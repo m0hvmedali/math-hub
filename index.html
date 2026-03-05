@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Study Hub OS</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Cairo:wght@300;400;500;600;700;800;900&display=swap"
+    rel="stylesheet">
+
+  <!-- Anti-Flash Script: prevents FOUC by applying theme BEFORE paint -->
+  <script>
+    (function () {
+      var theme = localStorage.getItem('study_theme');
+      // Default to dark (Obsidian) if no preference saved
+      if (theme === 'light') {
+        document.documentElement.classList.remove('dark');
+      } else {
+        document.documentElement.classList.add('dark');
+      }
+    })();
+  </script>
+
+  <style>
+    body {
+      overflow-x: hidden;
+    }
+
+    /* Pro Markdown & Table Styles */
+    .prose table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      overflow: hidden;
+      margin: 1.5rem 0;
+    }
+
+    .prose th {
+      background: var(--glass-bg);
+      color: var(--accent-primary, #3b82f6);
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 1rem;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .prose td {
+      padding: 1rem;
+      border-bottom: 1px solid var(--glass-border);
+      color: var(--text-primary);
+    }
+
+    .prose tr:last-child td {
+      border-bottom: none;
+    }
+
+    .prose tr:hover td {
+      background: rgba(59, 130, 246, 0.05);
+    }
+  </style>
+</head>
+
+<body class="antialiased selection:bg-accent-blue selection:text-white"
+  style="background: linear-gradient(135deg, var(--bg-base) 0%, var(--bg-base-end) 100%); color: var(--text-primary);">
+  <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+
+</html>
