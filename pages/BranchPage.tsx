@@ -273,12 +273,6 @@ const ContentRenderer: React.FC<{
                     </div>
                 )}
 
-                {block.type === 'whiteboard' && (
-                    <div className="p-6 bg-white rounded-xl text-black font-mono text-base whitespace-pre-wrap leading-relaxed">
-                        {block.content}
-                    </div>
-                )}
-
                 {block.type === 'quiz' && (
                     <div className="flex flex-col gap-5">
                         {block.content && (
