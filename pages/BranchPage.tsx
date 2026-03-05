@@ -479,12 +479,21 @@ const BranchPage: React.FC = () => {
 
                 <div className="flex items-center gap-4">
                     {isOwner && (
-                        <button
-                            onClick={() => setIsConfigOpen(true)}
-                            className="bg-white/10 hover:bg-white/20 text-white p-3 rounded-full backdrop-blur-md transition-colors"
-                        >
-                            <TargetIcon className="w-5 h-5" />
-                        </button>
+                        <>
+                            <button
+                                onClick={() => setIsSidebarOpen(true)}
+                                className="bg-brand-cyan/20 hover:bg-brand-cyan/40 text-brand-cyan px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest transition-all shadow-glow-brand flex items-center gap-2"
+                            >
+                                <PlusIcon className="w-4 h-4" />
+                                {language === 'ar' ? 'إضافة مورد' : 'Add Asset'}
+                            </button>
+                            <button
+                                onClick={() => setIsConfigOpen(true)}
+                                className="bg-white/10 hover:bg-white/20 text-white p-3 rounded-full backdrop-blur-md transition-colors"
+                            >
+                                <TargetIcon className="w-5 h-5" />
+                            </button>
+                        </>
                     )}
                 </div>
             </div>
@@ -549,30 +558,53 @@ const BranchPage: React.FC = () => {
                     </div>
 
                     {/* Content Playlist */}
-                    <div className="flex-1 overflow-y-auto px-4 py-6 space-y-3 custom-scrollbar">
+                    <div className="flex-1 overflow-y-auto px-4 py-6 space-y-3 custom-scrollbar pb-32">
                         <h3 className="text-white text-xs font-black uppercase tracking-widest px-2 mb-4">{language === 'ar' ? 'أصول الدرس' : 'Lesson Assets'}</h3>
 
-                        {activeLesson.content?.map((block, idx) => (
-                            <button
-                                key={block.id}
-                                onClick={() => setFocusedBlockIndex(idx)}
-                                className={`w-full text-left flex items-start gap-4 p-4 rounded-xl transition-all border ${focusedBlockIndex === idx
-                                    ? 'bg-brand-purple/20 border-brand-purple/50 shadow-glow-brand'
-                                    : 'bg-[#1a1a1a] border-white/5 hover:border-white/20 text-gray-400 hover:text-white hover:bg-[#222]'
-                                    }`}
-                            >
-                                <span className="font-bold opacity-50 text-sm mt-0.5">{idx + 1}</span>
-                                <div className="flex-1 min-w-0">
-                                    <div className={`font-bold text-sm truncate ${focusedBlockIndex === idx ? 'text-white' : ''}`}>
-                                        {block.title || block.fileName || block.type.toUpperCase()}
+                        {activeLesson.content?.map((block, idx) => {
+                            if (block.type === 'flashcard') return null; // Handled separately
+                            return (
+                                <button
+                                    key={block.id}
+                                    onClick={() => setFocusedBlockIndex(idx)}
+                                    className={`w-full text-left flex items-start gap-4 p-4 rounded-xl transition-all border ${focusedBlockIndex === idx
+                                        ? 'bg-brand-purple/20 border-brand-purple/50 shadow-glow-brand'
+                                        : 'bg-[#1a1a1a] border-white/5 hover:border-white/20 text-gray-400 hover:text-white hover:bg-[#222]'
+                                        }`}
+                                >
+                                    <span className="font-bold opacity-50 text-sm mt-0.5">{idx + 1}</span>
+                                    <div className="flex-1 min-w-0">
+                                        <div className={`font-bold text-sm truncate ${focusedBlockIndex === idx ? 'text-white' : ''}`}>
+                                            {block.title || block.fileName || block.type.toUpperCase()}
+                                        </div>
+                                        <div className="text-[10px] font-bold uppercase tracking-widest opacity-60 mt-1 flex items-center justify-between mt-2">
+                                            <span>{block.type}</span>
+                                            {progress?.data?.[block.id]?.isCorrect && <CheckCircleIcon className="w-3.5 h-3.5 text-brand-cyan" />}
+                                        </div>
                                     </div>
-                                    <div className="text-[10px] font-bold uppercase tracking-widest opacity-60 mt-1 flex items-center justify-between mt-2">
-                                        <span>{block.type}</span>
-                                        {progress?.data?.[block.id]?.isCorrect && <CheckCircleIcon className="w-3.5 h-3.5 text-brand-cyan" />}
+                                </button>
+                            );
+                        })}
+
+                        {flashcards.length > 0 && (
+                            <button
+                                onClick={() => {
+                                    setFlashcardStartIndex(0);
+                                    setIsFlashcardViewerOpen(true);
+                                }}
+                                className="w-full text-left flex items-start gap-4 p-4 rounded-xl transition-all border bg-brand-cyan/10 border-brand-cyan/30 hover:border-brand-cyan/60 text-brand-cyan shadow-glow-brand mt-4"
+                            >
+                                <span className="font-bold opacity-70 text-sm mt-0.5">🎴</span>
+                                <div className="flex-1 min-w-0">
+                                    <div className="font-bold text-sm truncate">
+                                        {language === 'ar' ? 'مجموعة البطاقات الذكية' : 'Flashcards Deck'}
+                                    </div>
+                                    <div className="text-[10px] font-bold uppercase tracking-widest opacity-80 mt-1 flex items-center justify-between mt-2">
+                                        <span>{flashcards.length} {language === 'ar' ? 'بطاقة' : 'Cards'}</span>
                                     </div>
                                 </div>
                             </button>
-                        ))}
+                        )}
                     </div>
                 </div>
             </div>

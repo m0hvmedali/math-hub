@@ -643,6 +643,28 @@ const App: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            {/* Mobile Bottom Navigation Menu */}
+            {user && (
+                <div className="md:hidden fixed bottom-0 w-full glass-nav border-t border-[var(--glass-border)] z-50 px-6 py-4 flex justify-between items-center bg-black/90 backdrop-blur-xl pb-safe">
+                    <button onClick={() => window.location.href = '/'} className="flex flex-col items-center gap-1 text-[var(--text-muted)] hover:text-brand-cyan transition-colors">
+                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+                        <span className="text-[10px] font-black uppercase tracking-widest">{language === 'ar' ? 'الرئيسية' : 'Home'}</span>
+                    </button>
+                    <button onClick={() => window.location.href = '/schedule'} className="flex flex-col items-center gap-1 text-[var(--text-muted)] hover:text-brand-cyan transition-colors">
+                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <span className="text-[10px] font-black uppercase tracking-widest">{language === 'ar' ? 'الجدول' : 'Schedule'}</span>
+                    </button>
+                    <button onClick={() => window.location.href = '/space'} className="flex flex-col items-center gap-1 text-[var(--text-muted)] hover:text-brand-cyan transition-colors">
+                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <span className="text-[10px] font-black uppercase tracking-widest">{language === 'ar' ? 'الفضاء' : 'Space'}</span>
+                    </button>
+                    <button onClick={() => window.location.href = '/labs'} className="flex flex-col items-center gap-1 text-[var(--text-muted)] hover:text-brand-cyan transition-colors">
+                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
+                        <span className="text-[10px] font-black uppercase tracking-widest">{language === 'ar' ? 'المعامل' : 'Labs'}</span>
+                    </button>
+                </div>
+            )}
         </AppContext.Provider>
     );
 };

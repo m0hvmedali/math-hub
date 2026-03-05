@@ -19,7 +19,7 @@ const CourseCard: React.FC<CourseCardProps> = ({ id, title, subtitle, link, imag
     return (
         <NavLink
             to={link}
-            className={`relative flex-none w-[240px] h-[340px] rounded-2xl overflow-hidden group cursor-pointer border border-white/5 hover:border-brand-purple transition-all duration-300 shadow-glass hover:shadow-glow-brand ${defaultBgClass}`}
+            className={`relative flex-none w-[320px] md:w-[400px] h-[200px] md:h-[240px] rounded-2xl overflow-hidden group cursor-pointer border border-white/5 hover:border-brand-purple transition-all duration-300 shadow-glass hover:shadow-glow-brand ${defaultBgClass}`}
             style={bgStyle}
         >
             <div className="absolute inset-0 bg-gradient-to-t from-[#000000] via-[#000000]/60 to-transparent opacity-90 group-hover:opacity-100 transition-opacity duration-300"></div>
