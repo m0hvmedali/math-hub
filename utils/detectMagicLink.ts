@@ -75,6 +75,16 @@ export const detectMagicLink = (url: string): MagicLinkResult | null => {
         return { type: 'audio', content: url, title: 'Audio', ...TYPE_CONFIG['audio'] };
     }
 
-    // Default to Embed
-    return { type: 'link', content: url, title: 'Dynamic Frame', ...TYPE_CONFIG['embed'] };
+    // Default to Embed - Handle any valid URL
+    try {
+        const domain = new URL(url).hostname.replace('www.', '');
+        return {
+            type: 'link',
+            content: url,
+            title: domain.charAt(0).toUpperCase() + domain.slice(1),
+            ...TYPE_CONFIG['embed']
+        };
+    } catch {
+        return { type: 'link', content: url, title: 'External Resource', ...TYPE_CONFIG['embed'] };
+    }
 };

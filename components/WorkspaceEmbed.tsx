@@ -11,7 +11,7 @@ const WORKSPACE_META: Record<string, { label: string; icon: string; color: strin
     'google-slides': { label: 'Google Slides', icon: '📊', color: '#F4B400', bgClass: 'from-[#4a2600]/30' },
     'google-sites': { label: 'Google Sites', icon: '🌐', color: '#0F9D58', bgClass: 'from-[#003300]/30' },
     'google-drive': { label: 'Google Drive', icon: '☁️', color: '#34A853', bgClass: 'from-[#002200]/30' },
-    'link': { label: 'External Link', icon: '🔗', color: '#94a3b8', bgClass: 'from-[#1a1a1a]/30' },
+    'link': { label: 'Web Page', icon: '🌐', color: '#8b5cf6', bgClass: 'from-[#2e1065]/30' },
 };
 
 /** Convert raw Google share link to the cleanest embeddable URL possible */
@@ -80,8 +80,10 @@ const WorkspaceEmbed: React.FC<WorkspaceEmbedProps> = ({ url, title, type }) => 
                     <div>
                         <p className="text-white font-black text-sm tracking-tight leading-tight">{title || meta.label}</p>
                         <div className="flex items-center gap-2 mt-0.5">
-                            <span className="w-1.5 h-1.5 rounded-full bg-brand-cyan animate-pulse" style={{ backgroundColor: meta.color }} />
-                            <p className="text-[10px] font-black uppercase tracking-[0.2em]" style={{ color: meta.color }}>{meta.label} Security Tunnel</p>
+                            <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: meta.color }} />
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em]" style={{ color: meta.color }}>
+                                {type === 'link' ? 'Encapsulated Web Portal' : `${meta.label} Immersive Tunnel`}
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -115,12 +117,26 @@ const WorkspaceEmbed: React.FC<WorkspaceEmbedProps> = ({ url, title, type }) => 
             {/* Immersive Viewport */}
             <div className={`relative bg-white transition-all duration-1000 ${isFullscreen ? 'h-[calc(100vh-73px)]' : 'h-[650px] md:h-[800px] shadow-inner'}`}>
                 {isLoading && (
-                    <div className="absolute inset-0 z-30 bg-[#050505] flex flex-col items-center justify-center p-8 text-center gap-4">
-                        <div className="relative w-16 h-16">
-                            <div className="absolute inset-0 border-4 border-white/5 rounded-full" />
-                            <div className="absolute inset-0 border-4 border-t-brand-cyan rounded-full animate-spin" style={{ borderTopColor: meta.color }} />
+                    <div className="absolute inset-0 z-30 bg-[#050505] flex flex-col items-center justify-center p-8 text-center gap-6">
+                        <div className="relative w-20 h-20">
+                            <div className="absolute inset-0 border-2 border-white/5 rounded-full scale-150 animate-ping opacity-20" style={{ borderColor: meta.color }} />
+                            <div className="absolute inset-0 border-[3px] border-white/5 rounded-full" />
+                            <div className="absolute inset-0 border-[3px] border-t-brand-cyan rounded-full animate-spin" style={{ borderTopColor: meta.color }} />
                         </div>
-                        <p className="text-gray-500 font-bold text-sm tracking-widest uppercase animate-pulse">Establishing Immersive Shell...</p>
+                        <div className="space-y-2">
+                            <p className="text-white font-black text-xs tracking-[0.3em] uppercase animate-pulse">Launching Digital Environment</p>
+                            <p className="text-gray-500 text-[10px] font-medium max-w-xs mx-auto">Connecting to external node via secure immersive protocol...</p>
+                        </div>
+
+                        {/* Fallback button shown during loading for safety */}
+                        <div className="mt-4 pt-8 border-t border-white/5 w-full max-w-xs">
+                            <p className="text-gray-600 text-[10px] italic mb-3">If the content doesn't appear below, it may be restricted by the provider.</p>
+                            <a href={url} target="_blank" rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white text-xs font-black transition-all border border-white/10"
+                            >
+                                🚀 VISIT SITE DIRECTLY
+                            </a>
+                        </div>
                     </div>
                 )}
                 <iframe
