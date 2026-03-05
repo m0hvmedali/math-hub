@@ -240,15 +240,15 @@ const ContentRenderer: React.FC<{
 
                 {block.type === 'video' && (
                     <div className="aspect-video rounded-xl overflow-hidden bg-black">
-                        <iframe src={block.content} className="w-full h-full" allowFullScreen loading="lazy"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        <iframe src={block.content} className="w-full h-full" allowFullScreen={true} loading="lazy"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
                         ></iframe>
                     </div>
                 )}
 
                 {block.type === 'google-drive' && (
                     <div className="aspect-[4/3] rounded-xl overflow-hidden bg-gray-900">
-                        <iframe src={block.content} className="w-full h-full border-0" loading="lazy"></iframe>
+                        <iframe src={block.content} className="w-full h-full border-0" loading="lazy" allowFullScreen={true} allow="fullscreen"></iframe>
                     </div>
                 )}
 
@@ -260,7 +260,7 @@ const ContentRenderer: React.FC<{
 
                 {block.type === 'pdf' && (
                     <div className="h-[700px] rounded-xl overflow-hidden">
-                        <iframe src={block.content} className="w-full h-full" loading="lazy"></iframe>
+                        <iframe src={block.content} className="w-full h-full" loading="lazy" allowFullScreen={true} allow="fullscreen"></iframe>
                     </div>
                 )}
 
@@ -466,7 +466,7 @@ const BranchPage: React.FC = () => {
     const focusedBlock = activeLesson.content?.[focusedBlockIndex];
 
     return (
-        <div className="flex flex-col h-screen bg-black overflow-hidden relative -mt-16 z-50">
+        <div className="flex flex-col min-h-screen bg-black relative -mt-16 z-10 w-full overflow-x-hidden">
             {/* Cinematic Top Navigation Overlay */}
             <div className="absolute top-0 left-0 w-full p-6 flex justify-between items-center z-50 bg-gradient-to-b from-black via-black/80 to-transparent">
                 <button
@@ -499,7 +499,7 @@ const BranchPage: React.FC = () => {
             </div>
 
             {/* OTT Layout Container */}
-            <div className="flex flex-col lg:flex-row w-full h-full pt-20 pb-0">
+            <div className="flex flex-col lg:flex-row w-full h-screen pt-20 pb-0">
 
                 {/* Main Player Area (Left) */}
                 <div className="flex-1 lg:w-3/4 relative flex flex-col items-center justify-center p-4">

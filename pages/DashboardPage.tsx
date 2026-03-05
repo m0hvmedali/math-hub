@@ -241,7 +241,7 @@ const DashboardPage: React.FC = () => {
                             {language === 'ar' ? 'مميز' : 'Featured'}
                         </span>
                     </div>
-                    <h1 className="text-5xl md:text-7xl font-black mb-4 leading-tight">
+                    <h1 className="text-4xl md:text-5xl lg:text-6xl font-black mb-4 leading-tight truncate">
                         {priorityLesson ? priorityLesson.lesson.name : (language === 'ar' ? 'ابدأ رحلتك المعرفية' : 'Start Your Journey')}
                     </h1>
                     <p className="text-lg md:text-xl text-gray-300 max-w-2xl mb-8 font-medium">
@@ -259,7 +259,7 @@ const DashboardPage: React.FC = () => {
                         {priorityLesson ? (
                             <button
                                 onClick={() => navigate(`/subject/${priorityLesson?.subjectId}/branch/${priorityLesson?.branchId}/lesson/${priorityLesson?.lesson.id}`)}
-                                className="bg-white text-black font-black px-8 py-4 flex items-center gap-3 rounded hover:bg-white/90 transition-transform hover:scale-105"
+                                className="bg-white text-black font-black px-6 md:px-8 py-3 md:py-4 flex items-center gap-3 rounded hover:bg-white/90 transition-transform hover:scale-105"
                             >
                                 <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
                                 {language === 'ar' ? 'تشغيل المورد' : 'Play Resource'}
@@ -267,7 +267,7 @@ const DashboardPage: React.FC = () => {
                         ) : (
                             <button
                                 onClick={() => setIsAdding(true)}
-                                className="bg-white text-black font-black px-8 py-4 flex items-center gap-3 rounded hover:bg-white/90 transition-transform hover:scale-105"
+                                className="bg-white text-black font-black px-6 md:px-8 py-3 md:py-4 flex items-center gap-3 rounded hover:bg-white/90 transition-transform hover:scale-105"
                             >
                                 <PlusIcon className="w-6 h-6" />
                                 {language === 'ar' ? 'إضافة مادة' : 'Add Subject'}
@@ -276,7 +276,7 @@ const DashboardPage: React.FC = () => {
 
                         <button
                             onClick={isStudying ? handleStopSession : handleStartSession}
-                            className={`px-8 py-4 flex items-center gap-3 rounded font-bold border-2 transition-transform hover:scale-105 ${isStudying ? 'bg-red-600/20 border-red-500 text-red-500 animate-pulse' : 'bg-white/10 border-white text-white backdrop-blur-sm hover:bg-white/20'}`}
+                            className={`px-6 md:px-8 py-3 md:py-4 flex items-center gap-3 rounded font-bold border-2 transition-transform hover:scale-105 ${isStudying ? 'bg-red-600/20 border-red-500 text-red-500 animate-pulse' : 'bg-white/10 border-white text-white backdrop-blur-sm hover:bg-white/20'}`}
                         >
                             <ClockIcon className="w-6 h-6" />
                             {isStudying ? (language === 'ar' ? `إيقاف المؤقت (${Math.floor((Date.now() - (startTime || 0)) / 60000)}m)` : `Stop Timer (${Math.floor((Date.now() - (startTime || 0)) / 60000)}m)`) : (language === 'ar' ? 'بدء مؤقت التركيز' : 'Start Focus Timer')}
@@ -284,7 +284,7 @@ const DashboardPage: React.FC = () => {
                     </div>
                 </div>
             </div>
-            <div className="w-full max-w-2xl mx-auto animate-fade-in relative z-40 mb-12">
+            <div className="w-full max-w-2xl mx-auto animate-fade-in relative z-[60] mb-12 px-4 md:px-0">
                 <div className="relative group">
                     <div className="absolute inset-0 bg-brand-cyan/10 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity rounded-full"></div>
                     <input
@@ -292,12 +292,12 @@ const DashboardPage: React.FC = () => {
                         placeholder={language === 'ar' ? 'البحث الراداري (محلي + عالمي)...' : 'Radar Search (Local + Global)...'}
                         value={searchQuery}
                         onChange={(e) => handleSearch(e.target.value)}
-                        className="w-full bg-[var(--glass-bg)] backdrop-blur-2xl border border-[var(--glass-border)] p-5 pl-14 rounded-[2rem] text-[var(--text-primary)] focus:border-brand-cyan/50 outline-none transition-all shadow-glass placeholder-[var(--text-muted)]"
+                        className="w-full bg-[var(--glass-bg)] backdrop-blur-2xl border border-[var(--glass-border)] p-4 md:p-5 pl-14 rounded-[2rem] text-[var(--text-primary)] focus:border-brand-cyan/50 outline-none transition-all shadow-glass placeholder-[var(--text-muted)] relative z-[60]"
                     />
-                    <SparkleIcon className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-accent-cyan animate-pulse" />
+                    <SparkleIcon className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-accent-cyan animate-pulse z-[61]" />
 
                     {searchResults.length > 0 && searchQuery && (
-                        <div className="absolute top-full left-0 right-0 mt-4 bg-[var(--glass-bg)] backdrop-blur-3xl border border-[var(--glass-border)] rounded-3xl p-4 shadow-2xl max-h-[300px] overflow-y-auto animate-scale-up z-[60]">
+                        <div className="absolute top-full left-0 right-0 mt-4 bg-[var(--glass-bg)] backdrop-blur-3xl border border-[var(--glass-border)] rounded-3xl p-4 shadow-2xl max-h-[300px] overflow-y-auto animate-scale-up z-[70]">
                             <div className="text-[10px] font-black text-accent-cyan uppercase tracking-widest mb-3 px-2 flex justify-between">
                                 <span>Radar Intercepts</span>
                                 <span className="text-[var(--text-muted)]">{searchResults.length} units</span>
