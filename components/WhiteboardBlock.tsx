@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { fabric } from 'fabric';
+import * as fabric from 'fabric';
+import type { Canvas as FabricCanvasType } from 'fabric';
+const { Canvas, Rect, Circle, Line, Triangle, PencilBrush, Image: FabricImage } = fabric;
+
 import * as pdfjsLib from 'pdfjs-dist';
 
 // Configure PDF.js worker
@@ -25,7 +28,7 @@ interface WhiteboardBlockProps {
  */
 const WhiteboardBlock: React.FC<WhiteboardBlockProps> = ({ savedData, readOnly, onSave, title }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const fabricRef = useRef<fabric.Canvas | null>(null);
+    const fabricRef = useRef<FabricCanvasType | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
 
     const [pages, setPages] = useState<WhiteboardPage[]>([{ id: '1', json: null }]);
@@ -56,7 +59,7 @@ const WhiteboardBlock: React.FC<WhiteboardBlockProps> = ({ savedData, readOnly, 
     useEffect(() => {
         if (!canvasRef.current) return;
 
-        const canvas = new fabric.Canvas(canvasRef.current, {
+        const canvas = new Canvas(canvasRef.current, {
             width: 1200,
             height: 800,
             backgroundColor: '#0a0a0a',
@@ -66,7 +69,7 @@ const WhiteboardBlock: React.FC<WhiteboardBlockProps> = ({ savedData, readOnly, 
         fabricRef.current = canvas;
 
         // Default tool setup
-        canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
+        canvas.freeDrawingBrush = new PencilBrush(canvas);
         canvas.freeDrawingBrush.color = activeColor;
         canvas.freeDrawingBrush.width = brushWidth;
 
@@ -96,15 +99,11 @@ const WhiteboardBlock: React.FC<WhiteboardBlockProps> = ({ savedData, readOnly, 
         canvas.isDrawingMode = activeTool === 'pencil' || activeTool === 'eraser';
 
         if (activeTool === 'pencil') {
-            canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
+            canvas.freeDrawingBrush = new PencilBrush(canvas);
             canvas.freeDrawingBrush.color = activeColor;
             canvas.freeDrawingBrush.width = brushWidth;
         } else if (activeTool === 'eraser') {
-            // Note: Fabric doesn't have a native pixel-eraser in v5 easily. 
-            // We'll use a white brush matching background or handle object removal.
-            // For true professional feel, we'll use object selection/removal for now
-            // or a "Background Color" brush.
-            canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
+            canvas.freeDrawingBrush = new PencilBrush(canvas);
             canvas.freeDrawingBrush.color = '#0a0a0a';
             canvas.freeDrawingBrush.width = brushWidth * 2;
         } else {
@@ -130,8 +129,10 @@ const WhiteboardBlock: React.FC<WhiteboardBlockProps> = ({ savedData, readOnly, 
         canvas.clear();
         canvas.backgroundColor = '#0a0a0a';
         if (newPageData) {
-            canvas.loadFromJSON(newPageData, () => {
+            canvas.loadFromJSON(newPageData).then(() => {
                 canvas.renderAll();
+            }).catch(err => {
+                console.error('Failed to load page data:', err);
             });
         }
     }, [currentPageIndex]);
@@ -248,21 +249,25 @@ const WhiteboardBlock: React.FC<WhiteboardBlockProps> = ({ savedData, readOnly, 
         }
     };
 
-    const addImage = () => {
+    const addImage = async () => {
         const url = window.prompt(title === 'ar' ? 'أدخل رابط الصورة:' : 'Enter image URL:');
         if (!url || !fabricRef.current) return;
 
-        fabric.Image.fromURL(url, (img) => {
+        try {
+            const img = await FabricImage.fromURL(url, { crossOrigin: 'anonymous' });
             img.scaleToWidth(400);
-            fabricRef.current?.add(img);
-            fabricRef.current?.centerObject(img);
-            fabricRef.current?.setActiveObject(img);
-        }, { crossOrigin: 'anonymous' });
+            fabricRef.current.add(img);
+            fabricRef.current.centerObject(img);
+            fabricRef.current.setActiveObject(img);
+            fabricRef.current.renderAll();
+        } catch (err) {
+            console.error('Failed to load image:', err);
+        }
     };
 
     const addShape = (type: 'rect' | 'circle' | 'line' | 'triangle') => {
         if (!fabricRef.current) return;
-        let obj: fabric.Object;
+        let obj: any;
 
         const props = {
             left: 200,
@@ -272,10 +277,10 @@ const WhiteboardBlock: React.FC<WhiteboardBlockProps> = ({ savedData, readOnly, 
             strokeWidth: brushWidth,
         };
 
-        if (type === 'rect') obj = new fabric.Rect({ ...props, width: 200, height: 100 });
-        else if (type === 'circle') obj = new fabric.Circle({ ...props, radius: 100 });
-        else if (type === 'triangle') obj = new fabric.Triangle({ ...props, width: 150, height: 150 });
-        else obj = new fabric.Line([50, 50, 250, 250], props);
+        if (type === 'rect') obj = new Rect({ ...props, width: 200, height: 100 });
+        else if (type === 'circle') obj = new Circle({ ...props, radius: 100 });
+        else if (type === 'triangle') obj = new Triangle({ ...props, width: 150, height: 150 });
+        else obj = new Line([50, 50, 250, 250], props);
 
         fabricRef.current.add(obj);
         fabricRef.current.setActiveObject(obj);
