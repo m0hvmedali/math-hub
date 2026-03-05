@@ -75,7 +75,7 @@ const Navigation: React.FC = () => {
                     {isMenuOpen && (
                         <>
                             <div className="fixed inset-0 z-40" onClick={() => setIsMenuOpen(false)}></div>
-                            <div className="absolute right-0 top-full mt-4 w-60 glass-card border-[var(--glass-border)] rounded-2xl shadow-2xl z-[9999] flex flex-col py-2 animate-scale-in origin-top-right">
+                            <div className="absolute -right-2 md:right-0 top-full mt-4 w-60 glass-card border-[var(--glass-border)] rounded-2xl shadow-2xl z-[9999] flex flex-col py-2 animate-scale-in origin-top-right">
                                 <div className="px-4 py-3 border-b border-white/5 mb-2">
                                     <p className="text-sm text-gray-400">{language === 'ar' ? 'مرحباً،' : 'Hello,'}</p>
                                     <p className="font-bold text-white truncate">{user}</p>
