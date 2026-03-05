@@ -6,6 +6,7 @@ import ContentModal from '../components/ContentModal';
 import FlashcardViewer from '../components/FlashcardViewer';
 import WorkspaceEmbed from '../components/WorkspaceEmbed';
 import WhiteboardBlock from '../components/WhiteboardBlock';
+import RichTextEditor from '../components/RichTextEditor';
 import GeminiChatWidget from '../components/GeminiChatWidget';
 
 import HTMLCodeViewer from '../components/HTMLCodeViewer';
@@ -352,6 +353,16 @@ const ContentRenderer: React.FC<{
                         isFullScreen={isFocused}
                     />
                 )}
+
+                {block.type === 'rich-text' && (
+                    <RichTextEditor
+                        initialValue={block.richTextData}
+                        readOnly={readOnly}
+                        onSave={readOnly ? undefined : (html) => {
+                            (block as any).__pendingRichTextSave = html;
+                        }}
+                    />
+                )}
             </div>
         </div>
     );
@@ -368,6 +379,7 @@ const BranchPage: React.FC = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isConfigOpen, setIsConfigOpen] = useState(false);
     const [isGeminiOpen, setIsGeminiOpen] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
 
     // Focus Mode State (Always Active in OTT)
     const [focusedBlockIndex, setFocusedBlockIndex] = useState<number>(0);
@@ -484,7 +496,42 @@ const BranchPage: React.FC = () => {
             b.id === blockId ? { ...b, fileName: newName.trim(), title: newName.trim() } : b
         );
         const updatedLesson = { ...activeLesson, content: updatedContent };
+        setActiveLesson(updatedLesson);
         await updateLesson(subject.id, branch.id, updatedLesson);
+    };
+
+    const handleSaveLessonEdits = async () => {
+        if (!isOwner || !subject || !branch || !activeLesson) return;
+        setIsSaving(true);
+        try {
+            // Collect all pending edits from content blocks
+            const updatedContent = activeLesson.content.map(block => {
+                let newBlock = { ...block };
+                let modified = false;
+
+                if ((block as any).__pendingWhiteboardSave) {
+                    newBlock.whiteboardData = (block as any).__pendingWhiteboardSave;
+                    modified = true;
+                }
+
+                if ((block as any).__pendingRichTextSave) {
+                    newBlock.richTextData = (block as any).__pendingRichTextSave;
+                    modified = true;
+                }
+
+                return modified ? newBlock : block;
+            });
+
+            const updatedLesson = { ...activeLesson, content: updatedContent };
+            setActiveLesson(updatedLesson);
+            await updateLesson(subject.id, branch.id, updatedLesson);
+
+            // Show a success state briefly if needed, but for now just clear saving
+            setTimeout(() => setIsSaving(false), 1000);
+        } catch (error) {
+            console.error("Save failed:", error);
+            setIsSaving(false);
+        }
     };
 
     // --- RENDER ---
@@ -516,6 +563,16 @@ const BranchPage: React.FC = () => {
                     </button>
                     {isOwner && (
                         <>
+                            <button
+                                onClick={handleSaveLessonEdits}
+                                disabled={isSaving}
+                                className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest transition-all border flex items-center gap-2 ${isSaving
+                                        ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                                        : 'bg-brand-purple/20 hover:bg-brand-purple/40 text-brand-purple border-brand-purple/30 shadow-glow-brand'
+                                    }`}
+                            >
+                                {isSaving ? '⏳ ' + (language === 'ar' ? 'جاري الحفظ...' : 'Saving...') : '💾 ' + (language === 'ar' ? 'حفظ التعديلات' : 'Save Changes')}
+                            </button>
                             <button
                                 onClick={() => setIsSidebarOpen(true)}
                                 className="bg-brand-cyan/20 hover:bg-brand-cyan/40 text-brand-cyan px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest transition-all shadow-glow-brand flex items-center gap-2"

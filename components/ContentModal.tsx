@@ -6,6 +6,7 @@ import remarkGfm from 'remark-gfm';
 import { supabase } from '../supabaseClient';
 import { getAiResponse } from '../utils/aiHelper';
 import { detectMagicLink, MagicLinkResult } from '../utils/detectMagicLink';
+import RichTextEditor from './RichTextEditor';
 
 
 interface ContentModalProps {
@@ -41,6 +42,7 @@ const ContentModal: React.FC<ContentModalProps> = ({ isOpen, onClose, onSave }) 
     const [markdown, setMarkdown] = useState('');
     const [whiteboardText, setWhiteboardText] = useState('');
     const [notebooklmText, setNotebooklmText] = useState('');
+    const [richTextData, setRichTextData] = useState('');
 
     // Flashcard State
     const [flashcardFront, setFlashcardFront] = useState('');
@@ -142,7 +144,9 @@ const ContentModal: React.FC<ContentModalProps> = ({ isOpen, onClose, onSave }) 
         } else if (contentType === 'markdown') {
             if (markdown.trim()) onSave({ type: 'markdown', content: markdown, color: selectedColor, customColor: customColorHex || undefined, fileName });
         } else if (contentType === 'whiteboard') {
-            if (whiteboardText.trim()) onSave({ type: 'whiteboard', content: whiteboardText, title: resourceTitle.trim() || undefined, fileName: resourceTitle.trim() || undefined });
+            onSave({ type: 'whiteboard', content: 'Canvas Whiteboard', whiteboardData: whiteboardText, title: resourceTitle.trim() || undefined, fileName: resourceTitle.trim() || undefined });
+        } else if (contentType === 'rich-text') {
+            onSave({ type: 'rich-text', content: 'Native Document', richTextData: richTextData, title: resourceTitle.trim() || undefined, fileName: resourceTitle.trim() || undefined });
         } else if (contentType === 'notebooklm') {
             if (notebooklmText.trim()) onSave({ type: 'notebooklm', content: notebooklmText, fileName });
         } else if (contentType === 'flashcard') {
@@ -843,6 +847,28 @@ const ContentModal: React.FC<ContentModalProps> = ({ isOpen, onClose, onSave }) 
                             Choose File
                         </button>
                         {file && <p className="mt-4 text-accent-green">{file.name}</p>}
+                    </div>
+                );
+            case 'whiteboard':
+                return (
+                    <div className="h-[60vh] flex flex-col items-center justify-center border-2 border-dashed border-gray-600 rounded-lg p-8 text-center bg-brand-cyan/5">
+                        <WhiteboardIcon className="w-16 h-16 text-brand-cyan mb-4 animate-pulse" />
+                        <h3 className="text-xl font-bold text-white mb-2">Interactive Whiteboard</h3>
+                        <p className="text-sm text-gray-400 max-w-sm mb-6">Create a dynamic drawing board where you can sketch, explain, and visualize concepts.</p>
+                        <div className="bg-brand-cyan/20 px-6 py-3 rounded-xl border border-brand-cyan/30 text-brand-cyan font-bold text-xs uppercase tracking-widest">
+                            Ready to Initialize
+                        </div>
+                    </div>
+                );
+            case 'rich-text':
+                return (
+                    <div className="h-[60vh] flex flex-col gap-4">
+                        <div className="flex-1 overflow-y-auto custom-scrollbar">
+                            <RichTextEditor
+                                placeholder="Create your Google Docs style lesson here..."
+                                onSave={(html) => setRichTextData(html)}
+                            />
+                        </div>
                     </div>
                 );
             default:
