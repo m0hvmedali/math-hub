@@ -16,8 +16,34 @@ const WhiteboardBlock: React.FC<WhiteboardBlockProps> = ({ savedData, readOnly, 
     const [ExcalidrawComponent, setExcalidrawComponent] = useState<React.ComponentType<any> | null>(null);
     const [initialData, setInitialData] = useState<any>(null);
     const [error, setError] = useState<string | null>(null);
-    const [isSaving, setIsSaving] = useState(false);
-    const excalidrawRef = useRef<any>(null);
+    const [isFullscreen, setIsFullscreen] = useState(false);
+
+    // Dynamic scale and style overrides for Excalidraw
+    useEffect(() => {
+        const style = document.createElement('style');
+        style.innerHTML = `
+            .excalidraw .App-toolbar-content {
+                transform: scale(0.85);
+                transform-origin: center bottom;
+            }
+            .excalidraw .LayerIcon {
+                transform: scale(0.8);
+            }
+            .excalidraw .Island {
+                padding: 4px !important;
+            }
+            .excalidraw .footer-center {
+                transform: scale(0.8);
+                transform-origin: center bottom;
+            }
+            /* Make sure the canvas still fills space */
+            .excalidraw main {
+                height: 100% !important;
+            }
+        `;
+        document.head.appendChild(style);
+        return () => { document.head.removeChild(style); };
+    }, []);
 
     // Dynamically import Excalidraw (heavy lib)
     useEffect(() => {
@@ -89,7 +115,7 @@ const WhiteboardBlock: React.FC<WhiteboardBlockProps> = ({ savedData, readOnly, 
     }
 
     return (
-        <div className="relative w-full rounded-xl overflow-hidden border border-white/10">
+        <div className={`relative w-full rounded-xl overflow-hidden border border-white/10 transition-all ${isFullscreen ? 'fixed inset-0 z-[100] bg-[#1a1a2e]' : ''}`}>
             {/* Toolbar */}
             <div className="flex items-center justify-between px-4 py-2.5 bg-[#0d0d0d] border-b border-white/5">
                 <div className="flex items-center gap-2">
@@ -105,10 +131,16 @@ const WhiteboardBlock: React.FC<WhiteboardBlockProps> = ({ savedData, readOnly, 
                 </div>
                 <div className="flex items-center gap-2">
                     <button
+                        onClick={() => setIsFullscreen(!isFullscreen)}
+                        className="px-3 py-1.5 text-xs font-bold bg-white/5 hover:bg-white/10 text-brand-cyan rounded-lg transition-colors flex items-center gap-1"
+                    >
+                        {isFullscreen ? '🏁 خروج' : '🔲 ملء الشاشة'}
+                    </button>
+                    <button
                         onClick={handleExportPNG}
                         className="px-3 py-1.5 text-xs font-bold bg-white/5 hover:bg-white/10 text-gray-300 rounded-lg transition-colors flex items-center gap-1"
                     >
-                        ⬇️ تصدير PNG
+                        ⬇️ PNG
                     </button>
                     {!readOnly && onSave && (
                         <button
@@ -116,14 +148,14 @@ const WhiteboardBlock: React.FC<WhiteboardBlockProps> = ({ savedData, readOnly, 
                             disabled={isSaving}
                             className="px-3 py-1.5 text-xs font-bold bg-brand-cyan/20 hover:bg-brand-cyan/40 text-brand-cyan rounded-lg transition-all flex items-center gap-1 border border-brand-cyan/30 disabled:opacity-50"
                         >
-                            {isSaving ? '⏳ حفظ...' : '💾 حفظ'}
+                            {isSaving ? '⏳ حفظ' : '💾 حفظ'}
                         </button>
                     )}
                 </div>
             </div>
 
             {/* Canvas */}
-            <div className="h-[600px] md:h-[700px] w-full" style={{ background: '#1a1a2e' }}>
+            <div className={`w-full ${isFullscreen ? 'h-[calc(100vh-60px)]' : 'h-[600px] md:h-[700px]'}`} style={{ background: '#1a1a2e' }}>
                 <ExcalidrawComponent
                     ref={excalidrawRef}
                     initialData={initialData}
