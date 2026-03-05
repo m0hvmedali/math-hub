@@ -117,7 +117,8 @@ const ContentRenderer: React.FC<{
     savedState?: { selectedOption?: number; isCorrect?: boolean };
     onSaveProgress?: (state: any) => void;
     isFocused?: boolean;
-}> = ({ block, onDelete, readOnly, flashcardIndex = 0, onOpenFlashcard, lessonId, onQuizFail, savedState, onSaveProgress, isFocused }) => {
+    subjectId?: string;
+}> = ({ block, onDelete, readOnly, flashcardIndex = 0, onOpenFlashcard, lessonId, onQuizFail, savedState, onSaveProgress, isFocused, subjectId }) => {
     const triggerRedPulse = useCosmicStore(state => state.triggerRedPulse);
     const [selectedOption, setSelectedOption] = useState<number | null>(savedState?.selectedOption ?? null);
     const [isCorrect, setIsCorrect] = useState<boolean | null>(savedState?.isCorrect ?? null);
@@ -140,9 +141,9 @@ const ContentRenderer: React.FC<{
                 onSaveProgress({ selectedOption: optionIdx, isCorrect: correct });
             }
 
-            if (!correct && lessonId) {
+            if (!correct && lessonId && subjectId) {
                 // Trigger the Red Pulse on this lesson node in the cosmic graph
-                triggerRedPulse(lessonId);
+                triggerRedPulse(subjectId, lessonId);
                 if (onQuizFail) onQuizFail(lessonId);
             }
         }
@@ -308,28 +309,15 @@ const ContentRenderer: React.FC<{
                     </div>
                 )}
 
-                {block.type === 'link' && (
-                    <a href={block.url || block.content} target="_blank" rel="noopener noreferrer"
-                        className="flex items-center gap-3 p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-all group"
-                    >
-                        <span className="text-brand-cyan font-medium break-all flex-1">{block.url || block.content}</span>
-                        <svg className="w-5 h-5 text-brand-cyan flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                        </svg>
-                    </a>
-                )}
-
-                {block.type === 'podcast' && (
-                    <div className="aspect-video rounded-xl overflow-hidden bg-gray-900">
-                        <iframe src={block.content} className="w-full h-full" allow="autoplay" loading="lazy"></iframe>
-                    </div>
-                )}
-
-                {(block.type === 'google-docs' || block.type === 'google-slides' || block.type === 'google-sites' || block.type === 'google-drive') && (
+                {(block.type === 'google-docs' || block.type === 'google-slides' || block.type === 'google-sites' || block.type === 'google-drive' || block.type === 'link' || block.type === 'pdf') && (
                     <WorkspaceEmbed
-                        url={block.content}
+                        url={block.url || block.content}
                         title={block.title || block.fileName}
-                        type={block.type === 'google-drive' ? 'google-drive' : block.type as any}
+                        type={
+                            block.type === 'pdf' ? 'link' :
+                                block.type === 'google-drive' ? 'google-drive' :
+                                    block.type as any
+                        }
                     />
                 )}
 
@@ -568,6 +556,7 @@ const BranchPage: React.FC = () => {
                                 savedState={progress?.data?.[focusedBlock.id]}
                                 onSaveProgress={(state) => saveProgress(activeLesson.id, focusedBlock.id, state)}
                                 isFocused={true}
+                                subjectId={subjectId}
                             />
                         </div>
                     ) : (

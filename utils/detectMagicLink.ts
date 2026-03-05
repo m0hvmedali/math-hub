@@ -17,7 +17,7 @@ const TYPE_CONFIG: Record<string, { icon: string; color: string; label: string }
     'pdf': { icon: '📄', color: '#fb923c', label: 'PDF' },
     'image': { icon: '🖼️', color: '#34d399', label: 'Image' },
     'audio': { icon: '🎧', color: '#a78bfa', label: 'Audio' },
-    'link': { icon: '🔗', color: '#38bdf8', label: 'Link' },
+    'embed': { icon: '🧩', color: '#94a3b8', label: 'Embed' },
 };
 
 export const detectMagicLink = (url: string): MagicLinkResult | null => {
@@ -50,6 +50,16 @@ export const detectMagicLink = (url: string): MagicLinkResult | null => {
         return { type: 'google-drive', content: url, title: 'Google Drive File', ...TYPE_CONFIG['google-drive'] };
     }
 
+    // Canva
+    if (url.includes('canva.com/')) {
+        return { type: 'google-slides', content: url, title: 'Canva Design', ...TYPE_CONFIG['google-slides'] };
+    }
+
+    // Miro
+    if (url.includes('miro.com/')) {
+        return { type: 'google-sites', content: url, title: 'Miro Board', ...TYPE_CONFIG['google-sites'] };
+    }
+
     // PDF
     if (lowerUrl.endsWith('.pdf')) {
         return { type: 'pdf', content: url, title: 'PDF Document', ...TYPE_CONFIG['pdf'] };
@@ -65,6 +75,6 @@ export const detectMagicLink = (url: string): MagicLinkResult | null => {
         return { type: 'audio', content: url, title: 'Audio', ...TYPE_CONFIG['audio'] };
     }
 
-    // Default to Link
-    return { type: 'link', content: url, title: 'Web Link', ...TYPE_CONFIG['link'] };
+    // Default to Embed
+    return { type: 'link', content: url, title: 'Dynamic Frame', ...TYPE_CONFIG['embed'] };
 };

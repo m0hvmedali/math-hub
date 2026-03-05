@@ -33,7 +33,7 @@ export const AppContext = createContext<{
     login: (name: string) => void;
     addSubject: (name: string) => Promise<void>;
     addBranchToSubject: (subjectId: string, branchName: string) => Promise<void>;
-    addLessonToBranch: (subjectId: string, branchId: string, lessonName: string, tags?: string[]) => Promise<void>;
+    addLessonToBranch: (subjectId: string, branchId: string, lessonName: string, initialContent?: any[], tags?: string[]) => Promise<void>;
     updateLesson: (subjectId: string, branchId: string, updatedLesson: Lesson) => Promise<void>;
     getSubject: (subjectId: string) => Subject | undefined;
     getCourseBranch: (subjectId: string, branchId: string) => CourseBranch | undefined;
@@ -335,14 +335,14 @@ const App: React.FC = () => {
         }
     };
 
-    const addLessonToBranch = async (subjectId: string, branchId: string, lessonName: string, tags?: string[]) => {
+    const addLessonToBranch = async (subjectId: string, branchId: string, lessonName: string, initialContent?: any[], tags?: string[]) => {
         if (!supabase) return;
         const tempId = crypto.randomUUID();
         const newLesson: Lesson = {
             id: tempId,
             branch_id: branchId,
             name: lessonName,
-            content: [],
+            content: initialContent || [],
             status: 'not_started',
             difficulty: 'medium',
             importance: 'medium',
@@ -362,7 +362,7 @@ const App: React.FC = () => {
         const { data, error } = await supabase.from('lessons').insert([{
             branch_id: branchId,
             name: lessonName,
-            content: [],
+            content: initialContent || [],
             status: 'not_started',
             difficulty: 'medium',
             importance: 'medium',

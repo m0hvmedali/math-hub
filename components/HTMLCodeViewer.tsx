@@ -121,7 +121,7 @@ const HTMLCodeViewer: React.FC<HTMLCodeViewerProps> = ({ html, css, js, title, i
                 <div className={isFullScreen ? 'flex-1 flex flex-col overflow-hidden' : 'p-8'}>
                     <div
                         ref={containerRef}
-                        className={`${isFullScreen ? 'flex-1 border-none' : 'min-h-[200px] bg-white/5 rounded-2xl border border-white/10'} overflow-auto`}
+                        className={`${isFullScreen ? 'flex-1 border-none' : 'min-h-[600px] bg-white/5 rounded-2xl border border-white/10 shadow-inner'} overflow-auto bg-white`}
                     />
                 </div>
             )}

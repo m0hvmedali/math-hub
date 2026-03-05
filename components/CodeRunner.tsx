@@ -9,7 +9,7 @@ interface CodeRunnerProps {
 
 const CodeRunner: React.FC<CodeRunnerProps> = ({ code, title, isFullScreen }) => {
     const iframeRef = useRef<HTMLIFrameElement>(null);
-    const [iframeHeight, setIframeHeight] = useState(300);
+    const [iframeHeight, setIframeHeight] = useState(500);
 
     useEffect(() => {
         const iframe = iframeRef.current;
@@ -19,7 +19,8 @@ const CodeRunner: React.FC<CodeRunnerProps> = ({ code, title, isFullScreen }) =>
         const updateHeight = () => {
             if (iframe.contentWindow?.document?.body) {
                 const height = iframe.contentWindow.document.body.scrollHeight;
-                setIframeHeight(height > 100 ? height + 20 : 300); // Minimum 300px
+                // Allow it to grow, but give it a healthy minimum and some extra padding
+                setIframeHeight(Math.max(600, height + 40));
             }
         };
 
@@ -30,7 +31,7 @@ const CodeRunner: React.FC<CodeRunnerProps> = ({ code, title, isFullScreen }) =>
     }, [code, isFullScreen]);
 
     return (
-        <div className={`${isFullScreen ? 'h-full w-full flex flex-col overflow-hidden' : 'bg-cinematic-card border border-cinematic-border rounded-3xl overflow-hidden shadow-2xl transition-all hover:shadow-accent-blue/10'}`}>
+        <div className={`${isFullScreen ? 'h-screen w-full flex flex-col overflow-hidden fixed inset-0 z-[9999]' : 'bg-cinematic-card border border-cinematic-border rounded-3xl overflow-hidden shadow-2xl transition-all hover:shadow-accent-blue/10'}`}>
             {/* Header */}
             {!isFullScreen && (
                 <div className="bg-gray-900/50 px-8 py-4 border-b border-white/5 flex items-center justify-between">
@@ -40,14 +41,9 @@ const CodeRunner: React.FC<CodeRunnerProps> = ({ code, title, isFullScreen }) =>
                             {title || 'Genius Runner'}
                         </span>
                     </div>
-                    <div className="flex gap-2">
-                        <div className="w-3 h-3 rounded-full bg-red-500/20 border border-red-500/50"></div>
-                        <div className="w-3 h-3 rounded-full bg-yellow-500/20 border border-yellow-500/50"></div>
-                        <div className="w-3 h-3 rounded-full bg-green-500/20 border border-green-500/50"></div>
-                    </div>
                 </div>
             )}
-            <div className={isFullScreen ? 'flex-1 w-full overflow-hidden' : 'bg-white'}>
+            <div className={isFullScreen ? 'flex-1 w-full overflow-hidden' : 'bg-white h-full'}>
                 <iframe
                     ref={iframeRef}
                     srcDoc={code}

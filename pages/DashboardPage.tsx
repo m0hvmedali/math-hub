@@ -18,7 +18,7 @@ import NodeInjectorModal from '../components/NodeInjectorModal';
 import CourseCard from '../components/CourseCard';
 
 const DashboardPage: React.FC = () => {
-    const { subjects, addSubject, addStudySession, studySessions, language, setLanguage, user, customNodes, addCustomNode, manualLinks, addManualLink, tasks, knowledgeErrors } = useContext(AppContext);
+    const { subjects, addSubject, addStudySession, studySessions, language, setLanguage, user, customNodes, addCustomNode, manualLinks, addManualLink, tasks, knowledgeErrors, addLessonToBranch } = useContext(AppContext);
     const {
         activeView,
         setActiveView,
@@ -65,8 +65,7 @@ const DashboardPage: React.FC = () => {
         }
 
         // Use the context function to add lesson with tags
-        const { addLessonToBranch } = useContext(AppContext); // Ensure it's available or use props/context
-        await addLessonToBranch(newLessonData.subjectId, newLessonData.branchId, newLessonData.name, tagsArray);
+        await addLessonToBranch(newLessonData.subjectId, newLessonData.branchId, newLessonData.name, [], tagsArray);
 
         setIsAddingLesson(false);
         setNewLessonData({ name: '', subjectId: '', branchId: '', tags: '' });

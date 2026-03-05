@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 interface WorkspaceEmbedProps {
     url: string;
     title?: string;
-    type: 'google-docs' | 'google-slides' | 'google-sites' | 'google-drive';
+    type: 'google-docs' | 'google-slides' | 'google-sites' | 'google-drive' | 'link';
 }
 
 const WORKSPACE_META: Record<string, { label: string; icon: string; color: string; bgClass: string }> = {
@@ -11,6 +11,7 @@ const WORKSPACE_META: Record<string, { label: string; icon: string; color: strin
     'google-slides': { label: 'Google Slides', icon: '📊', color: '#F4B400', bgClass: 'from-[#4a2600]/30' },
     'google-sites': { label: 'Google Sites', icon: '🌐', color: '#0F9D58', bgClass: 'from-[#003300]/30' },
     'google-drive': { label: 'Google Drive', icon: '☁️', color: '#34A853', bgClass: 'from-[#002200]/30' },
+    'link': { label: 'External Link', icon: '🔗', color: '#94a3b8', bgClass: 'from-[#1a1a1a]/30' },
 };
 
 /** Convert raw Google share link to the cleanest embeddable URL possible */
@@ -24,6 +25,18 @@ const toEmbedUrl = (url: string, type: string): string => {
             if (kind === 'document') return `https://docs.google.com/document/d/${id}/preview?rm=minimal`;
             if (kind === 'spreadsheets') return `https://docs.google.com/spreadsheets/d/${id}/preview?rm=minimal`;
             if (kind === 'presentation') return `https://docs.google.com/presentation/d/${id}/embed?start=false&loop=false&rm=minimal`;
+        }
+
+        // Canva
+        if (url.includes('canva.com/')) {
+            const canvaMatch = url.match(/canva\.com\/design\/([a-zA-Z0-9_-]+)/);
+            if (canvaMatch) return `https://www.canva.com/design/${canvaMatch[1]}/view?embed`;
+        }
+
+        // Miro
+        if (url.includes('miro.com/')) {
+            const miroMatch = url.match(/miro\.com\/app\/board\/([a-zA-Z0-9_-]+)/);
+            if (miroMatch) return `https://miro.com/app/live-embed/${miroMatch[1]}/`;
         }
 
         // Google Drive file
