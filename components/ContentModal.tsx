@@ -226,6 +226,14 @@ const ContentModal: React.FC<ContentModalProps> = ({ isOpen, onClose, onSave }) 
                 alert('Please enter some code.');
                 return;
             }
+        } else if (contentType === 'google-docs' || contentType === 'google-slides' || contentType === 'google-sites') {
+            if (linkUrl.trim()) {
+                const labels: Record<string, string> = { 'google-docs': 'Google Document', 'google-slides': 'Google Slides', 'google-sites': 'Google Site' };
+                onSave({ type: contentType, content: linkUrl, fileName: labels[contentType] || contentType });
+            } else {
+                alert('Please enter a valid Google URL.');
+                return;
+            }
         } else if (contentType === 'google-drive') {
             const embedUrl = getGoogleDriveEmbedUrl(linkUrl);
             if (embedUrl) {
@@ -605,6 +613,37 @@ const ContentModal: React.FC<ContentModalProps> = ({ isOpen, onClose, onSave }) 
                         <p className="text-xs text-gray-500 mt-2">Works with Docs, Slides, Sheets, and Files.</p>
                     </div>
                 );
+            case 'google-docs':
+            case 'google-slides':
+            case 'google-sites': {
+                const docsMeta: Record<string, { label: string; icon: string; placeholder: string; color: string }> = {
+                    'google-docs': { label: 'Google Docs', icon: '📄', placeholder: 'Paste Google Docs link...', color: '#4285F4' },
+                    'google-slides': { label: 'Google Slides', icon: '📊', placeholder: 'Paste Google Slides link (Publish to web)...', color: '#F4B400' },
+                    'google-sites': { label: 'Google Sites', icon: '🌐', placeholder: 'Paste Google Sites URL...', color: '#0F9D58' },
+                };
+                const meta = docsMeta[contentType];
+                return (
+                    <div className="h-[60vh] flex flex-col items-center justify-center gap-6 p-8">
+                        <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl" style={{ backgroundColor: meta.color + '20', border: `1px solid ${meta.color}40` }}>
+                            {meta.icon}
+                        </div>
+                        <div className="text-center">
+                            <h3 className="text-white font-bold text-lg mb-1">{meta.label}</h3>
+                            <p className="text-gray-400 text-sm max-w-sm">
+                                سيتم عرض المحتوى مدمجاً بالكامل داخل الدرس وكأنه جزء من الموقع.
+                            </p>
+                        </div>
+                        <input
+                            type="url"
+                            value={linkUrl}
+                            onChange={e => setLinkUrl(e.target.value)}
+                            placeholder={meta.placeholder}
+                            className="w-full max-w-lg p-4 bg-gray-900 border border-gray-700 rounded-xl text-white text-sm focus:outline-none font-mono"
+                            style={{ borderColor: linkUrl ? meta.color : undefined }}
+                        />
+                    </div>
+                );
+            }
             case 'video':
                 return (
                     <div className="h-[60vh] flex flex-col gap-6 p-4">
@@ -745,7 +784,10 @@ const ContentModal: React.FC<ContentModalProps> = ({ isOpen, onClose, onSave }) 
         { type: 'html-code' as ContentType, icon: '💻', label: 'Custom Code' },
         { type: 'raw-html' as ContentType, icon: '🚀', label: 'Genius Runner' },
         { type: 'link' as ContentType, icon: <LinkIcon className="w-5 h-5" />, label: 'Link' },
-        { type: 'google-drive' as ContentType, icon: <LinkIcon className="w-5 h-5" />, label: 'Drive' },
+        { type: 'google-docs' as ContentType, icon: '📄', label: 'Docs' },
+        { type: 'google-slides' as ContentType, icon: '📊', label: 'Slides' },
+        { type: 'google-sites' as ContentType, icon: '🌐', label: 'Sites' },
+        { type: 'google-drive' as ContentType, icon: '☁️', label: 'Drive' },
         { type: 'podcast' as ContentType, icon: <AudioIcon className="w-5 h-5" />, label: 'Podcast' },
         { type: 'video' as ContentType, icon: <VideoIcon className="w-5 h-5" />, label: 'Video' },
         { type: 'image' as ContentType, icon: <ImageIcon className="w-5 h-5" />, label: 'Image' },

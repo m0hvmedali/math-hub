@@ -8,12 +8,14 @@ import CourseCard from '../components/CourseCard';
 
 const SubjectPage: React.FC = () => {
     const { subjectId } = useParams<{ subjectId: string }>();
-    const { getSubject, addBranchToSubject, language, user } = useContext(AppContext);
+    const { getSubject, addBranchToSubject, addLessonToBranch, language, user } = useContext(AppContext) as any;
     const navigate = useNavigate();
 
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [newBranchName, setNewBranchName] = useState('');
     const [activeTab, setActiveTab] = useState<'content' | 'about'>('content');
+    const [addLessonBranchId, setAddLessonBranchId] = useState<string | null>(null);
+    const [newLessonName, setNewLessonName] = useState('');
 
     const subject = getSubject(subjectId!);
 
@@ -33,6 +35,15 @@ const SubjectPage: React.FC = () => {
             setNewBranchName('');
             setIsSidebarOpen(false);
         }
+    };
+
+    const handleAddLesson = async () => {
+        if (!newLessonName.trim() || !addLessonBranchId || !isOwner) return;
+        if (addLessonToBranch) {
+            await addLessonToBranch(subject.id, addLessonBranchId, newLessonName.trim());
+        }
+        setNewLessonName('');
+        setAddLessonBranchId(null);
     };
 
     return (
@@ -126,10 +137,41 @@ const SubjectPage: React.FC = () => {
 
                         {subject.branches?.map((branch, index) => (
                             <section key={branch.id} className="w-full">
-                                <div className="flex items-center justify-between mb-6">
+                                <div className="flex items-center justify-between mb-6 gap-4">
                                     <h2 className="text-2xl md:text-3xl font-bold text-white flex items-center gap-3">
                                         <span className="text-gray-500 text-xl font-medium">{index + 1}.</span> {branch.name}
                                     </h2>
+                                    {isOwner && (
+                                        <div className="flex items-center gap-2 shrink-0">
+                                            {addLessonBranchId === branch.id ? (
+                                                <div className="flex items-center gap-2">
+                                                    <input
+                                                        autoFocus
+                                                        type="text"
+                                                        value={newLessonName}
+                                                        onChange={e => setNewLessonName(e.target.value)}
+                                                        onKeyDown={e => e.key === 'Enter' && handleAddLesson()}
+                                                        placeholder={language === 'ar' ? 'اسم الدرس...' : 'Lesson name...'}
+                                                        className="bg-black border border-brand-cyan/40 text-white text-sm px-3 py-1.5 rounded-lg focus:outline-none focus:border-brand-cyan w-44"
+                                                    />
+                                                    <button onClick={handleAddLesson} className="text-xs font-black text-brand-cyan hover:text-white transition-colors px-2 py-1.5 bg-brand-cyan/20 rounded-lg border border-brand-cyan/30">
+                                                        {language === 'ar' ? 'حفظ' : 'Save'}
+                                                    </button>
+                                                    <button onClick={() => { setAddLessonBranchId(null); setNewLessonName(''); }} className="text-xs text-gray-500 hover:text-white transition-colors">
+                                                        ✕
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <button
+                                                    onClick={() => setAddLessonBranchId(branch.id)}
+                                                    className="flex items-center gap-1.5 text-xs font-bold text-brand-cyan hover:text-white bg-brand-cyan/10 hover:bg-brand-cyan/20 border border-brand-cyan/20 px-3 py-1.5 rounded-lg transition-all"
+                                                >
+                                                    <PlusIcon className="w-3.5 h-3.5" />
+                                                    {language === 'ar' ? '+ درس' : '+ Lesson'}
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
 
                                 {branch.lessons && branch.lessons.length > 0 ? (
@@ -161,6 +203,18 @@ const SubjectPage: React.FC = () => {
                         {(!subject.branches || subject.branches.length === 0) && (
                             <div className="py-24 text-center">
                                 <p className="text-gray-500 text-xl font-bold">{language === 'ar' ? 'المحتوى قريباً...' : 'Content Coming Soon...'}</p>
+                            </div>
+                        )}
+
+                        {isOwner && (
+                            <div className="py-8 flex justify-center">
+                                <button
+                                    onClick={() => setIsSidebarOpen(true)}
+                                    className="flex items-center gap-2 px-6 py-3 border border-dashed border-brand-purple/40 text-brand-purple hover:border-brand-purple hover:bg-brand-purple/10 rounded-xl font-bold text-sm transition-all"
+                                >
+                                    <PlusIcon className="w-4 h-4" />
+                                    {language === 'ar' ? '+ إضافة فصل جديد' : '+ Add New Chapter'}
+                                </button>
                             </div>
                         )}
                     </div>

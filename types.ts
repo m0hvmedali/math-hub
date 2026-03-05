@@ -1,6 +1,6 @@
 
 
-export type ContentType = 'markdown' | 'image' | 'audio' | 'video' | 'pdf' | 'google-drive' | 'whiteboard' | 'notebooklm' | 'flashcard' | 'quiz' | 'link' | 'podcast' | 'html-code' | 'raw-html' | 'timetable' | 'carousel';
+export type ContentType = 'markdown' | 'image' | 'audio' | 'video' | 'pdf' | 'google-drive' | 'whiteboard' | 'notebooklm' | 'flashcard' | 'quiz' | 'link' | 'podcast' | 'html-code' | 'raw-html' | 'timetable' | 'carousel' | 'google-docs' | 'google-slides' | 'google-sites';
 
 export interface ContentBlock {
   id: string;
@@ -22,6 +22,7 @@ export interface ContentBlock {
   timetableData?: any; // For timetable type
   images?: string[]; // For carousel type
   title?: string; // For carousel type
+  whiteboardData?: string; // For whiteboard type (Excalidraw JSON)
 
   // Intelligent Flashcard Stats (Spaced Repetition)
   flashcardStats?: {

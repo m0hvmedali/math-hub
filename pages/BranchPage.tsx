@@ -4,6 +4,9 @@ import { AppContext } from '../App';
 import { ContentBlock, Lesson } from '../types';
 import ContentModal from '../components/ContentModal';
 import FlashcardViewer from '../components/FlashcardViewer';
+import WorkspaceEmbed from '../components/WorkspaceEmbed';
+import WhiteboardBlock from '../components/WhiteboardBlock';
+import GeminiChatWidget from '../components/GeminiChatWidget';
 
 import HTMLCodeViewer from '../components/HTMLCodeViewer';
 import CodeRunner from '../components/CodeRunner';
@@ -162,6 +165,9 @@ const ContentRenderer: React.FC<{
         'audio': { icon: '🎧', label: 'Audio', color: '#a78bfa' },
         'pdf': { icon: '📄', label: 'PDF', color: '#fb923c' },
         'google-drive': { icon: '☁️', label: 'Drive', color: '#22d3ee' },
+        'google-docs': { icon: '📝', label: 'Google Docs', color: '#4285F4' },
+        'google-slides': { icon: '📊', label: 'Google Slides', color: '#F4B400' },
+        'google-sites': { icon: '🌐', label: 'Google Sites', color: '#0F9D58' },
         'whiteboard': { icon: '✏️', label: 'Whiteboard', color: '#fbbf24' },
         'notebooklm': { icon: '🧠', label: 'NotebookLM', color: '#c084fc' },
         'quiz': { icon: '❓', label: 'Quiz', color: '#fb7185' },
@@ -319,6 +325,28 @@ const ContentRenderer: React.FC<{
                     </div>
                 )}
 
+                {(block.type === 'google-docs' || block.type === 'google-slides' || block.type === 'google-sites' || block.type === 'google-drive') && (
+                    <WorkspaceEmbed
+                        url={block.content}
+                        title={block.title || block.fileName}
+                        type={block.type === 'google-drive' ? 'google-drive' : block.type as any}
+                    />
+                )}
+
+                {block.type === 'whiteboard' && (
+                    <div className="-m-6">
+                        <WhiteboardBlock
+                            savedData={block.whiteboardData}
+                            readOnly={readOnly}
+                            title={block.title || block.fileName || 'Whiteboard'}
+                            onSave={readOnly ? undefined : async (data) => {
+                                // Caller handles save via onDelete prop pattern; we use a custom event
+                                (block as any).__pendingWhiteboardSave = data;
+                            }}
+                        />
+                    </div>
+                )}
+
                 {block.type === 'html-code' && (
                     <HTMLCodeViewer
                         html={block.htmlContent || block.content}
@@ -351,6 +379,7 @@ const BranchPage: React.FC = () => {
     const [activeLesson, setActiveLesson] = useState<Lesson | undefined>(undefined);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isConfigOpen, setIsConfigOpen] = useState(false);
+    const [isGeminiOpen, setIsGeminiOpen] = useState(false);
 
     // Focus Mode State (Always Active in OTT)
     const [focusedBlockIndex, setFocusedBlockIndex] = useState<number>(0);
@@ -478,6 +507,13 @@ const BranchPage: React.FC = () => {
                 </button>
 
                 <div className="flex items-center gap-4">
+                    {/* Gemini AI Chat Button — always visible */}
+                    <button
+                        onClick={() => setIsGeminiOpen(prev => !prev)}
+                        className="bg-gradient-to-r from-brand-purple/30 to-brand-cyan/20 hover:from-brand-purple/50 hover:to-brand-cyan/40 text-white px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest transition-all border border-brand-purple/30 flex items-center gap-2"
+                    >
+                        🤖 {language === 'ar' ? 'اسأل المساعد' : 'Ask AI'}
+                    </button>
                     {isOwner && (
                         <>
                             <button
@@ -690,6 +726,16 @@ const BranchPage: React.FC = () => {
                             setFocusedBlockIndex(updated.content.length - 1);
                         }
                     }}
+                />
+            )}
+
+            {/* Gemini AI Chat Widget */}
+            {isGeminiOpen && (
+                <GeminiChatWidget
+                    onClose={() => setIsGeminiOpen(false)}
+                    subjectName={subject?.name}
+                    branchName={branch?.name}
+                    lessonName={activeLesson?.name}
                 />
             )}
         </div>
