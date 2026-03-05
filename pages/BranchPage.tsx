@@ -247,7 +247,7 @@ const ContentRenderer: React.FC<{
                 )}
 
                 {block.type === 'google-drive' && (
-                    <div className="aspect-[4/3] rounded-xl overflow-hidden bg-gray-900">
+                    <div className="w-full h-[600px] md:h-[800px] rounded-xl overflow-hidden bg-gray-900">
                         <iframe src={block.content} className="w-full h-full border-0" loading="lazy" allowFullScreen={true} allow="fullscreen"></iframe>
                     </div>
                 )}
@@ -259,7 +259,7 @@ const ContentRenderer: React.FC<{
                 )}
 
                 {block.type === 'pdf' && (
-                    <div className="h-[700px] rounded-xl overflow-hidden">
+                    <div className="w-full h-[700px] md:h-[1000px] rounded-xl overflow-hidden">
                         <iframe src={block.content} className="w-full h-full" loading="lazy" allowFullScreen={true} allow="fullscreen"></iframe>
                     </div>
                 )}
@@ -499,12 +499,12 @@ const BranchPage: React.FC = () => {
             </div>
 
             {/* OTT Layout Container */}
-            <div className="flex flex-col lg:flex-row w-full h-screen pt-20 pb-0">
+            <div className="flex flex-col lg:flex-row w-full min-h-screen pt-20 pb-0">
 
                 {/* Main Player Area (Left) */}
-                <div className="flex-1 lg:w-3/4 relative flex flex-col items-center justify-center p-4">
+                <div className="flex-1 lg:w-3/4 relative flex flex-col items-center p-4 lg:p-8">
                     {activeLesson.content && activeLesson.content.length > 0 && focusedBlock ? (
-                        <div className="w-full max-w-[1200px] aspect-video w-full h-full max-h-[85vh] rounded-xl overflow-hidden shadow-glow-brand bg-[#050505] flex items-center justify-center border border-white/5 relative">
+                        <div className="w-full max-w-[1400px] rounded-2xl overflow-hidden shadow-glow-brand bg-[#050505] flex flex-col border border-white/5 relative">
                             <ContentRenderer
                                 key={focusedBlock.id}
                                 block={focusedBlock}
@@ -534,7 +534,7 @@ const BranchPage: React.FC = () => {
                 </div>
 
                 {/* Playlist / Assets Area (Right Side Toolbar) */}
-                <div className="w-full lg:w-1/4 h-full bg-[#111] border-l border-white/10 flex flex-col overflow-hidden">
+                <div className="w-full lg:w-1/4 bg-[#111] border-l border-white/10 flex flex-col lg:sticky lg:top-20 lg:h-[calc(100vh-80px)]">
                     {/* Context Header */}
                     <div className="p-6 border-b border-white/10 shrink-0 bg-gradient-to-b from-brand-dark to-[#111]">
                         <h2 className="text-2xl font-black text-white leading-tight mb-2">{activeLesson.name}</h2>
@@ -673,6 +673,25 @@ const BranchPage: React.FC = () => {
             )}
 
             <ErrorTaxonomyModal isOpen={isTaxonomyModalOpen} onClose={() => setIsTaxonomyModalOpen(false)} onSelect={handleSelectErrorCause} language={language} />
+
+            {isSidebarOpen && (
+                <ContentModal
+                    isOpen={isSidebarOpen}
+                    onClose={() => setIsSidebarOpen(false)}
+                    onSave={async (newContent) => {
+                        if (isOwner && subject && branch && activeLesson) {
+                            const newBlocks: ContentBlock[] = Array.isArray(newContent)
+                                ? newContent.map(c => ({ ...c as any, id: crypto.randomUUID() }))
+                                : [{ ...newContent as any, id: crypto.randomUUID() }];
+
+                            const updated = { ...activeLesson, content: [...(activeLesson.content || []), ...newBlocks] };
+                            await updateLesson(subject.id, branch.id, updated);
+                            setIsSidebarOpen(false);
+                            setFocusedBlockIndex(updated.content.length - 1);
+                        }
+                    }}
+                />
+            )}
         </div>
     );
 };
