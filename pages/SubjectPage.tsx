@@ -5,6 +5,7 @@ import { ArrowLeftIcon, PlusIcon, BookOpenIcon, ClockIcon } from '../components/
 import { supabase } from '../supabaseClient';
 import Sidebar from '../components/Sidebar';
 import CourseCard from '../components/CourseCard';
+import { detectMagicLink } from '../utils/detectMagicLink';
 
 const SubjectPage: React.FC = () => {
     const { subjectId } = useParams<{ subjectId: string }>();
@@ -16,6 +17,7 @@ const SubjectPage: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'content' | 'about'>('content');
     const [addLessonBranchId, setAddLessonBranchId] = useState<string | null>(null);
     const [newLessonName, setNewLessonName] = useState('');
+    const [magicUrl, setMagicUrl] = useState('');
 
     const subject = getSubject(subjectId!);
 
@@ -44,6 +46,24 @@ const SubjectPage: React.FC = () => {
         }
         setNewLessonName('');
         setAddLessonBranchId(null);
+    };
+
+    const handleMagicAdd = async (branchId: string, url: string) => {
+        if (!url.trim() || !isOwner) return;
+        const result = detectMagicLink(url.trim());
+        if (result && addLessonToBranch) {
+            // Create a new lesson with a single content block based on the result
+            const newContentBlock = {
+                id: crypto.randomUUID(),
+                type: result.type,
+                content: result.content,
+                url: result.content,
+                fileName: result.title,
+                color: result.color
+            };
+            await addLessonToBranch(subject.id, branchId, result.title, [newContentBlock]);
+            setMagicUrl('');
+        }
     };
 
     return (
@@ -142,7 +162,20 @@ const SubjectPage: React.FC = () => {
                                         <span className="text-gray-500 text-xl font-medium">{index + 1}.</span> {branch.name}
                                     </h2>
                                     {isOwner && (
-                                        <div className="flex items-center gap-2 shrink-0">
+                                        <div className="flex items-center gap-4 shrink-0">
+                                            {/* Magic Add Input */}
+                                            <div className="hidden md:flex items-center relative group">
+                                                <input
+                                                    type="url"
+                                                    value={addLessonBranchId === branch.id ? '' : magicUrl}
+                                                    onChange={(e) => setMagicUrl(e.target.value)}
+                                                    onKeyDown={(e) => e.key === 'Enter' && handleMagicAdd(branch.id, magicUrl)}
+                                                    placeholder={language === 'ar' ? 'الصق رابط سحري...' : 'Paste Magic Link...'}
+                                                    className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-brand-purple/50 w-48 transition-all group-hover:w-64 placeholder:text-gray-600"
+                                                />
+                                                <div className="absolute right-2 text-[10px] text-gray-500 pointer-events-none group-hover:opacity-0 transition-opacity">✨</div>
+                                            </div>
+
                                             {addLessonBranchId === branch.id ? (
                                                 <div className="flex items-center gap-2">
                                                     <input

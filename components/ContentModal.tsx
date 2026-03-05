@@ -5,6 +5,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { supabase } from '../supabaseClient';
 import { getAiResponse } from '../utils/aiHelper';
+import { detectMagicLink, MagicLinkResult } from '../utils/detectMagicLink';
 
 
 interface ContentModalProps {
@@ -35,7 +36,8 @@ const getYoutubeEmbedUrl = (url: string): string | null => {
 };
 
 const ContentModal: React.FC<ContentModalProps> = ({ isOpen, onClose, onSave }) => {
-    const [contentType, setContentType] = useState<ContentType>('markdown');
+    const [contentType, setContentType] = useState<ContentType | 'magic'>('magic');
+    const [magicLinkResult, setMagicLinkResult] = useState<MagicLinkResult | null>(null);
     const [markdown, setMarkdown] = useState('');
     const [whiteboardText, setWhiteboardText] = useState('');
     const [notebooklmText, setNotebooklmText] = useState('');
@@ -116,11 +118,28 @@ const ContentModal: React.FC<ContentModalProps> = ({ isOpen, onClose, onSave }) 
         }
     };
 
+    React.useEffect(() => {
+        if (contentType === 'magic' && linkUrl.trim()) {
+            const detected = detectMagicLink(linkUrl.trim());
+            setMagicLinkResult(detected);
+        } else {
+            setMagicLinkResult(null);
+        }
+    }, [linkUrl, contentType]);
+
     const handleSave = async () => {
         const finalColor = customColorHex || (selectedColor !== 'bg-cinematic-card' ? selectedColor : undefined);
         const fileName = resourceTitle.trim() || undefined;
 
-        if (contentType === 'markdown') {
+        if (contentType === 'magic' && magicLinkResult) {
+            onSave({
+                type: magicLinkResult.type,
+                content: magicLinkResult.content,
+                url: magicLinkResult.content,
+                fileName: resourceTitle.trim() || magicLinkResult.title,
+                color: magicLinkResult.color
+            });
+        } else if (contentType === 'markdown') {
             if (markdown.trim()) onSave({ type: 'markdown', content: markdown, color: selectedColor, customColor: customColorHex || undefined, fileName });
         } else if (contentType === 'whiteboard') {
             if (whiteboardText.trim()) onSave({ type: 'whiteboard', content: whiteboardText, title: resourceTitle.trim() || undefined, fileName: resourceTitle.trim() || undefined });
@@ -390,6 +409,57 @@ const ContentModal: React.FC<ContentModalProps> = ({ isOpen, onClose, onSave }) 
 
     const renderContentInput = () => {
         switch (contentType) {
+            case 'magic':
+                return (
+                    <div className="flex-1 flex flex-col items-center justify-center p-8 space-y-8 animate-fade-in">
+                        <div className="text-center space-y-4 max-w-lg">
+                            <div className="relative inline-block">
+                                <div className="absolute -inset-4 bg-brand-purple/20 rounded-full blur-2xl animate-pulse" />
+                                <div className="relative w-20 h-20 bg-gradient-to-br from-brand-purple/20 to-brand-cyan/20 rounded-3xl flex items-center justify-center text-4xl shadow-glow-brand border border-white/10">
+                                    {magicLinkResult?.icon || '✨'}
+                                </div>
+                            </div>
+                            <h3 className="text-2xl font-black text-white tracking-tight">Magic Embed</h3>
+                            <p className="text-gray-400 text-sm leading-relaxed">
+                                Paste any link (Google Docs, Slides, YouTube, PDF, etc.) and we'll automatically frame it perfectly for your lesson.
+                            </p>
+                        </div>
+
+                        <div className="w-full max-w-xl relative group">
+                            <input
+                                autoFocus
+                                type="url"
+                                value={linkUrl}
+                                onChange={(e) => setLinkUrl(e.target.value)}
+                                placeholder="Paste your link here..."
+                                className="w-full bg-black/40 border-2 border-white/5 rounded-2xl px-6 py-5 text-white text-lg focus:outline-none focus:border-brand-purple/50 transition-all placeholder:text-gray-700 shadow-2xl"
+                                dir="ltr"
+                            />
+                            <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                                {linkUrl && (
+                                    <button onClick={() => setLinkUrl('')} className="p-2 hover:bg-white/5 rounded-lg text-gray-500 hover:text-white transition-colors">
+                                        <XIcon className="w-5 h-5" />
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+
+                        {magicLinkResult && (
+                            <div className="w-full max-w-md bg-white/5 border border-white/10 rounded-2xl p-6 flex items-center gap-6 animate-scale-in">
+                                <div className="w-14 h-14 rounded-xl flex items-center justify-center text-2xl" style={{ backgroundColor: magicLinkResult.color + '20', border: `1px solid ${magicLinkResult.color}40` }}>
+                                    {magicLinkResult.icon}
+                                </div>
+                                <div className="flex-1">
+                                    <p className="text-xs font-bold uppercase tracking-widest opacity-50 mb-1" style={{ color: magicLinkResult.color }}>Detected Type</p>
+                                    <p className="text-white font-bold">{magicLinkResult.title}</p>
+                                </div>
+                                <div className="text-brand-cyan animate-pulse">
+                                    <CheckCircleIcon className="w-6 h-6" />
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                );
             case 'markdown':
                 return (
                     <div className="h-[60vh] flex flex-col">
@@ -781,6 +851,7 @@ const ContentModal: React.FC<ContentModalProps> = ({ isOpen, onClose, onSave }) 
     };
 
     const contentTypeOptions = [
+        { type: 'magic' as const, icon: '✨', label: 'Magic' },
         { type: 'markdown' as ContentType, icon: <MarkdownIcon className="w-5 h-5" />, label: 'Note' },
         { type: 'flashcard' as ContentType, icon: <FlashcardIcon className="w-5 h-5" />, label: 'Flashcard' },
         { type: 'carousel' as ContentType, icon: '🎞️', label: 'Carousel' },
@@ -857,3 +928,5 @@ const ContentModal: React.FC<ContentModalProps> = ({ isOpen, onClose, onSave }) 
         </div>
     );
 };
+
+export default ContentModal;
