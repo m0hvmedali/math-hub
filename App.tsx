@@ -20,6 +20,8 @@ import GuidePage from './pages/GuidePage';
 import DynamoLab from './pages/DynamoLab';
 import AlkanesLab from './pages/AlkanesLab';
 import LabsPage from './pages/LabsPage';
+import ExplainLessonPage from './pages/ExplainLessonPage';
+import SettingsPage from './pages/SettingsPage';
 import { useCosmicStore } from './store/useCosmicStore';
 import { supabase, isSupabaseConfigured } from './supabaseClient';
 import { rebuildSearchIndex, searchRadar, SearchResult, fetchDuckDuckGoResults } from './utils/searchRadar';
@@ -614,6 +616,8 @@ const App: React.FC = () => {
                         <Route path="/labs" element={<ProtectedRoute><LabsPage /></ProtectedRoute>} />
                         <Route path="/labs/function" element={<ProtectedRoute><DynamoLab /></ProtectedRoute>} />
                         <Route path="/labs/alkanes" element={<ProtectedRoute><AlkanesLab /></ProtectedRoute>} />
+                        <Route path="/explain" element={<ProtectedRoute><ExplainLessonPage /></ProtectedRoute>} />
+                        <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
                         <Route path="*" element={<Navigate to={user ? "/" : "/login"} />} />
                     </Routes>
                 </main>
