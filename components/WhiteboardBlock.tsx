@@ -129,11 +129,14 @@ const WhiteboardBlock: React.FC<WhiteboardBlockProps> = ({ savedData, readOnly, 
                     initialData={initialData}
                     viewModeEnabled={readOnly}
                     theme="dark"
+                    langCode="ar-SA"
                     UIOptions={{
                         canvasActions: {
                             saveToActiveFile: false,
                             saveAsImage: false,
                             loadScene: false,
+                            export: false,
+                            toggleTheme: false,
                         },
                     }}
                 />
