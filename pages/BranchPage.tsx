@@ -499,12 +499,12 @@ const BranchPage: React.FC = () => {
             </div>
 
             {/* OTT Layout Container */}
-            <div className="flex flex-col lg:flex-row w-full min-h-screen pt-20 pb-0">
+            <div className="flex flex-col lg:flex-row w-full min-h-screen pt-20">
 
-                {/* Main Player Area (Left) */}
-                <div className="flex-1 lg:w-3/4 relative flex flex-col items-center p-4 lg:p-8">
+                {/* Main Player Area (Left) - scrollable */}
+                <div className="flex-1 lg:w-3/4 overflow-y-auto p-4 lg:p-8 pb-24">
                     {activeLesson.content && activeLesson.content.length > 0 && focusedBlock ? (
-                        <div className="w-full max-w-[1400px] rounded-2xl overflow-hidden shadow-glow-brand bg-[#050505] flex flex-col border border-white/5 relative">
+                        <div className="w-full rounded-2xl bg-[#050505] flex flex-col border border-white/5 relative">
                             <ContentRenderer
                                 key={focusedBlock.id}
                                 block={focusedBlock}
@@ -534,7 +534,7 @@ const BranchPage: React.FC = () => {
                 </div>
 
                 {/* Playlist / Assets Area (Right Side Toolbar) */}
-                <div className="w-full lg:w-1/4 bg-[#111] border-l border-white/10 flex flex-col lg:sticky lg:top-20 lg:h-[calc(100vh-80px)]">
+                <div className="w-full lg:w-1/4 bg-[#111] border-l border-white/10 flex flex-col lg:sticky lg:top-[80px] lg:h-[calc(100vh-80px)] overflow-hidden">
                     {/* Context Header */}
                     <div className="p-6 border-b border-white/10 shrink-0 bg-gradient-to-b from-brand-dark to-[#111]">
                         <h2 className="text-2xl font-black text-white leading-tight mb-2">{activeLesson.name}</h2>
