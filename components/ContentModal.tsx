@@ -894,6 +894,7 @@ const ContentModal: React.FC<ContentModalProps> = ({ isOpen, onClose, onSave }) 
         { type: 'image' as ContentType, icon: <ImageIcon className="w-5 h-5" />, label: 'Image' },
         { type: 'pdf' as ContentType, icon: <PdfIcon className="w-5 h-5" />, label: 'PDF' },
         { type: 'whiteboard' as ContentType, icon: <WhiteboardIcon className="w-5 h-5" />, label: 'Draw' },
+        { type: 'rich-text' as ContentType, icon: <MarkdownIcon className="w-5 h-5" />, label: 'Document' },
     ];
 
     return (
