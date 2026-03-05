@@ -7,6 +7,7 @@ import { supabase } from '../supabaseClient';
 import { getAiResponse } from '../utils/aiHelper';
 import { detectMagicLink, MagicLinkResult } from '../utils/detectMagicLink';
 import RichTextEditor from './RichTextEditor';
+import WhiteboardBlock from './WhiteboardBlock';
 
 
 interface ContentModalProps {
@@ -851,12 +852,13 @@ const ContentModal: React.FC<ContentModalProps> = ({ isOpen, onClose, onSave }) 
                 );
             case 'whiteboard':
                 return (
-                    <div className="h-[60vh] flex flex-col items-center justify-center border-2 border-dashed border-gray-600 rounded-lg p-8 text-center bg-brand-cyan/5">
-                        <WhiteboardIcon className="w-16 h-16 text-brand-cyan mb-4 animate-pulse" />
-                        <h3 className="text-xl font-bold text-white mb-2">Interactive Whiteboard</h3>
-                        <p className="text-sm text-gray-400 max-w-sm mb-6">Create a dynamic drawing board where you can sketch, explain, and visualize concepts.</p>
-                        <div className="bg-brand-cyan/20 px-6 py-3 rounded-xl border border-brand-cyan/30 text-brand-cyan font-bold text-xs uppercase tracking-widest">
-                            Ready to Initialize
+                    <div className="h-[60vh] flex flex-col gap-4">
+                        <div className="flex-1 overflow-hidden">
+                            <WhiteboardBlock
+                                savedData={whiteboardText}
+                                onSave={(data) => setWhiteboardText(data)}
+                                title={resourceTitle || 'New Whiteboard'}
+                            />
                         </div>
                     </div>
                 );
