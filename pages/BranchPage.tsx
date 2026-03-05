@@ -119,7 +119,8 @@ const ContentRenderer: React.FC<{
     onSaveProgress?: (state: any) => void;
     isFocused?: boolean;
     subjectId?: string;
-}> = ({ block, onDelete, readOnly, flashcardIndex = 0, onOpenFlashcard, lessonId, onQuizFail, savedState, onSaveProgress, isFocused, subjectId }) => {
+    onSetHasChanges?: (val: boolean) => void;
+}> = ({ block, onDelete, readOnly, flashcardIndex = 0, onOpenFlashcard, lessonId, onQuizFail, savedState, onSaveProgress, isFocused, subjectId, onSetHasChanges }) => {
     const triggerRedPulse = useCosmicStore(state => state.triggerRedPulse);
     const [selectedOption, setSelectedOption] = useState<number | null>(savedState?.selectedOption ?? null);
     const [isCorrect, setIsCorrect] = useState<boolean | null>(savedState?.isCorrect ?? null);
@@ -331,6 +332,7 @@ const ContentRenderer: React.FC<{
                             onSave={readOnly ? undefined : async (data) => {
                                 // Caller handles save via onDelete prop pattern; we use a custom event
                                 (block as any).__pendingWhiteboardSave = data;
+                                if (onSetHasChanges) onSetHasChanges(true);
                             }}
                         />
                     </div>
@@ -360,6 +362,7 @@ const ContentRenderer: React.FC<{
                         readOnly={readOnly}
                         onSave={readOnly ? undefined : (html) => {
                             (block as any).__pendingRichTextSave = html;
+                            if (onSetHasChanges) onSetHasChanges(true);
                         }}
                     />
                 )}
@@ -380,6 +383,7 @@ const BranchPage: React.FC = () => {
     const [isConfigOpen, setIsConfigOpen] = useState(false);
     const [isGeminiOpen, setIsGeminiOpen] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
+    const [hasChanges, setHasChanges] = useState(false);
 
     // Focus Mode State (Always Active in OTT)
     const [focusedBlockIndex, setFocusedBlockIndex] = useState<number>(0);
@@ -525,6 +529,7 @@ const BranchPage: React.FC = () => {
             const updatedLesson = { ...activeLesson, content: updatedContent };
             setActiveLesson(updatedLesson);
             await updateLesson(subject.id, branch.id, updatedLesson);
+            setHasChanges(false);
 
             // Show a success state briefly if needed, but for now just clear saving
             setTimeout(() => setIsSaving(false), 1000);
@@ -567,7 +572,9 @@ const BranchPage: React.FC = () => {
                                 onClick={handleSaveLessonEdits}
                                 disabled={isSaving}
                                 className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest transition-all border flex items-center gap-2 ${isSaving
-                                        ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                                    ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+                                    : hasChanges
+                                        ? 'bg-brand-purple text-white border-brand-purple shadow-glow-brand animate-pulse-purple'
                                         : 'bg-brand-purple/20 hover:bg-brand-purple/40 text-brand-purple border-brand-purple/30 shadow-glow-brand'
                                     }`}
                             >
@@ -614,6 +621,7 @@ const BranchPage: React.FC = () => {
                                 onSaveProgress={(state) => saveProgress(activeLesson.id, focusedBlock.id, state)}
                                 isFocused={true}
                                 subjectId={subjectId}
+                                onSetHasChanges={setHasChanges}
                             />
                         </div>
                     ) : (

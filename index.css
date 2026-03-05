@@ -236,6 +236,28 @@ body {
   animation: pulse-red 2s infinite;
 }
 
+@keyframes pulse-purple {
+  0% {
+    box-shadow: 0 0 0 0 rgba(138, 63, 252, 0.4);
+  }
+
+  70% {
+    box-shadow: 0 0 0 20px rgba(138, 63, 252, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(138, 63, 252, 0);
+  }
+}
+
+.animate-pulse-purple {
+  animation: pulse-purple 2s infinite;
+}
+
+.shadow-glow-brand {
+  box-shadow: 0 0 20px rgba(138, 63, 252, 0.4);
+}
+
 @keyframes fade-in {
   from {
     opacity: 0;

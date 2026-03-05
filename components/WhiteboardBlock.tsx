@@ -17,6 +17,9 @@ const WhiteboardBlock: React.FC<WhiteboardBlockProps> = ({ savedData, readOnly, 
     const [initialData, setInitialData] = useState<any>(null);
     const [error, setError] = useState<string | null>(null);
     const [isFullscreen, setIsFullscreen] = useState(false);
+    const [gridMode, setGridMode] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
+    const excalidrawRef = useRef<any>(null);
 
     // Dynamic scale and style overrides for Excalidraw
     useEffect(() => {
@@ -95,6 +98,13 @@ const WhiteboardBlock: React.FC<WhiteboardBlockProps> = ({ savedData, readOnly, 
         }
     }, [title]);
 
+    const handleClear = useCallback(() => {
+        if (!excalidrawRef.current) return;
+        if (window.confirm(title === 'ar' ? 'هل تريد مسح السبورة بالكامل؟' : 'Clear entire whiteboard?')) {
+            excalidrawRef.current.updateScene({ elements: [] });
+        }
+    }, [title]);
+
     if (error) {
         return (
             <div className="p-8 text-center text-yellow-400 bg-yellow-500/10 rounded-xl border border-yellow-500/20">
@@ -131,6 +141,21 @@ const WhiteboardBlock: React.FC<WhiteboardBlockProps> = ({ savedData, readOnly, 
                 </div>
                 <div className="flex items-center gap-2">
                     <button
+                        onClick={() => setGridMode(!gridMode)}
+                        className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-colors flex items-center gap-1 ${gridMode ? 'bg-brand-cyan/20 text-brand-cyan border border-brand-cyan/30' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}
+                        title={gridMode ? 'Disable Grid' : 'Enable Grid'}
+                    >
+                        #️⃣ {gridMode ? 'الشبكة' : 'سادة'}
+                    </button>
+                    {!readOnly && (
+                        <button
+                            onClick={handleClear}
+                            className="px-3 py-1.5 text-xs font-bold bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-lg transition-colors flex items-center gap-1 border border-red-500/20"
+                        >
+                            🗑️ مسح
+                        </button>
+                    )}
+                    <button
                         onClick={() => setIsFullscreen(!isFullscreen)}
                         className="px-3 py-1.5 text-xs font-bold bg-white/5 hover:bg-white/10 text-brand-cyan rounded-lg transition-colors flex items-center gap-1"
                     >
@@ -162,6 +187,7 @@ const WhiteboardBlock: React.FC<WhiteboardBlockProps> = ({ savedData, readOnly, 
                     viewModeEnabled={readOnly}
                     theme="dark"
                     langCode="ar-SA"
+                    gridModeEnabled={gridMode}
                     UIOptions={{
                         canvasActions: {
                             saveToActiveFile: false,
