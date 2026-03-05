@@ -47,6 +47,7 @@ const ContentModal: React.FC<ContentModalProps> = ({ isOpen, onClose, onSave }) 
     // Shared styling state
     const [selectedColor, setSelectedColor] = useState('bg-cinematic-card');
     const [customColorHex, setCustomColorHex] = useState('');
+    const [resourceTitle, setResourceTitle] = useState('');
 
     // HTML Code State
     const [htmlCode, setHtmlCode] = useState('');
@@ -117,13 +118,14 @@ const ContentModal: React.FC<ContentModalProps> = ({ isOpen, onClose, onSave }) 
 
     const handleSave = async () => {
         const finalColor = customColorHex || (selectedColor !== 'bg-cinematic-card' ? selectedColor : undefined);
+        const fileName = resourceTitle.trim() || undefined;
 
         if (contentType === 'markdown') {
-            if (markdown.trim()) onSave({ type: 'markdown', content: markdown, color: selectedColor, customColor: customColorHex || undefined });
+            if (markdown.trim()) onSave({ type: 'markdown', content: markdown, color: selectedColor, customColor: customColorHex || undefined, fileName });
         } else if (contentType === 'whiteboard') {
-            if (whiteboardText.trim()) onSave({ type: 'whiteboard', content: whiteboardText });
+            if (whiteboardText.trim()) onSave({ type: 'whiteboard', content: whiteboardText, title: resourceTitle.trim() || undefined, fileName: resourceTitle.trim() || undefined });
         } else if (contentType === 'notebooklm') {
-            if (notebooklmText.trim()) onSave({ type: 'notebooklm', content: notebooklmText });
+            if (notebooklmText.trim()) onSave({ type: 'notebooklm', content: notebooklmText, fileName });
         } else if (contentType === 'flashcard') {
             if (isCsvMode) {
                 if (!csvText.trim()) {
@@ -168,7 +170,7 @@ const ContentModal: React.FC<ContentModalProps> = ({ isOpen, onClose, onSave }) 
                         content: '',
                         color: selectedColor,
                         customColor: customColorHex || undefined,
-                        fileName: 'Flashcard'
+                        fileName: resourceTitle.trim() || 'Flashcard'
                     });
                 }
             }
@@ -178,8 +180,8 @@ const ContentModal: React.FC<ContentModalProps> = ({ isOpen, onClose, onSave }) 
                     type: 'carousel',
                     content: '',
                     images: carouselImages,
-                    title: carouselTitle || 'Mission Gallery',
-                    fileName: carouselTitle || 'Image Carousel'
+                    title: resourceTitle.trim() || carouselTitle || 'Mission Gallery',
+                    fileName: resourceTitle.trim() || carouselTitle || 'Image Carousel'
                 });
             } else {
                 alert("Please upload at least one image for the carousel.");
@@ -187,7 +189,7 @@ const ContentModal: React.FC<ContentModalProps> = ({ isOpen, onClose, onSave }) 
             }
         } else if (contentType === 'link') {
             if (linkUrl.trim()) {
-                onSave({ type: 'link', content: linkUrl, url: linkUrl, fileName: 'Direct Link' });
+                onSave({ type: 'link', content: linkUrl, url: linkUrl, fileName: resourceTitle.trim() || 'Direct Link' });
             } else {
                 alert('Please enter a valid URL.');
                 return;
@@ -195,7 +197,7 @@ const ContentModal: React.FC<ContentModalProps> = ({ isOpen, onClose, onSave }) 
         } else if (contentType === 'podcast') {
             const embedUrl = getGoogleDriveEmbedUrl(linkUrl);
             if (embedUrl) {
-                onSave({ type: 'podcast', content: embedUrl, fileName: 'Podcast Audio' });
+                onSave({ type: 'podcast', content: embedUrl, fileName: resourceTitle.trim() || 'Podcast Audio' });
             } else {
                 alert('Invalid Google Drive URL for podcast.');
                 return;
@@ -208,7 +210,7 @@ const ContentModal: React.FC<ContentModalProps> = ({ isOpen, onClose, onSave }) 
                     htmlContent: htmlCode,
                     cssContent: cssCode,
                     jsContent: jsCode,
-                    fileName: 'Custom Code'
+                    fileName: resourceTitle.trim() || 'Custom Code'
                 });
             } else {
                 alert('Please enter some HTML code.');
@@ -220,7 +222,7 @@ const ContentModal: React.FC<ContentModalProps> = ({ isOpen, onClose, onSave }) 
                 onSave({
                     type: 'raw-html',
                     content: htmlCode,
-                    fileName: 'Genius Runner Code'
+                    fileName: resourceTitle.trim() || 'Genius Runner Code'
                 });
             } else {
                 alert('Please enter some code.');
@@ -229,7 +231,7 @@ const ContentModal: React.FC<ContentModalProps> = ({ isOpen, onClose, onSave }) 
         } else if (contentType === 'google-docs' || contentType === 'google-slides' || contentType === 'google-sites') {
             if (linkUrl.trim()) {
                 const labels: Record<string, string> = { 'google-docs': 'Google Document', 'google-slides': 'Google Slides', 'google-sites': 'Google Site' };
-                onSave({ type: contentType, content: linkUrl, fileName: labels[contentType] || contentType });
+                onSave({ type: contentType, content: linkUrl, fileName: resourceTitle.trim() || labels[contentType] || contentType });
             } else {
                 alert('Please enter a valid Google URL.');
                 return;
@@ -237,7 +239,7 @@ const ContentModal: React.FC<ContentModalProps> = ({ isOpen, onClose, onSave }) 
         } else if (contentType === 'google-drive') {
             const embedUrl = getGoogleDriveEmbedUrl(linkUrl);
             if (embedUrl) {
-                onSave({ type: 'google-drive', content: embedUrl, fileName: 'Google Drive File' });
+                onSave({ type: 'google-drive', content: embedUrl, fileName: resourceTitle.trim() || 'Google Drive File' });
             } else {
                 alert("Invalid Google Drive URL.");
                 return;
@@ -246,7 +248,7 @@ const ContentModal: React.FC<ContentModalProps> = ({ isOpen, onClose, onSave }) 
             // Check if it's YouTube
             const ytEmbed = getYoutubeEmbedUrl(linkUrl);
             if (ytEmbed) {
-                onSave({ type: 'video', content: ytEmbed, fileName: 'YouTube Video' });
+                onSave({ type: 'video', content: ytEmbed, fileName: resourceTitle.trim() || 'YouTube Video' });
             } else {
                 if (file) {
                     await uploadAndSaveFile();
@@ -272,7 +274,7 @@ const ContentModal: React.FC<ContentModalProps> = ({ isOpen, onClose, onSave }) 
                 question: quizQuestion,
                 options: quizOptions,
                 correctAnswer: quizCorrect,
-                fileName: 'Quiz Question'
+                fileName: resourceTitle.trim() || 'Quiz Question'
             });
 
         } else { // File types (Image, Audio, PDF)
@@ -292,7 +294,7 @@ const ContentModal: React.FC<ContentModalProps> = ({ isOpen, onClose, onSave }) 
                 return;
             }
             const { data } = supabase!.storage.from('lesson_files').getPublicUrl(filePath);
-            onSave({ type: contentType, content: data.publicUrl, fileName: file.name });
+            onSave({ type: contentType, content: data.publicUrl, fileName: resourceTitle.trim() || file.name });
             resetAndClose();
         }
     }
@@ -307,6 +309,7 @@ const ContentModal: React.FC<ContentModalProps> = ({ isOpen, onClose, onSave }) 
         setCsvText('');
         setCarouselImages([]);
         setCarouselTitle('');
+        setResourceTitle('');
         setQuizQuestion('');
         setQuizOptions(['', '', '', '']);
         setQuizCorrect(0);
@@ -318,6 +321,7 @@ const ContentModal: React.FC<ContentModalProps> = ({ isOpen, onClose, onSave }) 
         if (multiImageInputRef.current) multiImageInputRef.current.value = '';
         onClose();
     };
+
 
     const fileAcceptMap: any = {
         image: 'image/*',
@@ -798,38 +802,58 @@ const ContentModal: React.FC<ContentModalProps> = ({ isOpen, onClose, onSave }) 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-[60] p-4 backdrop-blur-sm">
             <div className="bg-cinematic-card border border-cinematic-border rounded-xl shadow-2xl w-full max-w-5xl max-h-[90vh] flex flex-col">
-                <header className="flex items-center justify-between p-4 border-b border-cinematic-border">
-                    <h2 className="text-xl font-bold text-white">Add Mission Intel</h2>
-                    <button onClick={resetAndClose} className="p-1 rounded-full hover:bg-gray-700 text-gray-400">
+                <div className="px-8 py-6 border-b border-white/10 flex items-center justify-between bg-gradient-to-r from-brand-dark to-transparent">
+                    <div>
+                        <h2 className="text-2xl font-black text-white uppercase tracking-tighter">Architect Terminal</h2>
+                        <p className="text-[10px] text-brand-cyan font-bold uppercase tracking-widest">Deploying Knowledge Assets</p>
+                    </div>
+                    <button onClick={resetAndClose} className="p-3 bg-white/5 hover:bg-white/10 text-white rounded-2xl transition-all">
                         <XIcon className="w-6 h-6" />
                     </button>
-                </header>
-                <div className="p-6 flex-1 overflow-y-auto">
-                    <div className="flex flex-wrap gap-2 mb-6 p-1 justify-center md:justify-start">
-                        {contentTypeOptions.map(({ type, icon, label }) => (
+                </div>
+
+                <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
+                    {/* Sidebar - Asset Types */}
+                    <div className="w-full md:w-64 bg-black/40 border-r border-white/5 overflow-y-auto p-4 flex md:flex-col gap-2 custom-scrollbar">
+                        {contentTypeOptions.map((opt) => (
                             <button
-                                key={type}
-                                onClick={() => setContentType(type)}
-                                className={`flex flex-col items-center justify-center space-y-1 px-4 py-3 text-xs font-bold rounded-xl transition-all border min-w-[80px] ${contentType === type ? 'bg-accent-blue/20 border-accent-blue text-white shadow-[0_0_10px_rgba(45,0,247,0.3)]' : 'border-transparent text-gray-500 hover:bg-gray-800 hover:text-white'
-                                    }`}
+                                key={opt.type}
+                                onClick={() => setContentType(opt.type)}
+                                className={`flex items-center gap-3 p-4 rounded-xl text-xs font-black uppercase tracking-widest transition-all text-left truncate min-w-[120px] md:min-w-0 ${contentType === opt.type ? 'bg-brand-cyan text-black shadow-glow-brand' : 'text-gray-500 hover:bg-white/5 hover:text-white'}`}
                             >
-                                {icon} <span>{label}</span>
+                                <span className="text-lg">{opt.icon}</span>
+                                <span className="hidden md:inline">{opt.label}</span>
                             </button>
                         ))}
                     </div>
-                    {renderContentInput()}
+
+                    {/* Main Editor Area */}
+                    <div className="flex-1 p-8 overflow-y-auto custom-scrollbar bg-black/20">
+                        {/* Global Resource Title Input */}
+                        <div className="mb-8 group">
+                            <label className="block text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-2 px-1 group-focus-within:text-brand-cyan transition-colors">
+                                Resource Title (Optional)
+                            </label>
+                            <input
+                                type="text"
+                                value={resourceTitle}
+                                onChange={(e) => setResourceTitle(e.target.value)}
+                                placeholder="Enter a descriptive name for this asset..."
+                                className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl text-white font-bold focus:border-brand-cyan focus:bg-white/10 outline-none transition-all placeholder:text-gray-700"
+                            />
+                        </div>
+
+                        {renderContentInput()}
+                    </div>
                 </div>
-                <footer className="flex justify-end p-4 border-t border-cinematic-border bg-cinematic-bg/50">
-                    <button onClick={resetAndClose} className="px-6 py-2 text-gray-400 rounded-lg hover:text-white mr-4 font-bold">
-                        Abort
+
+                <div className="px-8 py-6 border-t border-white/10 flex justify-between items-center bg-black/40">
+                    <button onClick={resetAndClose} className="px-6 py-2 text-gray-500 font-bold uppercase tracking-widest hover:text-white transition-colors">Cancel</button>
+                    <button onClick={handleSave} className="px-10 py-3 bg-white text-black rounded-2xl font-black uppercase tracking-widest hover:scale-105 transition-all shadow-xl">
+                        Deploy Asset
                     </button>
-                    <button onClick={handleSave} className="px-6 py-2 bg-accent-green text-black rounded-lg hover:bg-green-400 font-black uppercase tracking-wider">
-                        Save Intel
-                    </button>
-                </footer>
+                </div>
             </div>
         </div>
     );
 };
-
-export default ContentModal;

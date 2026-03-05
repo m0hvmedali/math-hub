@@ -487,6 +487,18 @@ const BranchPage: React.FC = () => {
         setFocusedBlockIndex(0); // reset index
     };
 
+    const handleRenameAsset = async (blockId: string, currentName: string) => {
+        if (!isOwner || !subject || !branch || !activeLesson) return;
+        const newName = window.prompt(language === 'ar' ? 'أدخل الاسم الجديد للمورد:' : 'Enter new name for the asset:', currentName);
+        if (newName === null || newName.trim() === '' || newName === currentName) return;
+
+        const updatedContent = activeLesson.content.map(b =>
+            b.id === blockId ? { ...b, fileName: newName.trim(), title: newName.trim() } : b
+        );
+        const updatedLesson = { ...activeLesson, content: updatedContent };
+        await updateLesson(subject.id, branch.id, updatedLesson);
+    };
+
     // --- RENDER ---
     if (!subject || !branch) return <div className="p-10 text-center text-gray-400 text-xl flex h-screen items-center justify-center">Loading Data...</div>;
 
@@ -600,27 +612,43 @@ const BranchPage: React.FC = () => {
                         {activeLesson.content?.map((block, idx) => {
                             if (block.type === 'flashcard') return null; // Handled separately
                             return (
-                                <button
-                                    key={block.id}
-                                    onClick={() => setFocusedBlockIndex(idx)}
-                                    className={`w-full text-left flex items-start gap-4 p-4 rounded-xl transition-all border ${focusedBlockIndex === idx
-                                        ? 'bg-brand-purple/20 border-brand-purple/50 shadow-glow-brand'
-                                        : 'bg-[#1a1a1a] border-white/5 hover:border-white/20 text-gray-400 hover:text-white hover:bg-[#222]'
-                                        }`}
-                                >
-                                    <span className="font-bold opacity-50 text-sm mt-0.5">{idx + 1}</span>
-                                    <div className="flex-1 min-w-0">
-                                        <div className={`font-bold text-sm truncate ${focusedBlockIndex === idx ? 'text-white' : ''}`}>
-                                            {block.title || block.fileName || block.type.toUpperCase()}
+                                <div key={block.id} className="relative group/item">
+                                    <button
+                                        onClick={() => setFocusedBlockIndex(idx)}
+                                        className={`w-full text-left flex items-start gap-4 p-4 rounded-xl transition-all border ${focusedBlockIndex === idx
+                                            ? 'bg-brand-purple/20 border-brand-purple/50 shadow-glow-brand'
+                                            : 'bg-[#1a1a1a] border-white/5 hover:border-white/20 text-gray-400 hover:text-white hover:bg-[#222]'
+                                            }`}
+                                    >
+                                        <span className="font-bold opacity-50 text-sm mt-0.5">{idx + 1}</span>
+                                        <div className="flex-1 min-w-0">
+                                            <div className={`font-bold text-sm truncate ${focusedBlockIndex === idx ? 'text-white' : ''}`}>
+                                                {block.title || block.fileName || block.type.toUpperCase()}
+                                            </div>
+                                            <div className="text-[10px] font-bold uppercase tracking-widest opacity-60 mt-1 flex items-center justify-between mt-2">
+                                                <span>{block.type}</span>
+                                                {progress?.data?.[block.id]?.isCorrect && <CheckCircleIcon className="w-3.5 h-3.5 text-brand-cyan" />}
+                                            </div>
                                         </div>
-                                        <div className="text-[10px] font-bold uppercase tracking-widest opacity-60 mt-1 flex items-center justify-between mt-2">
-                                            <span>{block.type}</span>
-                                            {progress?.data?.[block.id]?.isCorrect && <CheckCircleIcon className="w-3.5 h-3.5 text-brand-cyan" />}
-                                        </div>
-                                    </div>
-                                </button>
+                                    </button>
+                                    {isOwner && (
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleRenameAsset(block.id, block.title || block.fileName || block.type);
+                                            }}
+                                            className="absolute top-2 right-2 p-1.5 bg-white/5 hover:bg-white/10 text-white rounded-lg opacity-0 group-hover/item:opacity-100 transition-opacity"
+                                            title={language === 'ar' ? 'تعديل الاسم' : 'Rename'}
+                                        >
+                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                                            </svg>
+                                        </button>
+                                    )}
+                                </div>
                             );
                         })}
+
 
                         {flashcards.length > 0 && (
                             <button
