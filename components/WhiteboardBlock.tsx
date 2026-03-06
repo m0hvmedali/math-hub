@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import * as fabric from 'fabric';
-import type { Canvas as FabricCanvasType } from 'fabric';
-const { Canvas, Rect, Circle, Line, Triangle, PencilBrush, Image: FabricImage } = fabric;
+import { Canvas, Rect, Circle, Line, Triangle, PencilBrush, Image as FabricImage } from '../lib/fabric';
+import type { FabricCanvasType } from '../lib/fabric';
+
 
 import * as pdfjsLib from 'pdfjs-dist';
 
