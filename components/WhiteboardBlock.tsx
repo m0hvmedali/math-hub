@@ -104,11 +104,41 @@ const WhiteboardBlock: React.FC<WhiteboardBlockProps> = ({ savedData, onSave, on
         window.addEventListener('resize', updateSize);
         setTimeout(updateSize, 100);
 
+        // Autosave Logic - Listen for any canvas changes
+        const saveTimeout = { current: null as any };
+        const triggerAutosave = () => {
+            if (saveTimeout.current) clearTimeout(saveTimeout.current);
+            saveTimeout.current = setTimeout(() => {
+                // We use a custom event to trigger the save because handleSave is in a closure
+                const event = new CustomEvent('whiteboard:autosave');
+                window.dispatchEvent(event);
+            }, 5000); // 5 second debounce for cloud autosave to avoid rate limits
+        };
+
+        canvas.on('object:added', triggerAutosave);
+        canvas.on('object:modified', triggerAutosave);
+        canvas.on('object:removed', triggerAutosave);
+        canvas.on('path:created', triggerAutosave);
+
         return () => {
             window.removeEventListener('resize', updateSize);
+            canvas.off('object:added', triggerAutosave);
+            canvas.off('object:modified', triggerAutosave);
+            canvas.off('object:removed', triggerAutosave);
+            canvas.off('path:created', triggerAutosave);
             canvas.dispose();
+            if (saveTimeout.current) clearTimeout(saveTimeout.current);
         };
     }, []);
+
+    // Listen for the autosave event to trigger the handleSave callback
+    useEffect(() => {
+        const handleAutosaveEvent = () => {
+            handleSave();
+        };
+        window.addEventListener('whiteboard:autosave', handleAutosaveEvent);
+        return () => window.removeEventListener('whiteboard:autosave', handleAutosaveEvent);
+    }, [handleSave]);
 
     // Sync state tools when tool/color/width/type change
     useEffect(() => {
