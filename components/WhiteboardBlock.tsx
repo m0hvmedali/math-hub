@@ -1,3 +1,4 @@
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { Canvas, Rect, Circle, Line, Triangle, PencilBrush, Image as FabricImage } from '../lib/fabric';
 import type { FabricCanvasType } from '../lib/fabric';
 

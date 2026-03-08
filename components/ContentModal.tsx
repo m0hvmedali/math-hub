@@ -17,16 +17,16 @@ interface ContentModalProps {
 }
 
 const getGoogleDriveEmbedUrl = (url: string): string | null => {
-    // Standardize Drive Links to Preview Mode
+    // Standardize Drive Links to Viewer Mode
     const fileRegex = /drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/;
     const fileMatch = url.match(fileRegex);
     if (fileMatch && fileMatch[1]) {
-        return `https://drive.google.com/file/d/${fileMatch[1]}/preview`;
+        return `https://docs.google.com/viewer?srcid=${fileMatch[1]}&embedded=true`;
     }
     const docsRegex = /docs\.google\.com\/(document|spreadsheets|presentation)\/d\/([a-zA-Z0-9_-]+)/;
     const docsMatch = url.match(docsRegex);
     if (docsMatch && docsMatch[1] && docsMatch[2]) {
-        return `https://docs.google.com/${docsMatch[1]}/d/${docsMatch[2]}/preview`;
+        return `https://docs.google.com/viewer?srcid=${docsMatch[2]}&embedded=true`;
     }
     return null;
 };
