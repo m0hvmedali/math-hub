@@ -9,6 +9,9 @@ export const {
     Line,
     Triangle,
     PencilBrush,
+    SprayBrush,
+    CircleBrush,
+    PatternBrush,
     Image,
     ActiveSelection,
     util,
@@ -23,5 +26,8 @@ export type {
     Line as LineType,
     Triangle as TriangleType,
     PencilBrush as PencilBrushType,
+    SprayBrush as SprayBrushType,
+    CircleBrush as CircleBrushType,
+    PatternBrush as PatternBrushType,
     FabricImage as FabricImageType
 } from 'fabric';

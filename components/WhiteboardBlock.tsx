@@ -1,87 +1,103 @@
-import React, { useRef, useState, useEffect, useCallback } from 'react';
-import { Canvas, Rect, Circle, Line, Triangle, PencilBrush, Image as FabricImage } from '../lib/fabric';
-import type { FabricCanvasType } from '../lib/fabric';
-
-
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import {
+    Canvas,
+    PencilBrush,
+    SprayBrush,
+    CircleBrush,
+    PatternBrush,
+    Rect,
+    Circle,
+    Line,
+    Triangle,
+    Image as FabricImage,
+    ActiveSelection,
+    util,
+    Point
+} from '../lib/fabric';
 import * as pdfjsLib from 'pdfjs-dist';
 
-// Configure PDF.js worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+// Set worker src for pdf.js
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
 interface WhiteboardPage {
     id: string;
     json: any;
-    thumbnail?: string;
 }
 
 interface WhiteboardBlockProps {
-    savedData?: string; // Multi-page JSON state
-    readOnly?: boolean;
-    onSave?: (data: string) => void;
+    savedData?: string;
+    onSave: (data: string) => Promise<any>;
     onClose?: () => void;
     title?: string;
-    onSetHasChanges?: (hasChanges: boolean) => void;
+    onSetHasChanges?: (val: boolean) => void;
 }
 
-/**
- * WhiteboardBlock — Professional Multi-page Whiteboard
- * Built with Fabric.js + PDF.js support
- */
-const WhiteboardBlock: React.FC<WhiteboardBlockProps> = ({ savedData, readOnly, onSave, onClose, title, onSetHasChanges }) => {
+const WhiteboardBlock: React.FC<WhiteboardBlockProps> = ({ savedData, onSave, onClose, title, onSetHasChanges }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const fabricRef = useRef<FabricCanvasType | null>(null);
+    const fabricRef = useRef<Canvas | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
 
-    const [pages, setPages] = useState<WhiteboardPage[]>([{ id: '1', json: null }]);
-    const [currentPageIndex, setCurrentPageIndex] = useState(0);
+    // Tools State
     const [activeTool, setActiveTool] = useState<'pencil' | 'eraser' | 'rect' | 'circle' | 'line' | 'text' | 'select'>('pencil');
     const [activeColor, setActiveColor] = useState('#ffffff');
     const [brushWidth, setBrushWidth] = useState(3);
+    const [eraserWidth, setEraserWidth] = useState(30);
+    const [brushType, setBrushType] = useState<'pencil' | 'spray' | 'circle' | 'pattern'>('pencil');
     const [isFullscreen, setIsFullscreen] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [isLoadingPdf, setIsLoadingPdf] = useState(false);
+    const [isMobile, setIsMobile] = useState(false);
 
     // Initial Load - Only once
     const initialLoadDone = useRef(false);
+    const [pages, setPages] = useState<WhiteboardPage[]>([{ id: '1', json: null }]);
+    const [currentPageIndex, setCurrentPageIndex] = useState(0);
+
     useEffect(() => {
         if (savedData && !initialLoadDone.current) {
             try {
                 const parsed = JSON.parse(savedData);
-                if (Array.isArray(parsed.pages)) {
+                if (parsed.pages) {
                     setPages(parsed.pages);
                     setCurrentPageIndex(parsed.currentIndex || 0);
                     initialLoadDone.current = true;
                 }
             } catch (e) {
-                console.warn('Failed to parse whiteboard data:', e);
+                console.error("Failed to parse saved whiteboard data", e);
             }
         }
     }, [savedData]);
 
-    // Canvas Initialization
+    // Canvas Initialization & Responsiveness
     useEffect(() => {
         if (!canvasRef.current) return;
 
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth < 768);
+        };
+        checkMobile();
+
         const canvas = new Canvas(canvasRef.current, {
-            width: 1200,
-            height: 800,
+            width: window.innerWidth < 768 ? window.innerWidth - 32 : 1200,
+            height: window.innerWidth < 768 ? window.innerHeight * 0.7 : 800,
             backgroundColor: '#0a0a0a',
             isDrawingMode: true,
         });
 
         fabricRef.current = canvas;
 
-        // Default tool setup
-        canvas.freeDrawingBrush = new PencilBrush(canvas);
-        canvas.freeDrawingBrush.color = activeColor;
-        canvas.freeDrawingBrush.width = brushWidth;
-
-        // Resize handling
+        // Resize handling - Professional fluid scaling
         const updateSize = () => {
+            checkMobile();
             if (!containerRef.current) return;
-            const { clientWidth } = containerRef.current;
-            const scale = clientWidth / 1200;
-            canvas.setDimensions({ width: clientWidth, height: 800 * scale });
+            const { clientWidth, clientHeight } = containerRef.current;
+
+            // Adjust base dimensions for mobile vs desktop
+            const baseWidth = window.innerWidth < 768 ? clientWidth : 1200;
+            const baseHeight = window.innerWidth < 768 ? clientHeight : 800;
+
+            const scale = clientWidth / baseWidth;
+            canvas.setDimensions({ width: clientWidth, height: baseHeight * scale });
             canvas.setZoom(scale);
         };
 
@@ -94,7 +110,7 @@ const WhiteboardBlock: React.FC<WhiteboardBlockProps> = ({ savedData, readOnly, 
         };
     }, []);
 
-    // Sync state tools when tool/color/width change
+    // Sync state tools when tool/color/width/type change
     useEffect(() => {
         const canvas = fabricRef.current;
         if (!canvas) return;
@@ -102,89 +118,63 @@ const WhiteboardBlock: React.FC<WhiteboardBlockProps> = ({ savedData, readOnly, 
         canvas.isDrawingMode = activeTool === 'pencil' || activeTool === 'eraser';
 
         if (activeTool === 'pencil') {
-            canvas.freeDrawingBrush = new PencilBrush(canvas);
+            // Instantiate correct brush type
+            let brush;
+            switch (brushType) {
+                case 'spray': brush = new SprayBrush(canvas); break;
+                case 'circle': brush = new CircleBrush(canvas); break;
+                case 'pattern': brush = new PatternBrush(canvas); break;
+                default: brush = new PencilBrush(canvas);
+            }
+            canvas.freeDrawingBrush = brush;
             canvas.freeDrawingBrush.color = activeColor;
             canvas.freeDrawingBrush.width = brushWidth;
         } else if (activeTool === 'eraser') {
             canvas.freeDrawingBrush = new PencilBrush(canvas);
-            canvas.freeDrawingBrush.color = '#0a0a0a';
-            canvas.freeDrawingBrush.width = brushWidth * 2;
+            canvas.freeDrawingBrush.color = '#0a0a0a'; // Background color acting as eraser
+            canvas.freeDrawingBrush.width = eraserWidth;
         } else {
             canvas.isDrawingMode = false;
         }
 
-    }, [activeTool, activeColor, brushWidth]);
+    }, [activeTool, activeColor, brushWidth, eraserWidth, brushType]);
 
     // Page Switching Logic - Refactored for stability
     const changePage = async (newIndex: number) => {
         const canvas = fabricRef.current;
         if (!canvas || newIndex === currentPageIndex) return;
 
-        // 1. Save current canvas to the pages array
+        // Save current page
         const currentData = canvas.toJSON();
         const updatedPages = [...pages];
         updatedPages[currentPageIndex] = { ...updatedPages[currentPageIndex], json: currentData };
         setPages(updatedPages);
 
-        // 2. Clear and load new data
+        // Clear and load new page
         canvas.clear();
         canvas.backgroundColor = '#0a0a0a';
-
-        const nextData = updatedPages[newIndex]?.json;
-        if (nextData) {
-            try {
-                await canvas.loadFromJSON(nextData);
-                canvas.renderAll();
-            } catch (err) {
-                console.error('Failed to load page data:', err);
-            }
-        }
-
         setCurrentPageIndex(newIndex);
-    };
 
-    // Initial canvas content load (when pages are ready or switch triggered)
-    useEffect(() => {
-        const canvas = fabricRef.current;
-        if (!canvas || !initialLoadDone.current) return;
-
-        const data = pages[currentPageIndex]?.json;
-        if (data) {
-            canvas.loadFromJSON(data).then(() => canvas.renderAll());
+        const targetJson = updatedPages[newIndex]?.json;
+        if (targetJson) {
+            await canvas.loadFromJSON(targetJson);
+            canvas.renderAll();
         }
-    }, [fabricRef.current]);
+    };
 
     const handleClearAll = () => {
         if (!fabricRef.current) return;
-        if (window.confirm(title === 'ar' ? 'هل تريد مسح الصفحة بالكامل؟' : 'Clear entire page?')) {
-            fabricRef.current.clear();
-            fabricRef.current.backgroundColor = '#0a0a0a';
-            fabricRef.current.renderAll();
-        }
+        fabricRef.current.clear();
+        fabricRef.current.backgroundColor = '#0a0a0a';
+        fabricRef.current.renderAll();
     };
 
-    // Keyboard Shortcuts
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key === 'Delete' || e.key === 'Backspace') {
-                const canvas = fabricRef.current;
-                if (canvas && canvas.getActiveObject()) {
-                    canvas.remove(canvas.getActiveObject()!);
-                    canvas.discardActiveObject();
-                    canvas.renderAll();
-                }
-            }
-        };
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, []);
-
     const handleSave = useCallback(async () => {
-        if (!fabricRef.current || !onSave) return;
         setIsSaving(true);
         try {
             // Ensure current page is synced
             const canvas = fabricRef.current;
+            if (!canvas) return;
             const currentJson = canvas.toJSON();
             const updatedPages = [...pages];
             updatedPages[currentPageIndex] = { ...updatedPages[currentPageIndex], json: currentJson };
@@ -446,21 +436,21 @@ const WhiteboardBlock: React.FC<WhiteboardBlockProps> = ({ savedData, readOnly, 
                         style={{
                             left: 0,
                             top: 0,
-                            transform: `translate(${Math.min(window.innerWidth - (isPaletteOpen ? 120 : 60), Math.max(20, pointerPos.x + 20))}px, ${Math.min(window.innerHeight - (isPaletteOpen ? 450 : 60), Math.max(20, pointerPos.y - (isPaletteOpen ? 200 : 30)))}px)`
+                            transform: `translate(${Math.min(window.innerWidth - (isPaletteOpen ? (isMobile ? 100 : 120) : 60), Math.max(20, pointerPos.x + 20))}px, ${Math.min(window.innerHeight - (isPaletteOpen ? (isMobile ? 400 : 450) : 60), Math.max(20, pointerPos.y - (isPaletteOpen ? (isMobile ? 150 : 200) : 30)))}px)`
                         }}
                     >
                         {!isPaletteOpen ? (
                             /* COMPACT MAGIC BUTTON - Follows Finger/Pointer */
                             <button
                                 onClick={() => setIsPaletteOpen(true)}
-                                className="pointer-events-auto w-12 h-12 bg-brand-purple text-white rounded-full shadow-[0_10px_30px_rgba(139,92,246,0.6)] border-2 border-white/20 flex items-center justify-center text-2xl hover:scale-110 active:scale-95 transition-all shadow-glow-brand animate-pulse-purple"
+                                className={`pointer-events-auto ${isMobile ? 'w-14 h-14' : 'w-12 h-12'} bg-brand-purple text-white rounded-full shadow-[0_10px_30px_rgba(139,92,246,0.6)] border-2 border-white/20 flex items-center justify-center ${isMobile ? 'text-3xl' : 'text-2xl'} hover:scale-110 active:scale-95 transition-all shadow-glow-brand animate-pulse-purple`}
                                 title="Open Tools"
                             >
                                 ✨
                             </button>
                         ) : (
                             /* EXPANDED PALETTE - Locked in Position */
-                            <div className="pointer-events-auto flex flex-col gap-1.5 p-2 bg-[#0d0d0d]/95 backdrop-blur-3xl border border-white/10 rounded-2xl shadow-[0_30px_60px_rgba(0,0,0,0.8)] border-l-brand-purple border-l-4 group">
+                            <div className={`pointer-events-auto flex flex-col gap-1.5 p-2 bg-[#0d0d0d]/95 backdrop-blur-3xl border border-white/10 rounded-2xl shadow-[0_30px_60px_rgba(0,0,0,0.8)] border-l-brand-purple border-l-4 group ${isMobile ? 'scale-90' : ''}`}>
                                 <div className="flex items-center justify-between gap-4 mb-1 border-b border-white/5 pb-1 select-none">
                                     <span className="text-[9px] font-black text-white/50 uppercase tracking-widest pl-1">Tools</span>
                                     <button
@@ -471,38 +461,76 @@ const WhiteboardBlock: React.FC<WhiteboardBlockProps> = ({ savedData, readOnly, 
                                     </button>
                                 </div>
 
-                                <button
-                                    onClick={() => setActiveTool('select')}
-                                    className={`p-3 rounded-xl transition-all ${activeTool === 'select' ? 'bg-brand-purple text-white shadow-glow-brand scale-110' : 'text-gray-400 hover:bg-white/5'}`}
-                                    title="Selection"
-                                >
-                                    🖱️
-                                </button>
-                                <button
-                                    onClick={() => setActiveTool('pencil')}
-                                    className={`p-3 rounded-xl transition-all ${activeTool === 'pencil' ? 'bg-brand-purple text-white shadow-glow-brand scale-110' : 'text-gray-400 hover:bg-white/5'}`}
-                                    title="Pen"
-                                >
-                                    ✏️
-                                </button>
-                                <button
-                                    onClick={() => setActiveTool('eraser')}
-                                    className={`p-3 rounded-xl transition-all ${activeTool === 'eraser' ? 'bg-brand-purple text-white shadow-glow-brand scale-110' : 'text-gray-400 hover:bg-white/5'}`}
-                                    title="Eraser"
-                                >
-                                    🧽
-                                </button>
-
-                                <div className="h-px w-full bg-white/10 my-1" />
-
-                                <div className="flex flex-col gap-1 text-lg">
-                                    <button onClick={() => addShape('rect')} className="p-2.5 text-gray-400 hover:bg-white/5 rounded-lg transition-transform hover:scale-110">⏹️</button>
-                                    <button onClick={() => addShape('circle')} className="p-2.5 text-gray-400 hover:bg-white/5 rounded-lg transition-transform hover:scale-110">⏺️</button>
-                                    <button onClick={() => addShape('triangle')} className="p-2.5 text-gray-400 hover:bg-white/5 rounded-lg transition-transform hover:scale-110">🔼</button>
-                                    <button onClick={addImage} className="p-2.5 text-gray-400 hover:bg-white/5 rounded-lg transition-transform hover:scale-110" title="Insert Image">🖼️</button>
+                                <div className="flex flex-col gap-1">
+                                    <button
+                                        onClick={() => setActiveTool('pencil')}
+                                        className={`p-3 rounded-xl transition-all ${activeTool === 'pencil' ? 'bg-brand-purple text-white shadow-glow-brand scale-110' : 'text-gray-400 hover:bg-white/5'}`}
+                                        title="Pen"
+                                    >
+                                        ✏️
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveTool('eraser')}
+                                        className={`p-3 rounded-xl transition-all ${activeTool === 'eraser' ? 'bg-brand-purple text-white shadow-glow-brand scale-110' : 'text-gray-400 hover:bg-white/5'}`}
+                                        title="Eraser"
+                                    >
+                                        🧽
+                                    </button>
+                                    <button
+                                        onClick={() => setActiveTool('select')}
+                                        className={`p-3 rounded-xl transition-all ${activeTool === 'select' ? 'bg-brand-purple text-white shadow-glow-brand scale-110' : 'text-gray-400 hover:bg-white/5'}`}
+                                        title="Selection"
+                                    >
+                                        🖱️
+                                    </button>
                                 </div>
 
-                                <div className="h-px w-full bg-white/10 my-1" />
+                                <div className="h-px w-full bg-white/10 my-0.5" />
+
+                                {/* Brush/Eraser Options */}
+                                <div className="px-1 py-1 bg-white/5 rounded-xl border border-white/5 flex flex-col gap-2">
+                                    <div className="flex flex-col gap-1 px-1">
+                                        <div className="flex items-center justify-between text-[8px] text-white/40 font-bold uppercase tracking-wider">
+                                            <span>Size</span>
+                                            <span>{activeTool === 'eraser' ? eraserWidth : brushWidth}px</span>
+                                        </div>
+                                        <input
+                                            type="range"
+                                            min="1" max="100"
+                                            value={activeTool === 'eraser' ? eraserWidth : brushWidth}
+                                            onChange={(e) => {
+                                                const val = parseInt(e.target.value);
+                                                if (activeTool === 'eraser') setEraserWidth(val);
+                                                else setBrushWidth(val);
+                                            }}
+                                            className="w-full h-1 bg-white/10 rounded-lg appearance-none cursor-pointer accent-brand-purple"
+                                        />
+                                    </div>
+
+                                    {activeTool === 'pencil' && (
+                                        <div className="grid grid-cols-2 gap-1 mt-1">
+                                            {(['pencil', 'spray', 'circle', 'pattern'] as const).map(t => (
+                                                <button
+                                                    key={t}
+                                                    onClick={() => setBrushType(t)}
+                                                    className={`p-1.5 rounded-md text-[8px] transition-all capitalize ${brushType === t ? 'bg-white/10 text-brand-cyan shadow-inner' : 'text-white/30 hover:text-white'}`}
+                                                >
+                                                    {t}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="h-px w-full bg-white/10 my-0.5" />
+
+                                <div className={`flex flex-col gap-1 ${isMobile ? 'text-base' : 'text-lg'}`}>
+                                    <button onClick={() => addShape('rect')} className="p-2 text-gray-400 hover:bg-white/5 rounded-lg transition-transform hover:scale-110">⏹️</button>
+                                    <button onClick={() => addShape('circle')} className="p-2 text-gray-400 hover:bg-white/5 rounded-lg transition-transform hover:scale-110">⏺️</button>
+                                    <button onClick={() => addShape('triangle')} className="p-2 text-gray-400 hover:bg-white/5 rounded-lg transition-transform hover:scale-110">🔼</button>
+                                </div>
+
+                                <div className="h-px w-full bg-white/10 my-0.5" />
 
                                 {/* Unlimited Color Picker - Enhanced */}
                                 <div className="relative flex justify-center py-1">
@@ -513,7 +541,7 @@ const WhiteboardBlock: React.FC<WhiteboardBlockProps> = ({ savedData, readOnly, 
                                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                                     />
                                     <div
-                                        className="w-10 h-10 rounded-full border-2 border-white/40 shadow-glow-brand flex items-center justify-center overflow-hidden transition-transform hover:scale-110"
+                                        className="w-8 h-8 rounded-full border-2 border-white/40 shadow-glow-brand flex items-center justify-center overflow-hidden transition-transform hover:scale-110"
                                         style={{ backgroundColor: activeColor }}
                                     >
                                         <div className="w-full h-full bg-gradient-to-tr from-black/20 to-transparent flex items-center justify-center text-xs">
@@ -523,7 +551,7 @@ const WhiteboardBlock: React.FC<WhiteboardBlockProps> = ({ savedData, readOnly, 
                                     <div className="absolute -right-2 -top-1 w-2 h-2 rounded-full bg-brand-cyan animate-pulse shadow-glow-brand" />
                                 </div>
 
-                                <div className="h-px w-full bg-white/10 my-1" />
+                                <div className="h-px w-full bg-white/10 my-0.5" />
 
                                 <button
                                     onClick={handleClearAll}
@@ -532,12 +560,12 @@ const WhiteboardBlock: React.FC<WhiteboardBlockProps> = ({ savedData, readOnly, 
                                 >
                                     🗑️
                                 </button>
-
                                 <label className="p-2 text-gray-400 hover:bg-white/5 rounded-lg cursor-pointer text-sm" title="Import PDF">
                                     {isLoadingPdf ? '⏳' : '📁'}
                                     <input type="file" accept="application/pdf" className="hidden" onChange={handlePdfImport} />
                                 </label>
                             </div>
+                        )}
                     </div>
                 )}
 

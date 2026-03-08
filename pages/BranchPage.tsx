@@ -119,8 +119,11 @@ const ContentRenderer: React.FC<{
     onSaveProgress?: (state: any) => void;
     isFocused?: boolean;
     subjectId?: string;
+    branchId?: string;
+    language: string;
+    navigate: any;
     onSetHasChanges?: (val: boolean) => void;
-}> = ({ block, onDelete, readOnly, flashcardIndex = 0, onOpenFlashcard, lessonId, onQuizFail, savedState, onSaveProgress, isFocused, subjectId, onSetHasChanges }) => {
+}> = ({ block, onDelete, readOnly, flashcardIndex = 0, onOpenFlashcard, lessonId, onQuizFail, savedState, onSaveProgress, isFocused, subjectId, branchId, language, navigate, onSetHasChanges }) => {
     const triggerRedPulse = useCosmicStore(state => state.triggerRedPulse);
     const [selectedOption, setSelectedOption] = useState<number | null>(savedState?.selectedOption ?? null);
     const [isCorrect, setIsCorrect] = useState<boolean | null>(savedState?.isCorrect ?? null);
@@ -403,6 +406,15 @@ const BranchPage: React.FC = () => {
         }
     }, [activeLesson?.id, fetchProgress]);
 
+    // Restore Content Modal if returning from Whiteboard
+    useEffect(() => {
+        const isReturning = localStorage.getItem('is_returning_from_whiteboard');
+        if (isReturning === 'true') {
+            setIsSidebarOpen(true);
+            // Flag is handled/cleared inside ContentModal.tsx on mount
+        }
+    }, []);
+
     const subject = getSubject(subjectId!);
     const branch = getCourseBranch(subjectId!, branchId!);
 
@@ -606,6 +618,9 @@ const BranchPage: React.FC = () => {
                                 onSaveProgress={(state) => saveProgress(activeLesson.id, focusedBlock.id, state)}
                                 isFocused={true}
                                 subjectId={subjectId}
+                                branchId={branchId}
+                                language={language}
+                                navigate={navigate}
                                 onSetHasChanges={setHasChanges}
                             />
                         </div>

@@ -136,11 +136,18 @@ const ContentModal: React.FC<ContentModalProps> = ({ isOpen, onClose, onSave }) 
 
     // Sync from fullscreen whiteboard if coming back
     useEffect(() => {
-        if (isOpen && contentType === 'whiteboard') {
-            const savedTitle = localStorage.getItem('temp_whiteboard_title');
-            const savedData = localStorage.getItem('temp_whiteboard_data');
-            if (savedTitle) setResourceTitle(savedTitle);
-            if (savedData) setWhiteboardText(savedData);
+        if (isOpen) {
+            const isReturning = localStorage.getItem('is_returning_from_whiteboard');
+            if (isReturning === 'true') {
+                setContentType('whiteboard');
+            }
+
+            if (contentType === 'whiteboard') {
+                const savedTitle = localStorage.getItem('temp_whiteboard_title');
+                const savedData = localStorage.getItem('temp_whiteboard_data');
+                if (savedTitle) setResourceTitle(savedTitle);
+                if (savedData) setWhiteboardText(savedData);
+            }
         }
     }, [contentType, isOpen]);
 
@@ -162,6 +169,7 @@ const ContentModal: React.FC<ContentModalProps> = ({ isOpen, onClose, onSave }) 
             onSave({ type: 'whiteboard', content: 'Canvas Whiteboard', whiteboardData: whiteboardText, title: resourceTitle.trim() || undefined, fileName: resourceTitle.trim() || undefined });
             localStorage.removeItem('temp_whiteboard_title');
             localStorage.removeItem('temp_whiteboard_data');
+            localStorage.removeItem('is_returning_from_whiteboard');
         } else if (contentType === 'rich-text') {
             onSave({ type: 'rich-text', content: 'Native Document', richTextData: richTextData, title: resourceTitle.trim() || undefined, fileName: resourceTitle.trim() || undefined });
         } else if (contentType === 'notebooklm') {
@@ -359,6 +367,7 @@ const ContentModal: React.FC<ContentModalProps> = ({ isOpen, onClose, onSave }) 
         setSelectedColor('bg-cinematic-card');
         localStorage.removeItem('temp_whiteboard_title');
         localStorage.removeItem('temp_whiteboard_data');
+        localStorage.removeItem('is_returning_from_whiteboard');
         if (fileInputRef.current) fileInputRef.current.value = '';
         if (multiImageInputRef.current) multiImageInputRef.current.value = '';
         onClose();
@@ -881,6 +890,7 @@ const ContentModal: React.FC<ContentModalProps> = ({ isOpen, onClose, onSave }) 
                                 // Store current session data in localStorage so the page can pick it up
                                 localStorage.setItem('temp_whiteboard_title', resourceTitle || 'New Whiteboard');
                                 localStorage.setItem('temp_whiteboard_data', whiteboardText || '');
+                                localStorage.setItem('is_returning_from_whiteboard', 'true');
                                 navigate('/whiteboard/temp/new');
                             }}
                             className="bg-brand-cyan text-black px-8 py-4 rounded-2xl font-black uppercase tracking-widest hover:scale-105 transition-all shadow-glow-brand"
