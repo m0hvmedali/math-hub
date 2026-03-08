@@ -18,6 +18,7 @@ interface WhiteboardBlockProps {
     savedData?: string; // Multi-page JSON state
     readOnly?: boolean;
     onSave?: (data: string) => void;
+    onClose?: () => void;
     title?: string;
     onSetHasChanges?: (hasChanges: boolean) => void;
 }
@@ -26,7 +27,7 @@ interface WhiteboardBlockProps {
  * WhiteboardBlock — Professional Multi-page Whiteboard
  * Built with Fabric.js + PDF.js support
  */
-const WhiteboardBlock: React.FC<WhiteboardBlockProps> = ({ savedData, readOnly, onSave, title }) => {
+const WhiteboardBlock: React.FC<WhiteboardBlockProps> = ({ savedData, readOnly, onSave, onClose, title, onSetHasChanges }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const fabricRef = useRef<FabricCanvasType | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -40,14 +41,16 @@ const WhiteboardBlock: React.FC<WhiteboardBlockProps> = ({ savedData, readOnly, 
     const [isSaving, setIsSaving] = useState(false);
     const [isLoadingPdf, setIsLoadingPdf] = useState(false);
 
-    // Initial Load
+    // Initial Load - Only once
+    const initialLoadDone = useRef(false);
     useEffect(() => {
-        if (savedData) {
+        if (savedData && !initialLoadDone.current) {
             try {
                 const parsed = JSON.parse(savedData);
                 if (Array.isArray(parsed.pages)) {
                     setPages(parsed.pages);
                     setCurrentPageIndex(parsed.currentIndex || 0);
+                    initialLoadDone.current = true;
                 }
             } catch (e) {
                 console.warn('Failed to parse whiteboard data:', e);
@@ -112,30 +115,44 @@ const WhiteboardBlock: React.FC<WhiteboardBlockProps> = ({ savedData, readOnly, 
 
     }, [activeTool, activeColor, brushWidth]);
 
-    // Page Switching Logic
-    useEffect(() => {
+    // Page Switching Logic - Refactored for stability
+    const changePage = async (newIndex: number) => {
         const canvas = fabricRef.current;
-        if (!canvas) return;
+        if (!canvas || newIndex === currentPageIndex) return;
 
-        // Save current page to state before switching
-        setPages(prev => {
-            const next = [...prev];
-            next[currentPageIndex] = { ...next[currentPageIndex], json: canvas.toJSON() };
-            return next;
-        });
+        // 1. Save current canvas to the pages array
+        const currentData = canvas.toJSON();
+        const updatedPages = [...pages];
+        updatedPages[currentPageIndex] = { ...updatedPages[currentPageIndex], json: currentData };
+        setPages(updatedPages);
 
-        // Load new page
-        const newPageData = pages[currentPageIndex]?.json;
+        // 2. Clear and load new data
         canvas.clear();
         canvas.backgroundColor = '#0a0a0a';
-        if (newPageData) {
-            canvas.loadFromJSON(newPageData).then(() => {
+
+        const nextData = updatedPages[newIndex]?.json;
+        if (nextData) {
+            try {
+                await canvas.loadFromJSON(nextData);
                 canvas.renderAll();
-            }).catch(err => {
+            } catch (err) {
                 console.error('Failed to load page data:', err);
-            });
+            }
         }
-    }, [currentPageIndex]);
+
+        setCurrentPageIndex(newIndex);
+    };
+
+    // Initial canvas content load (when pages are ready or switch triggered)
+    useEffect(() => {
+        const canvas = fabricRef.current;
+        if (!canvas || !initialLoadDone.current) return;
+
+        const data = pages[currentPageIndex]?.json;
+        if (data) {
+            canvas.loadFromJSON(data).then(() => canvas.renderAll());
+        }
+    }, [fabricRef.current]);
 
     const handleClearAll = () => {
         if (!fabricRef.current) return;
@@ -168,31 +185,69 @@ const WhiteboardBlock: React.FC<WhiteboardBlockProps> = ({ savedData, readOnly, 
         try {
             // Ensure current page is synced
             const canvas = fabricRef.current;
+            const currentJson = canvas.toJSON();
             const updatedPages = [...pages];
-            updatedPages[currentPageIndex] = { ...updatedPages[currentPageIndex], json: canvas.toJSON() };
+            updatedPages[currentPageIndex] = { ...updatedPages[currentPageIndex], json: currentJson };
+
+            setPages(updatedPages);
 
             const state = {
                 pages: updatedPages,
                 currentIndex: currentPageIndex,
                 lastSaved: new Date().toISOString()
             };
-            await onSave(JSON.stringify(state));
+            const serialized = JSON.stringify(state);
+            await onSave(serialized);
+            if (onSetHasChanges) onSetHasChanges(false);
+            return serialized;
         } finally {
             setIsSaving(false);
         }
-    }, [onSave, pages, currentPageIndex]);
+    }, [onSave, pages, currentPageIndex, onSetHasChanges]);
+
+    const handleFinish = async () => {
+        await handleSave();
+        if (onClose) onClose();
+    };
 
     const addPage = () => {
+        const canvas = fabricRef.current;
+        if (!canvas) return;
+
+        // Save current page first
+        const currentData = canvas.toJSON();
+        const updatedPages = [...pages];
+        updatedPages[currentPageIndex] = { ...updatedPages[currentPageIndex], json: currentData };
+
         const newId = (pages.length + 1).toString();
-        setPages([...pages, { id: newId, json: null }]);
-        setCurrentPageIndex(pages.length);
+        const finalPages = [...updatedPages, { id: newId, json: null }];
+
+        setPages(finalPages);
+
+        // Switch to new page
+        canvas.clear();
+        canvas.backgroundColor = '#0a0a0a';
+        setCurrentPageIndex(finalPages.length - 1);
     };
 
     const deletePage = (index: number) => {
         if (pages.length <= 1) return;
         const newPages = pages.filter((_, i) => i !== index);
         setPages(newPages);
-        setCurrentPageIndex(Math.min(currentPageIndex, newPages.length - 1));
+
+        const nextIndex = Math.min(currentPageIndex, newPages.length - 1);
+        setCurrentPageIndex(nextIndex);
+
+        // Load the new active page
+        const canvas = fabricRef.current;
+        if (canvas) {
+            canvas.clear();
+            canvas.backgroundColor = '#0a0a0a';
+            const data = newPages[nextIndex]?.json;
+            if (data) {
+                canvas.loadFromJSON(data).then(() => canvas.renderAll());
+            }
+        }
     };
 
     // PDF Import Logic
@@ -302,7 +357,7 @@ const WhiteboardBlock: React.FC<WhiteboardBlockProps> = ({ savedData, readOnly, 
                     {/* Page Nav */}
                     <div className="flex items-center gap-2 bg-white/5 rounded-lg p-1">
                         <button
-                            onClick={() => setCurrentPageIndex(Math.max(0, currentPageIndex - 1))}
+                            onClick={() => changePage(Math.max(0, currentPageIndex - 1))}
                             disabled={currentPageIndex === 0}
                             className="p-1.5 hover:bg-white/10 disabled:opacity-20 rounded-md transition-all"
                         >
@@ -312,7 +367,7 @@ const WhiteboardBlock: React.FC<WhiteboardBlockProps> = ({ savedData, readOnly, 
                             Page {currentPageIndex + 1} / {pages.length}
                         </span>
                         <button
-                            onClick={() => setCurrentPageIndex(Math.min(pages.length - 1, currentPageIndex + 1))}
+                            onClick={() => changePage(Math.min(pages.length - 1, currentPageIndex + 1))}
                             disabled={currentPageIndex === pages.length - 1}
                             className="p-1.5 hover:bg-white/10 disabled:opacity-20 rounded-md transition-all"
                         >
@@ -322,6 +377,15 @@ const WhiteboardBlock: React.FC<WhiteboardBlockProps> = ({ savedData, readOnly, 
                 </div>
 
                 <div className="flex items-center gap-2">
+                    {onClose && (
+                        <button
+                            onClick={handleFinish}
+                            className="px-4 py-1.5 text-xs font-bold bg-brand-cyan text-black rounded-lg hover:bg-brand-cyan/80 transition-all uppercase flex items-center gap-2"
+                        >
+                            <span>✅</span>
+                            <span>{title === 'ar' ? 'إنهاء وحفظ' : 'Finish & Return'}</span>
+                        </button>
+                    )}
                     <button
                         onClick={addPage}
                         className="px-3 py-1.5 text-[10px] font-bold bg-brand-cyan/20 text-brand-cyan rounded-lg border border-brand-cyan/30 hover:bg-brand-cyan/30 transition-all uppercase"
@@ -427,7 +491,7 @@ const WhiteboardBlock: React.FC<WhiteboardBlockProps> = ({ savedData, readOnly, 
                 {pages.map((_, i) => (
                     <button
                         key={i}
-                        onClick={() => setCurrentPageIndex(i)}
+                        onClick={() => changePage(i)}
                         className={`px-3 py-1 rounded-md text-[9px] font-bold transition-all ${currentPageIndex === i ? 'bg-brand-purple text-white' : 'bg-white/5 text-gray-500'}`}
                     >
                         PAGE {i + 1}

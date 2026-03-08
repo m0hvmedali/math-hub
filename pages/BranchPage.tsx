@@ -323,6 +323,7 @@ const ContentRenderer: React.FC<{
                             savedData={block.whiteboardData}
                             readOnly={readOnly}
                             title={block.title || block.fileName || 'Whiteboard'}
+                            onClose={handleSaveLessonEdits}
                             onSave={readOnly ? undefined : async (data) => {
                                 // Caller handles save via onDelete prop pattern; we use a custom event
                                 (block as any).__pendingWhiteboardSave = data;

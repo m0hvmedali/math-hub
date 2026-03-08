@@ -318,7 +318,7 @@ const ContentModal: React.FC<ContentModalProps> = ({ isOpen, onClose, onSave }) 
                 return;
             }
             const { data } = supabase!.storage.from('lesson_files').getPublicUrl(filePath);
-            onSave({ type: contentType, content: data.publicUrl, fileName: resourceTitle.trim() || file.name });
+            onSave({ type: contentType as ContentType, content: data.publicUrl, fileName: resourceTitle.trim() || file.name });
             resetAndClose();
         }
     }
@@ -857,6 +857,7 @@ const ContentModal: React.FC<ContentModalProps> = ({ isOpen, onClose, onSave }) 
                             <WhiteboardBlock
                                 savedData={whiteboardText}
                                 onSave={(data) => setWhiteboardText(data)}
+                                onClose={resetAndClose}
                                 title={resourceTitle || 'New Whiteboard'}
                             />
                         </div>
