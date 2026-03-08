@@ -131,6 +131,36 @@ const WhiteboardBlock: React.FC<WhiteboardBlockProps> = ({ savedData, onSave, on
         };
     }, []);
 
+    const handleSave = useCallback(async () => {
+        setIsSaving(true);
+        try {
+            const canvas = fabricRef.current;
+            if (!canvas) return;
+            const currentJson = canvas.toJSON();
+            const updatedPages = [...pages];
+            updatedPages[currentPageIndex] = { ...updatedPages[currentPageIndex], json: currentJson };
+
+            setPages(updatedPages);
+
+            const state = {
+                pages: updatedPages,
+                currentIndex: currentPageIndex,
+                lastSaved: new Date().toISOString()
+            };
+            const serialized = JSON.stringify(state);
+            await onSave(serialized);
+            if (onSetHasChanges) onSetHasChanges(false);
+            return serialized;
+        } finally {
+            setIsSaving(false);
+        }
+    }, [onSave, pages, currentPageIndex, onSetHasChanges]);
+
+    const handleFinish = async () => {
+        await handleSave();
+        if (onClose) onClose();
+    };
+
     // Listen for the autosave event to trigger the handleSave callback
     useEffect(() => {
         const handleAutosaveEvent = () => {
@@ -199,36 +229,6 @@ const WhiteboardBlock: React.FC<WhiteboardBlockProps> = ({ savedData, onSave, on
         fabricRef.current.renderAll();
     };
 
-    const handleSave = useCallback(async () => {
-        setIsSaving(true);
-        try {
-            // Ensure current page is synced
-            const canvas = fabricRef.current;
-            if (!canvas) return;
-            const currentJson = canvas.toJSON();
-            const updatedPages = [...pages];
-            updatedPages[currentPageIndex] = { ...updatedPages[currentPageIndex], json: currentJson };
-
-            setPages(updatedPages);
-
-            const state = {
-                pages: updatedPages,
-                currentIndex: currentPageIndex,
-                lastSaved: new Date().toISOString()
-            };
-            const serialized = JSON.stringify(state);
-            await onSave(serialized);
-            if (onSetHasChanges) onSetHasChanges(false);
-            return serialized;
-        } finally {
-            setIsSaving(false);
-        }
-    }, [onSave, pages, currentPageIndex, onSetHasChanges]);
-
-    const handleFinish = async () => {
-        await handleSave();
-        if (onClose) onClose();
-    };
 
     const addPage = () => {
         const canvas = fabricRef.current;
