@@ -343,16 +343,19 @@ const WhiteboardBlock: React.FC<WhiteboardBlockProps> = ({ savedData, readOnly, 
 
     const [pointerPos, setPointerPos] = useState({ x: 100, y: 100 });
     const [showTools, setShowTools] = useState(true);
+    const [isPaletteOpen, setIsPaletteOpen] = useState(false);
 
-    // Track mouse movement for floating toolbar
+    // Track mouse movement for floating toolbar - ONLY when closed
     useEffect(() => {
+        if (isPaletteOpen) return;
+
         const handleMouseMove = (e: MouseEvent) => {
-            // Apply a slight lag/smoothing for the floating effect
+            // Smoothly move the magic button
             setPointerPos({ x: e.clientX, y: e.clientY });
         };
         window.addEventListener('mousemove', handleMouseMove);
         return () => window.removeEventListener('mousemove', handleMouseMove);
-    }, []);
+    }, [isPaletteOpen]);
 
     return (
         <div className={`flex flex-col w-full bg-[#0a0a0a] rounded-2xl overflow-hidden border border-white/10 transition-all ${isFullscreen ? 'fixed inset-0 z-[100]' : 'relative'}`}>
@@ -436,86 +439,105 @@ const WhiteboardBlock: React.FC<WhiteboardBlockProps> = ({ savedData, readOnly, 
 
             {/* Main Canvas Area */}
             <div className="flex flex-1 relative overflow-hidden">
-                {/* Floating Tool Palette (Follows Cursor) */}
+                {/* Magic Button / Palette (Follows Cursor when closed) */}
                 {showTools && (
                     <div
-                        className="fixed pointer-events-none z-[2000] p-1 transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)]"
+                        className={`fixed pointer-events-none z-[2000] p-1 transition-all ${isPaletteOpen ? 'duration-500 scale-100' : 'duration-700 ease-[cubic-bezier(0.23,1,0.32,1)]'}`}
                         style={{
                             left: 0,
                             top: 0,
-                            transform: `translate(${Math.min(window.innerWidth - 100, Math.max(20, pointerPos.x + 20))}px, ${Math.min(window.innerHeight - 300, Math.max(20, pointerPos.y - 150))}px)`
+                            transform: `translate(${Math.min(window.innerWidth - (isPaletteOpen ? 120 : 60), Math.max(20, pointerPos.x + 20))}px, ${Math.min(window.innerHeight - (isPaletteOpen ? 450 : 60), Math.max(20, pointerPos.y - (isPaletteOpen ? 200 : 30)))}px)`
                         }}
                     >
-                        <div className="pointer-events-auto flex flex-col gap-1.5 p-2 bg-[#0d0d0d]/90 backdrop-blur-3xl border border-white/10 rounded-2xl shadow-[0_30px_60px_rgba(0,0,0,0.8)] border-l-brand-purple border-l-4 group">
-                            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-brand-purple text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">TOOLS</div>
-
+                        {!isPaletteOpen ? (
+                            /* COMPACT MAGIC BUTTON - Follows Finger/Pointer */
                             <button
-                                onClick={() => setActiveTool('select')}
-                                className={`p-3 rounded-xl transition-all ${activeTool === 'select' ? 'bg-brand-purple text-white shadow-glow-brand scale-110' : 'text-gray-400 hover:bg-white/5'}`}
-                                title="Selection"
+                                onClick={() => setIsPaletteOpen(true)}
+                                className="pointer-events-auto w-12 h-12 bg-brand-purple text-white rounded-full shadow-[0_10px_30px_rgba(139,92,246,0.6)] border-2 border-white/20 flex items-center justify-center text-2xl hover:scale-110 active:scale-95 transition-all shadow-glow-brand animate-pulse-purple"
+                                title="Open Tools"
                             >
-                                🖱️
+                                ✨
                             </button>
-                            <button
-                                onClick={() => setActiveTool('pencil')}
-                                className={`p-3 rounded-xl transition-all ${activeTool === 'pencil' ? 'bg-brand-purple text-white shadow-glow-brand scale-110' : 'text-gray-400 hover:bg-white/5'}`}
-                                title="Pen"
-                            >
-                                ✏️
-                            </button>
-                            <button
-                                onClick={() => setActiveTool('eraser')}
-                                className={`p-3 rounded-xl transition-all ${activeTool === 'eraser' ? 'bg-brand-purple text-white shadow-glow-brand scale-110' : 'text-gray-400 hover:bg-white/5'}`}
-                                title="Eraser"
-                            >
-                                🧽
-                            </button>
-
-                            <div className="h-px w-full bg-white/10 my-1" />
-
-                            <div className="flex flex-col gap-1 text-lg">
-                                <button onClick={() => addShape('rect')} className="p-2.5 text-gray-400 hover:bg-white/5 rounded-lg transition-transform hover:scale-110">⏹️</button>
-                                <button onClick={() => addShape('circle')} className="p-2.5 text-gray-400 hover:bg-white/5 rounded-lg transition-transform hover:scale-110">⏺️</button>
-                                <button onClick={() => addShape('triangle')} className="p-2.5 text-gray-400 hover:bg-white/5 rounded-lg transition-transform hover:scale-110">🔼</button>
-                                <button onClick={addImage} className="p-2.5 text-gray-400 hover:bg-white/5 rounded-lg transition-transform hover:scale-110" title="Insert Image">🖼️</button>
-                            </div>
-
-                            <div className="h-px w-full bg-white/10 my-1" />
-
-                            {/* Unlimited Color Picker - Enhanced */}
-                            <div className="relative flex justify-center py-1">
-                                <input
-                                    type="color"
-                                    value={activeColor}
-                                    onChange={(e) => setActiveColor(e.target.value)}
-                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                                />
-                                <div
-                                    className="w-10 h-10 rounded-full border-2 border-white/40 shadow-glow-brand flex items-center justify-center overflow-hidden transition-transform hover:scale-110"
-                                    style={{ backgroundColor: activeColor }}
-                                >
-                                    <div className="w-full h-full bg-gradient-to-tr from-black/20 to-transparent flex items-center justify-center text-xs">
-                                        🎨
-                                    </div>
+                        ) : (
+                            /* EXPANDED PALETTE - Locked in Position */
+                            <div className="pointer-events-auto flex flex-col gap-1.5 p-2 bg-[#0d0d0d]/95 backdrop-blur-3xl border border-white/10 rounded-2xl shadow-[0_30px_60px_rgba(0,0,0,0.8)] border-l-brand-purple border-l-4 group">
+                                <div className="flex items-center justify-between gap-4 mb-1 border-b border-white/5 pb-1 select-none">
+                                    <span className="text-[9px] font-black text-white/50 uppercase tracking-widest pl-1">Tools</span>
+                                    <button
+                                        onClick={() => setIsPaletteOpen(false)}
+                                        className="p-1 hover:bg-white/10 rounded-md text-[10px] text-white/40 hover:text-white transition-colors"
+                                    >
+                                        ❌
+                                    </button>
                                 </div>
-                                <div className="absolute -right-2 -top-1 w-2 h-2 rounded-full bg-brand-cyan animate-pulse shadow-glow-brand" />
+
+                                <button
+                                    onClick={() => setActiveTool('select')}
+                                    className={`p-3 rounded-xl transition-all ${activeTool === 'select' ? 'bg-brand-purple text-white shadow-glow-brand scale-110' : 'text-gray-400 hover:bg-white/5'}`}
+                                    title="Selection"
+                                >
+                                    🖱️
+                                </button>
+                                <button
+                                    onClick={() => setActiveTool('pencil')}
+                                    className={`p-3 rounded-xl transition-all ${activeTool === 'pencil' ? 'bg-brand-purple text-white shadow-glow-brand scale-110' : 'text-gray-400 hover:bg-white/5'}`}
+                                    title="Pen"
+                                >
+                                    ✏️
+                                </button>
+                                <button
+                                    onClick={() => setActiveTool('eraser')}
+                                    className={`p-3 rounded-xl transition-all ${activeTool === 'eraser' ? 'bg-brand-purple text-white shadow-glow-brand scale-110' : 'text-gray-400 hover:bg-white/5'}`}
+                                    title="Eraser"
+                                >
+                                    🧽
+                                </button>
+
+                                <div className="h-px w-full bg-white/10 my-1" />
+
+                                <div className="flex flex-col gap-1 text-lg">
+                                    <button onClick={() => addShape('rect')} className="p-2.5 text-gray-400 hover:bg-white/5 rounded-lg transition-transform hover:scale-110">⏹️</button>
+                                    <button onClick={() => addShape('circle')} className="p-2.5 text-gray-400 hover:bg-white/5 rounded-lg transition-transform hover:scale-110">⏺️</button>
+                                    <button onClick={() => addShape('triangle')} className="p-2.5 text-gray-400 hover:bg-white/5 rounded-lg transition-transform hover:scale-110">🔼</button>
+                                    <button onClick={addImage} className="p-2.5 text-gray-400 hover:bg-white/5 rounded-lg transition-transform hover:scale-110" title="Insert Image">🖼️</button>
+                                </div>
+
+                                <div className="h-px w-full bg-white/10 my-1" />
+
+                                {/* Unlimited Color Picker - Enhanced */}
+                                <div className="relative flex justify-center py-1">
+                                    <input
+                                        type="color"
+                                        value={activeColor}
+                                        onChange={(e) => setActiveColor(e.target.value)}
+                                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                                    />
+                                    <div
+                                        className="w-10 h-10 rounded-full border-2 border-white/40 shadow-glow-brand flex items-center justify-center overflow-hidden transition-transform hover:scale-110"
+                                        style={{ backgroundColor: activeColor }}
+                                    >
+                                        <div className="w-full h-full bg-gradient-to-tr from-black/20 to-transparent flex items-center justify-center text-xs">
+                                            🎨
+                                        </div>
+                                    </div>
+                                    <div className="absolute -right-2 -top-1 w-2 h-2 rounded-full bg-brand-cyan animate-pulse shadow-glow-brand" />
+                                </div>
+
+                                <div className="h-px w-full bg-white/10 my-1" />
+
+                                <button
+                                    onClick={handleClearAll}
+                                    className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg text-sm"
+                                    title="Clear All"
+                                >
+                                    🗑️
+                                </button>
+
+                                <label className="p-2 text-gray-400 hover:bg-white/5 rounded-lg cursor-pointer text-sm" title="Import PDF">
+                                    {isLoadingPdf ? '⏳' : '📁'}
+                                    <input type="file" accept="application/pdf" className="hidden" onChange={handlePdfImport} />
+                                </label>
                             </div>
-
-                            <div className="h-px w-full bg-white/10 my-1" />
-
-                            <button
-                                onClick={handleClearAll}
-                                className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg text-sm"
-                                title="Clear All"
-                            >
-                                🗑️
-                            </button>
-
-                            <label className="p-2 text-gray-400 hover:bg-white/5 rounded-lg cursor-pointer text-sm" title="Import PDF">
-                                {isLoadingPdf ? '⏳' : '📁'}
-                                <input type="file" accept="application/pdf" className="hidden" onChange={handlePdfImport} />
-                            </label>
-                        </div>
                     </div>
                 )}
 

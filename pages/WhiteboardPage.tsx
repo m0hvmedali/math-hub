@@ -42,6 +42,7 @@ const WhiteboardPage: React.FC = () => {
             }
         } else if (type === 'temp') {
             localStorage.setItem('temp_whiteboard_data', data);
+            localStorage.setItem('temp_whiteboard_title', title || '');
         }
     };
 
