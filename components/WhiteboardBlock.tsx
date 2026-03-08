@@ -341,6 +341,19 @@ const WhiteboardBlock: React.FC<WhiteboardBlockProps> = ({ savedData, readOnly, 
         fabricRef.current.setActiveObject(obj);
     };
 
+    const [pointerPos, setPointerPos] = useState({ x: 100, y: 100 });
+    const [showTools, setShowTools] = useState(true);
+
+    // Track mouse movement for floating toolbar
+    useEffect(() => {
+        const handleMouseMove = (e: MouseEvent) => {
+            // Apply a slight lag/smoothing for the floating effect
+            setPointerPos({ x: e.clientX, y: e.clientY });
+        };
+        window.addEventListener('mousemove', handleMouseMove);
+        return () => window.removeEventListener('mousemove', handleMouseMove);
+    }, []);
+
     return (
         <div className={`flex flex-col w-full bg-[#0a0a0a] rounded-2xl overflow-hidden border border-white/10 transition-all ${isFullscreen ? 'fixed inset-0 z-[100]' : 'relative'}`}>
 
@@ -377,6 +390,12 @@ const WhiteboardBlock: React.FC<WhiteboardBlockProps> = ({ savedData, readOnly, 
                 </div>
 
                 <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => setShowTools(!showTools)}
+                        className={`px-3 py-1.5 text-[10px] font-bold rounded-lg border transition-all uppercase ${showTools ? 'bg-brand-purple/20 text-brand-purple border-brand-purple/30' : 'bg-white/5 text-gray-400 border-white/10'}`}
+                    >
+                        {showTools ? 'Hide Tools' : 'Show Tools'}
+                    </button>
                     {onClose && (
                         <button
                             onClick={handleFinish}
@@ -415,67 +434,91 @@ const WhiteboardBlock: React.FC<WhiteboardBlockProps> = ({ savedData, readOnly, 
                 </div>
             </div>
 
-            {/* Tool Side Bar (Floating / Vertical / Sleek) */}
+            {/* Main Canvas Area */}
             <div className="flex flex-1 relative overflow-hidden">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 z-20 flex flex-col gap-2 p-2 bg-[#121212]/80 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl">
-                    <button
-                        onClick={() => setActiveTool('select')}
-                        className={`p-3 rounded-xl transition-all ${activeTool === 'select' ? 'bg-brand-purple text-white shadow-glow-brand' : 'text-gray-400 hover:bg-white/5'}`}
-                        title="Selection"
+                {/* Floating Tool Palette (Follows Cursor) */}
+                {showTools && (
+                    <div
+                        className="fixed pointer-events-none z-[2000] p-1 transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)]"
+                        style={{
+                            left: 0,
+                            top: 0,
+                            transform: `translate(${Math.min(window.innerWidth - 100, Math.max(20, pointerPos.x + 20))}px, ${Math.min(window.innerHeight - 300, Math.max(20, pointerPos.y - 150))}px)`
+                        }}
                     >
-                        🖱️
-                    </button>
-                    <button
-                        onClick={() => setActiveTool('pencil')}
-                        className={`p-3 rounded-xl transition-all ${activeTool === 'pencil' ? 'bg-brand-purple text-white shadow-glow-brand' : 'text-gray-400 hover:bg-white/5'}`}
-                        title="Pen"
-                    >
-                        ✏️
-                    </button>
-                    <button
-                        onClick={() => setActiveTool('eraser')}
-                        className={`p-3 rounded-xl transition-all ${activeTool === 'eraser' ? 'bg-brand-purple text-white shadow-glow-brand' : 'text-gray-400 hover:bg-white/5'}`}
-                        title="Eraser"
-                    >
-                        🧽
-                    </button>
-                    <div className="h-px w-full bg-white/10 my-1" />
-                    <button onClick={() => addShape('rect')} className="p-3 text-gray-400 hover:bg-white/5 rounded-xl">⏹️</button>
-                    <button onClick={() => addShape('circle')} className="p-3 text-gray-400 hover:bg-white/5 rounded-xl">⏺️</button>
-                    <button onClick={() => addShape('triangle')} className="p-3 text-gray-400 hover:bg-white/5 rounded-xl">🔼</button>
-                    <button onClick={addImage} className="p-3 text-gray-400 hover:bg-white/5 rounded-xl" title="Insert Image">🖼️</button>
+                        <div className="pointer-events-auto flex flex-col gap-1.5 p-2 bg-[#0d0d0d]/90 backdrop-blur-3xl border border-white/10 rounded-2xl shadow-[0_30px_60px_rgba(0,0,0,0.8)] border-l-brand-purple border-l-4 group">
+                            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-brand-purple text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">TOOLS</div>
 
-                    <div className="h-px w-full bg-white/10 my-1" />
-
-                    <button
-                        onClick={handleClearAll}
-                        className="p-3 text-red-400 hover:bg-red-500/10 rounded-xl"
-                        title="Clear All"
-                    >
-                        🗑️
-                    </button>
-
-                    <label className="p-3 text-gray-400 hover:bg-white/5 rounded-xl cursor-pointer" title="Import PDF">
-                        {isLoadingPdf ? '⏳' : '📁'}
-                        <input type="file" accept="application/pdf" className="hidden" onChange={handlePdfImport} />
-                    </label>
-
-                    <div className="h-px w-full bg-white/10 my-1" />
-
-                    {/* Colors */}
-                    <div className="flex flex-col gap-2 p-1">
-                        {['#ffffff', '#ff4757', '#2ed573', '#1e90ff', '#eccc68'].map(c => (
                             <button
-                                key={c}
-                                onClick={() => setActiveColor(c)}
-                                className={`w-8 h-8 rounded-full border-2 transition-all ${activeColor === c ? 'border-white scale-110 shadow-lg' : 'border-transparent'}`}
-                                style={{ backgroundColor: c }}
-                            />
-                        ))}
-                    </div>
-                </div>
+                                onClick={() => setActiveTool('select')}
+                                className={`p-3 rounded-xl transition-all ${activeTool === 'select' ? 'bg-brand-purple text-white shadow-glow-brand scale-110' : 'text-gray-400 hover:bg-white/5'}`}
+                                title="Selection"
+                            >
+                                🖱️
+                            </button>
+                            <button
+                                onClick={() => setActiveTool('pencil')}
+                                className={`p-3 rounded-xl transition-all ${activeTool === 'pencil' ? 'bg-brand-purple text-white shadow-glow-brand scale-110' : 'text-gray-400 hover:bg-white/5'}`}
+                                title="Pen"
+                            >
+                                ✏️
+                            </button>
+                            <button
+                                onClick={() => setActiveTool('eraser')}
+                                className={`p-3 rounded-xl transition-all ${activeTool === 'eraser' ? 'bg-brand-purple text-white shadow-glow-brand scale-110' : 'text-gray-400 hover:bg-white/5'}`}
+                                title="Eraser"
+                            >
+                                🧽
+                            </button>
 
-                {/* Main Canvas Area */}
+                            <div className="h-px w-full bg-white/10 my-1" />
+
+                            <div className="flex flex-col gap-1 text-lg">
+                                <button onClick={() => addShape('rect')} className="p-2.5 text-gray-400 hover:bg-white/5 rounded-lg transition-transform hover:scale-110">⏹️</button>
+                                <button onClick={() => addShape('circle')} className="p-2.5 text-gray-400 hover:bg-white/5 rounded-lg transition-transform hover:scale-110">⏺️</button>
+                                <button onClick={() => addShape('triangle')} className="p-2.5 text-gray-400 hover:bg-white/5 rounded-lg transition-transform hover:scale-110">🔼</button>
+                                <button onClick={addImage} className="p-2.5 text-gray-400 hover:bg-white/5 rounded-lg transition-transform hover:scale-110" title="Insert Image">🖼️</button>
+                            </div>
+
+                            <div className="h-px w-full bg-white/10 my-1" />
+
+                            {/* Unlimited Color Picker - Enhanced */}
+                            <div className="relative flex justify-center py-1">
+                                <input
+                                    type="color"
+                                    value={activeColor}
+                                    onChange={(e) => setActiveColor(e.target.value)}
+                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                                />
+                                <div
+                                    className="w-10 h-10 rounded-full border-2 border-white/40 shadow-glow-brand flex items-center justify-center overflow-hidden transition-transform hover:scale-110"
+                                    style={{ backgroundColor: activeColor }}
+                                >
+                                    <div className="w-full h-full bg-gradient-to-tr from-black/20 to-transparent flex items-center justify-center text-xs">
+                                        🎨
+                                    </div>
+                                </div>
+                                <div className="absolute -right-2 -top-1 w-2 h-2 rounded-full bg-brand-cyan animate-pulse shadow-glow-brand" />
+                            </div>
+
+                            <div className="h-px w-full bg-white/10 my-1" />
+
+                            <button
+                                onClick={handleClearAll}
+                                className="p-2 text-red-400 hover:bg-red-500/10 rounded-lg text-sm"
+                                title="Clear All"
+                            >
+                                🗑️
+                            </button>
+
+                            <label className="p-2 text-gray-400 hover:bg-white/5 rounded-lg cursor-pointer text-sm" title="Import PDF">
+                                {isLoadingPdf ? '⏳' : '📁'}
+                                <input type="file" accept="application/pdf" className="hidden" onChange={handlePdfImport} />
+                            </label>
+                        </div>
+                    </div>
+                )}
+
                 <div
                     ref={containerRef}
                     className="flex-1 bg-[#1a1a1a] flex items-center justify-center p-4 overflow-auto"
@@ -486,7 +529,7 @@ const WhiteboardBlock: React.FC<WhiteboardBlockProps> = ({ savedData, readOnly, 
                 </div>
             </div>
 
-            {/* Bottom Bar: Thumbnail strip (optional) */}
+            {/* Bottom Bar: Thumbnail strip */}
             <div className="px-6 py-2 bg-[#0d0d0d] border-t border-white/5 flex items-center h-12 overflow-x-auto gap-2">
                 {pages.map((_, i) => (
                     <button

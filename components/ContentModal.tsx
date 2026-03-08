@@ -125,7 +125,7 @@ const ContentModal: React.FC<ContentModalProps> = ({ isOpen, onClose, onSave }) 
         }
     };
 
-    React.useEffect(() => {
+    useEffect(() => {
         if (contentType === 'magic' && linkUrl.trim()) {
             const detected = detectMagicLink(linkUrl.trim());
             setMagicLinkResult(detected);
@@ -133,6 +133,16 @@ const ContentModal: React.FC<ContentModalProps> = ({ isOpen, onClose, onSave }) 
             setMagicLinkResult(null);
         }
     }, [linkUrl, contentType]);
+
+    // Sync from fullscreen whiteboard if coming back
+    useEffect(() => {
+        if (isOpen && contentType === 'whiteboard') {
+            const savedTitle = localStorage.getItem('temp_whiteboard_title');
+            const savedData = localStorage.getItem('temp_whiteboard_data');
+            if (savedTitle) setResourceTitle(savedTitle);
+            if (savedData) setWhiteboardText(savedData);
+        }
+    }, [contentType, isOpen]);
 
     const handleSave = async () => {
         const finalColor = customColorHex || (selectedColor !== 'bg-cinematic-card' ? selectedColor : undefined);
@@ -150,6 +160,8 @@ const ContentModal: React.FC<ContentModalProps> = ({ isOpen, onClose, onSave }) 
             if (markdown.trim()) onSave({ type: 'markdown', content: markdown, color: selectedColor, customColor: customColorHex || undefined, fileName });
         } else if (contentType === 'whiteboard') {
             onSave({ type: 'whiteboard', content: 'Canvas Whiteboard', whiteboardData: whiteboardText, title: resourceTitle.trim() || undefined, fileName: resourceTitle.trim() || undefined });
+            localStorage.removeItem('temp_whiteboard_title');
+            localStorage.removeItem('temp_whiteboard_data');
         } else if (contentType === 'rich-text') {
             onSave({ type: 'rich-text', content: 'Native Document', richTextData: richTextData, title: resourceTitle.trim() || undefined, fileName: resourceTitle.trim() || undefined });
         } else if (contentType === 'notebooklm') {
@@ -345,6 +357,8 @@ const ContentModal: React.FC<ContentModalProps> = ({ isOpen, onClose, onSave }) 
         setLinkUrl('');
         setFile(null);
         setSelectedColor('bg-cinematic-card');
+        localStorage.removeItem('temp_whiteboard_title');
+        localStorage.removeItem('temp_whiteboard_data');
         if (fileInputRef.current) fileInputRef.current.value = '';
         if (multiImageInputRef.current) multiImageInputRef.current.value = '';
         onClose();
