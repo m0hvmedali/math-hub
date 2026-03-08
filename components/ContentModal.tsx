@@ -852,15 +852,23 @@ const ContentModal: React.FC<ContentModalProps> = ({ isOpen, onClose, onSave }) 
                 );
             case 'whiteboard':
                 return (
-                    <div className="h-[60vh] flex flex-col gap-4">
-                        <div className="flex-1 overflow-hidden">
-                            <WhiteboardBlock
-                                savedData={whiteboardText}
-                                onSave={(data) => setWhiteboardText(data)}
-                                onClose={resetAndClose}
-                                title={resourceTitle || 'New Whiteboard'}
-                            />
-                        </div>
+                    <div className="flex flex-col items-center justify-center p-20 text-center gap-6">
+                        <div className="w-24 h-24 bg-brand-cyan/20 rounded-full flex items-center justify-center text-5xl animate-pulse">✏️</div>
+                        <h3 className="text-2xl font-bold text-white tracking-widest uppercase">{language === 'ar' ? 'السبورة الذكية' : 'Smart Whiteboard'}</h3>
+                        <p className="text-gray-400 max-w-sm">
+                            {language === 'ar' ? 'افتح السبورة في وضع ملء الشاشة للبدء في الرسم والشرح بوضوح.' : 'Open the whiteboard in fullscreen mode to start sketching and explaining clearly.'}
+                        </p>
+                        <button
+                            onClick={() => {
+                                // Store current session data in localStorage so the page can pick it up
+                                localStorage.setItem('temp_whiteboard_title', resourceTitle || 'New Whiteboard');
+                                localStorage.setItem('temp_whiteboard_data', whiteboardText || '');
+                                navigate('/whiteboard/temp/new');
+                            }}
+                            className="bg-brand-cyan text-black px-8 py-4 rounded-2xl font-black uppercase tracking-widest hover:scale-105 transition-all shadow-glow-brand"
+                        >
+                            {language === 'ar' ? 'فتح في وضع ملء الشاشة 🚀' : 'Open Fullscreen 🚀'}
+                        </button>
                     </div>
                 );
             case 'rich-text':

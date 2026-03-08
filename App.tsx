@@ -1,5 +1,6 @@
 import React, { useState, useCallback, createContext, useEffect } from 'react';
 import { Routes, Route, Navigate, NavLink } from 'react-router-dom';
+import WhiteboardPage from './pages/WhiteboardPage';
 import { Subject, CourseBranch, Lesson, StudySession, Task, Importance, Competition, CrashTask, ErrorCause, KnowledgeError, CustomNode, ManualLink } from './types';
 import Navigation from './components/Navigation';
 import DashboardPage from './pages/DashboardPage';
@@ -605,6 +606,8 @@ const App: React.FC = () => {
                         <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
                         <Route path="/subject/:subjectId" element={<ProtectedRoute><SubjectPage /></ProtectedRoute>} />
                         <Route path="/subject/:subjectId/branch/:branchId/lesson/:lessonId" element={<ProtectedRoute><BranchPage /></ProtectedRoute>} />
+                        <Route path="/whiteboard/:type/:id" element={<ProtectedRoute><WhiteboardPage /></ProtectedRoute>} />
+                        <Route path="/whiteboard/:type/:id/:subjectId/:branchId" element={<ProtectedRoute><WhiteboardPage /></ProtectedRoute>} />
                         <Route path="/profile" element={<ProtectedRoute><AnalyticsPage /></ProtectedRoute>} />
                         <Route path="/wishes" element={<ProtectedRoute><WishesPage /></ProtectedRoute>} />
                         <Route path="/schedule" element={<ProtectedRoute><SchedulePage /></ProtectedRoute>} />

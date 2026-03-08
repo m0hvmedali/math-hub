@@ -318,18 +318,18 @@ const ContentRenderer: React.FC<{
                 )}
 
                 {block.type === 'whiteboard' && (
-                    <div className="-m-6">
-                        <WhiteboardBlock
-                            savedData={block.whiteboardData}
-                            readOnly={readOnly}
-                            title={block.title || block.fileName || 'Whiteboard'}
-                            onClose={handleSaveLessonEdits}
-                            onSave={readOnly ? undefined : async (data) => {
-                                // Caller handles save via onDelete prop pattern; we use a custom event
-                                (block as any).__pendingWhiteboardSave = data;
-                                if (onSetHasChanges) onSetHasChanges(true);
-                            }}
-                        />
+                    <div className="flex flex-col items-center justify-center p-20 text-center gap-6 bg-[#0a0a0a] rounded-2xl">
+                        <div className="w-20 h-20 bg-brand-purple/20 rounded-full flex items-center justify-center text-4xl">🎨</div>
+                        <h3 className="text-xl font-bold text-white tracking-widest uppercase">{block.title || block.fileName || 'Whiteboard'}</h3>
+                        <p className="text-gray-500 text-sm max-w-xs italic tracking-wide">
+                            {language === 'ar' ? 'اضغط للبدء في الرسم أو الإكمال من حيث توقفت.' : 'Click to start sketching or continue where you left off.'}
+                        </p>
+                        <button
+                            onClick={() => navigate(`/whiteboard/lesson/${block.id}/${subjectId}/${branchId}`)}
+                            className="bg-brand-purple text-white px-8 py-3 rounded-xl font-bold uppercase tracking-widest hover:scale-105 transition-all shadow-glow-brand border border-brand-purple/50"
+                        >
+                            {language === 'ar' ? 'فتح السبورة 🚀' : 'Open Whiteboard 🚀'}
+                        </button>
                     </div>
                 )}
 
