@@ -25,6 +25,11 @@ interface CosmicState {
     // Ship Progress
     shipProgress: number;
     updateShipProgress: (completed: number, total: number, connections: number) => void;
+
+    // Whiteboard Temp Storage (to avoid localStorage quota issues)
+    tempWhiteboardData: string | null;
+    tempWhiteboardTitle: string | null;
+    setTempWhiteboard: (data: string | null, title: string | null) => void;
 }
 
 export const useCosmicStore = create<CosmicState>((set) => ({
@@ -56,4 +61,8 @@ export const useCosmicStore = create<CosmicState>((set) => ({
     tempNodes: [],
     addTempNode: (node) => set((state) => ({ tempNodes: [...state.tempNodes, node] })),
     clearTempNodes: () => set({ tempNodes: [] }),
+
+    tempWhiteboardData: null,
+    tempWhiteboardTitle: null,
+    setTempWhiteboard: (data, title) => set({ tempWhiteboardData: data, tempWhiteboardTitle: title }),
 }));

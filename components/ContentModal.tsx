@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AppContext } from '../App';
 import { ContentBlock, ContentType } from '../types';
 import { MarkdownIcon, ImageIcon, AudioIcon, VideoIcon, PdfIcon, LinkIcon, XIcon, WhiteboardIcon, NotebookLMIcon, FlashcardIcon, SparkleIcon, CheckCircleIcon, CodeIcon } from './Icons';
+import { useCosmicStore } from '../store/useCosmicStore';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { supabase } from '../supabaseClient';
@@ -134,6 +135,8 @@ const ContentModal: React.FC<ContentModalProps> = ({ isOpen, onClose, onSave }) 
         }
     }, [linkUrl, contentType]);
 
+    const { tempWhiteboardData, tempWhiteboardTitle, setTempWhiteboard } = useCosmicStore();
+
     // Sync from fullscreen whiteboard if coming back
     useEffect(() => {
         if (isOpen) {
@@ -143,13 +146,19 @@ const ContentModal: React.FC<ContentModalProps> = ({ isOpen, onClose, onSave }) 
             }
 
             if (contentType === 'whiteboard') {
-                const savedTitle = localStorage.getItem('temp_whiteboard_title');
-                const savedData = localStorage.getItem('temp_whiteboard_data');
-                if (savedTitle) setResourceTitle(savedTitle);
-                if (savedData) setWhiteboardText(savedData);
+                // Priority: Zustand (Memory) -> LocalStorage (Persistence fallback)
+                if (tempWhiteboardData) {
+                    setWhiteboardText(tempWhiteboardData);
+                    if (tempWhiteboardTitle) setResourceTitle(tempWhiteboardTitle);
+                } else {
+                    const savedTitle = localStorage.getItem('temp_whiteboard_title');
+                    const savedData = localStorage.getItem('temp_whiteboard_data');
+                    if (savedTitle) setResourceTitle(savedTitle);
+                    if (savedData) setWhiteboardText(savedData);
+                }
             }
         }
-    }, [contentType, isOpen]);
+    }, [contentType, isOpen, tempWhiteboardData, tempWhiteboardTitle]);
 
     const handleSave = async () => {
         const finalColor = customColorHex || (selectedColor !== 'bg-cinematic-card' ? selectedColor : undefined);
@@ -167,6 +176,7 @@ const ContentModal: React.FC<ContentModalProps> = ({ isOpen, onClose, onSave }) 
             if (markdown.trim()) onSave({ type: 'markdown', content: markdown, color: selectedColor, customColor: customColorHex || undefined, fileName });
         } else if (contentType === 'whiteboard') {
             onSave({ type: 'whiteboard', content: 'Canvas Whiteboard', whiteboardData: whiteboardText, title: resourceTitle.trim() || undefined, fileName: resourceTitle.trim() || undefined });
+            setTempWhiteboard(null, null);
             localStorage.removeItem('temp_whiteboard_title');
             localStorage.removeItem('temp_whiteboard_data');
             localStorage.removeItem('is_returning_from_whiteboard');
@@ -887,10 +897,19 @@ const ContentModal: React.FC<ContentModalProps> = ({ isOpen, onClose, onSave }) 
                         </p>
                         <button
                             onClick={() => {
-                                // Store current session data in localStorage so the page can pick it up
-                                localStorage.setItem('temp_whiteboard_title', resourceTitle || 'New Whiteboard');
-                                localStorage.setItem('temp_whiteboard_data', whiteboardText || '');
-                                localStorage.setItem('is_returning_from_whiteboard', 'true');
+                                // 1. Store in Zustand (Memory - No Limit)
+                                setTempWhiteboard(whiteboardText, resourceTitle || 'New Whiteboard');
+
+                                // 2. Try LocalStorage (Persistence - 5MB Limit)
+                                try {
+                                    localStorage.setItem('temp_whiteboard_title', resourceTitle || 'New Whiteboard');
+                                    localStorage.setItem('temp_whiteboard_data', whiteboardText || '');
+                                    localStorage.setItem('is_returning_from_whiteboard', 'true');
+                                } catch (e) {
+                                    console.warn("LocalStorage quota exceeded, linking via memory store only.", e);
+                                    // Still set the flag so the return flow works
+                                    localStorage.setItem('is_returning_from_whiteboard', 'true');
+                                }
                                 navigate('/whiteboard/temp/new');
                             }}
                             className="bg-brand-cyan text-black px-8 py-4 rounded-2xl font-black uppercase tracking-widest hover:scale-105 transition-all shadow-glow-brand"

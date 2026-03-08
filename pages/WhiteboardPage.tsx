@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { AppContext } from '../App';
 import WhiteboardBlock from '../components/WhiteboardBlock';
 import { ArrowLeftIcon } from '../components/Icons';
+import { useCosmicStore } from '../store/useCosmicStore';
 
 const WhiteboardPage: React.FC = () => {
     const { type, id, subjectId, branchId } = useParams<{ type: string; id: string; subjectId?: string; branchId?: string }>();
@@ -12,12 +13,12 @@ const WhiteboardPage: React.FC = () => {
     const [whiteboardData, setWhiteboardData] = useState<string | undefined>(undefined);
     const [title, setTitle] = useState<string>('Whiteboard');
 
+    const { tempWhiteboardData, tempWhiteboardTitle, setTempWhiteboard } = useCosmicStore();
+
     useEffect(() => {
         if (type === 'lesson' && subjectId && branchId && id) {
             const lesson = getLesson(subjectId, branchId, id);
             if (lesson) {
-                // Find the first whiteboard block in this lesson if no block id is specified? 
-                // Or maybe id is the block id.
                 const block = lesson.content.find(b => b.id === id);
                 if (block) {
                     setWhiteboardData(block.whiteboardData);
@@ -25,11 +26,18 @@ const WhiteboardPage: React.FC = () => {
                 }
             }
         } else if (type === 'temp') {
-            // Load from localStorage if it's a new whiteboard being created
-            const saved = localStorage.getItem('temp_whiteboard_data');
-            if (saved) setWhiteboardData(saved);
+            // Priority: Zustand (Memory) -> LocalStorage (Persistence fallback)
+            if (tempWhiteboardData) {
+                setWhiteboardData(tempWhiteboardData);
+                if (tempWhiteboardTitle) setTitle(tempWhiteboardTitle);
+            } else {
+                const saved = localStorage.getItem('temp_whiteboard_data');
+                if (saved) setWhiteboardData(saved);
+                const savedTitle = localStorage.getItem('temp_whiteboard_title');
+                if (savedTitle) setTitle(savedTitle);
+            }
         }
-    }, [type, id, subjectId, branchId, getLesson]);
+    }, [type, id, subjectId, branchId, getLesson, tempWhiteboardData, tempWhiteboardTitle]);
 
     const handleSave = async (data: string) => {
         if (type === 'lesson' && subjectId && branchId && id) {
@@ -41,8 +49,17 @@ const WhiteboardPage: React.FC = () => {
                 await updateLesson(subjectId, branchId, { ...lesson, content: updatedContent });
             }
         } else if (type === 'temp') {
-            localStorage.setItem('temp_whiteboard_data', data);
-            localStorage.setItem('temp_whiteboard_title', title || '');
+            // 1. Save to Zustand (Memory - No limit, no immediate crash)
+            setTempWhiteboard(data, title);
+
+            // 2. Try saving to localStorage (Persistence - 5MB limit)
+            try {
+                localStorage.setItem('temp_whiteboard_data', data);
+                localStorage.setItem('temp_whiteboard_title', title || '');
+            } catch (e) {
+                // If quota exceeded, we still have it in Zustand memory for the return flow!
+                console.warn("LocalStorage quota exceeded, data will only persist in memory.", e);
+            }
         }
     };
 
