@@ -255,11 +255,6 @@ const ContentRenderer: React.FC<{
                     </div>
                 )}
 
-                {block.type === 'google-drive' && (
-                    <div className="w-full h-[600px] md:h-[800px] rounded-xl overflow-hidden bg-gray-900">
-                        <iframe src={block.content} className="w-full h-full border-0" loading="lazy" allowFullScreen={true} allow="fullscreen"></iframe>
-                    </div>
-                )}
 
                 {block.type === 'image' && (
                     <div className="flex justify-center rounded-xl overflow-hidden">
@@ -267,11 +262,6 @@ const ContentRenderer: React.FC<{
                     </div>
                 )}
 
-                {block.type === 'pdf' && (
-                    <div className="w-full h-[700px] md:h-[1000px] rounded-xl overflow-hidden">
-                        <iframe src={block.content} className="w-full h-full" loading="lazy" allowFullScreen={true} allow="fullscreen"></iframe>
-                    </div>
-                )}
 
                 {block.type === 'quiz' && (
                     <div className="flex flex-col gap-5">

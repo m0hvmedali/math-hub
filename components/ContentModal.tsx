@@ -1,4 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { AppContext } from '../App';
 import { ContentBlock, ContentType } from '../types';
 import { MarkdownIcon, ImageIcon, AudioIcon, VideoIcon, PdfIcon, LinkIcon, XIcon, WhiteboardIcon, NotebookLMIcon, FlashcardIcon, SparkleIcon, CheckCircleIcon, CodeIcon } from './Icons';
 import ReactMarkdown from 'react-markdown';
@@ -38,6 +40,8 @@ const getYoutubeEmbedUrl = (url: string): string | null => {
 };
 
 const ContentModal: React.FC<ContentModalProps> = ({ isOpen, onClose, onSave }) => {
+    const { language } = useContext(AppContext);
+    const navigate = useNavigate();
     const [contentType, setContentType] = useState<ContentType | 'magic'>('magic');
     const [magicLinkResult, setMagicLinkResult] = useState<MagicLinkResult | null>(null);
     const [markdown, setMarkdown] = useState('');
