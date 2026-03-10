@@ -41,7 +41,7 @@ const toEmbedUrl = (url: string, type: string): string => {
 
         // Google Drive file
         const driveMatch = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
-        if (driveMatch) return `https://docs.google.com/viewer?srcid=${driveMatch[1]}&embedded=true`;
+        if (driveMatch) return `https://drive.google.com/file/d/${driveMatch[1]}/preview`;
 
         // Google Sites — just use as-is
         if (url.includes('sites.google.com')) return url;

@@ -20,16 +20,24 @@ interface ContentModalProps {
 }
 
 const getGoogleDriveEmbedUrl = (url: string): string | null => {
-    // Standardize Drive Links to Viewer Mode
+    // Standardize Drive Links to modern Preview/Embed Mode
+    // Handle generic Drive file links
     const fileRegex = /drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/;
     const fileMatch = url.match(fileRegex);
     if (fileMatch && fileMatch[1]) {
-        return `https://docs.google.com/viewer?srcid=${fileMatch[1]}&embedded=true`;
+        return `https://drive.google.com/file/d/${fileMatch[1]}/preview`;
     }
+
+    // Handle Google Docs, Spreadsheets, and Presentations
     const docsRegex = /docs\.google\.com\/(document|spreadsheets|presentation)\/d\/([a-zA-Z0-9_-]+)/;
     const docsMatch = url.match(docsRegex);
     if (docsMatch && docsMatch[1] && docsMatch[2]) {
-        return `https://docs.google.com/viewer?srcid=${docsMatch[2]}&embedded=true`;
+        const kind = docsMatch[1];
+        const id = docsMatch[2];
+        if (kind === 'presentation') {
+            return `https://docs.google.com/presentation/d/${id}/embed?rm=minimal`;
+        }
+        return `https://docs.google.com/${kind}/d/${id}/preview?rm=minimal`;
     }
     return null;
 };
