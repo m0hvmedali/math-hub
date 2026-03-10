@@ -34,7 +34,7 @@ interface WhiteboardBlockProps {
 
 const WhiteboardBlock: React.FC<WhiteboardBlockProps> = ({ savedData, onSave, onClose, title, onSetHasChanges }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
-    const fabricRef = useRef<Canvas | null>(null);
+    const fabricRef = useRef<InstanceType<typeof Canvas> | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
 
     // Tools State
@@ -305,8 +305,8 @@ const WhiteboardBlock: React.FC<WhiteboardBlockProps> = ({ savedData, onSave, on
                                 top: 0,
                                 scaleX: 1200 / canvas.width,
                                 scaleY: 800 / canvas.height,
-                                selectable: false,
-                                evented: false
+                                selectable: true,
+                                evented: true
                             }],
                             background: '#0a0a0a'
                         }
@@ -315,6 +315,7 @@ const WhiteboardBlock: React.FC<WhiteboardBlockProps> = ({ savedData, onSave, on
 
                 setPages(prev => [...prev, ...newPages]);
                 setCurrentPageIndex(pages.length); // Jump to first new PDF page
+                setActiveTool('select'); // Auto-switch to select tool so they can move the PDF
             };
             reader.readAsArrayBuffer(file);
         } catch (err) {
@@ -332,9 +333,10 @@ const WhiteboardBlock: React.FC<WhiteboardBlockProps> = ({ savedData, onSave, on
             const img = await FabricImage.fromURL(url, { crossOrigin: 'anonymous' });
             img.scaleToWidth(400);
             fabricRef.current.add(img);
-            fabricRef.current.centerObject(img);
-            fabricRef.current.setActiveObject(img);
+            fabricRef.current.centerObject(img as any);
+            fabricRef.current.setActiveObject(img as any);
             fabricRef.current.renderAll();
+            setActiveTool('select'); // Switch to select to allow immediate moving/resizing
         } catch (err) {
             console.error('Failed to load image:', err);
         }
@@ -364,10 +366,11 @@ const WhiteboardBlock: React.FC<WhiteboardBlockProps> = ({ savedData, onSave, on
     const [pointerPos, setPointerPos] = useState({ x: 100, y: 100 });
     const [showTools, setShowTools] = useState(true);
     const [isPaletteOpen, setIsPaletteOpen] = useState(false);
+    const [isPinned, setIsPinned] = useState(false); // New state to pin toolbar
 
-    // Track mouse movement for floating toolbar - ONLY when closed
+    // Track mouse movement for floating toolbar - ONLY when closed and NOT pinned
     useEffect(() => {
-        if (isPaletteOpen) return;
+        if (isPaletteOpen || isPinned) return;
 
         const handleMouseMove = (e: MouseEvent) => {
             // Smoothly move the magic button
@@ -375,7 +378,7 @@ const WhiteboardBlock: React.FC<WhiteboardBlockProps> = ({ savedData, onSave, on
         };
         window.addEventListener('mousemove', handleMouseMove);
         return () => window.removeEventListener('mousemove', handleMouseMove);
-    }, [isPaletteOpen]);
+    }, [isPaletteOpen, isPinned]);
 
     return (
         <div className={`flex flex-col w-full bg-[#0a0a0a] rounded-2xl overflow-hidden border border-white/10 transition-all ${isFullscreen ? 'fixed inset-0 z-[100]' : 'relative'}`}>
@@ -482,7 +485,16 @@ const WhiteboardBlock: React.FC<WhiteboardBlockProps> = ({ savedData, onSave, on
                             /* EXPANDED PALETTE - Locked in Position */
                             <div className={`pointer-events-auto flex flex-col gap-1.5 p-2 bg-[#0d0d0d]/95 backdrop-blur-3xl border border-white/10 rounded-2xl shadow-[0_30px_60px_rgba(0,0,0,0.8)] border-l-brand-purple border-l-4 group ${isMobile ? 'scale-90' : ''}`}>
                                 <div className="flex items-center justify-between gap-4 mb-1 border-b border-white/5 pb-1 select-none">
-                                    <span className="text-[9px] font-black text-white/50 uppercase tracking-widest pl-1">Tools</span>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[9px] font-black text-white/50 uppercase tracking-widest pl-1">Tools</span>
+                                        <button
+                                            onClick={() => setIsPinned(!isPinned)}
+                                            className={`p-1 rounded-md text-[10px] transition-colors ${isPinned ? 'text-brand-purple bg-brand-purple/20' : 'text-white/40 hover:text-white hover:bg-white/10'}`}
+                                            title="Pin Toolbar"
+                                        >
+                                            📌
+                                        </button>
+                                    </div>
                                     <button
                                         onClick={() => setIsPaletteOpen(false)}
                                         className="p-1 hover:bg-white/10 rounded-md text-[10px] text-white/40 hover:text-white transition-colors"
