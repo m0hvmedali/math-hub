@@ -318,7 +318,7 @@ const ContentRenderer: React.FC<{
                             {language === 'ar' ? 'اضغط للبدء في الرسم أو الإكمال من حيث توقفت.' : 'Click to start sketching or continue where you left off.'}
                         </p>
                         <button
-                            onClick={() => navigate(`/whiteboard/lesson/${block.id}/${subjectId}/${branchId}`)}
+                            onClick={() => navigate(`/whiteboard/lesson/${block.id}/${subjectId}/${branchId}/${lessonId}`)}
                             className="bg-brand-purple text-white px-8 py-3 rounded-xl font-bold uppercase tracking-widest hover:scale-105 transition-all shadow-glow-brand border border-brand-purple/50"
                         >
                             {language === 'ar' ? 'فتح السبورة 🚀' : 'Open Whiteboard 🚀'}
@@ -428,7 +428,7 @@ const BranchPage: React.FC = () => {
     useEffect(() => {
         if (subject) {
             if (subject.themeColor) applySubjectTheme(subject);
-            else applySubjectTheme(randomTheme);
+            else applySubjectTheme(randomTheme as any);
         }
         return () => resetTheme();
     }, [subject, randomTheme, applySubjectTheme, resetTheme]);

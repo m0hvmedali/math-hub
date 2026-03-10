@@ -607,7 +607,7 @@ const App: React.FC = () => {
                         <Route path="/subject/:subjectId" element={<ProtectedRoute><SubjectPage /></ProtectedRoute>} />
                         <Route path="/subject/:subjectId/branch/:branchId/lesson/:lessonId" element={<ProtectedRoute><BranchPage /></ProtectedRoute>} />
                         <Route path="/whiteboard/:type/:id" element={<ProtectedRoute><WhiteboardPage /></ProtectedRoute>} />
-                        <Route path="/whiteboard/:type/:id/:subjectId/:branchId" element={<ProtectedRoute><WhiteboardPage /></ProtectedRoute>} />
+                        <Route path="/whiteboard/:type/:id/:subjectId/:branchId/:lessonId" element={<ProtectedRoute><WhiteboardPage /></ProtectedRoute>} />
                         <Route path="/profile" element={<ProtectedRoute><AnalyticsPage /></ProtectedRoute>} />
                         <Route path="/wishes" element={<ProtectedRoute><WishesPage /></ProtectedRoute>} />
                         <Route path="/schedule" element={<ProtectedRoute><SchedulePage /></ProtectedRoute>} />

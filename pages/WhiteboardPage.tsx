@@ -6,7 +6,7 @@ import { ArrowLeftIcon } from '../components/Icons';
 import { useCosmicStore } from '../store/useCosmicStore';
 
 const WhiteboardPage: React.FC = () => {
-    const { type, id, subjectId, branchId } = useParams<{ type: string; id: string; subjectId?: string; branchId?: string }>();
+    const { type, id, subjectId, branchId, lessonId } = useParams<{ type: string; id: string; subjectId?: string; branchId?: string; lessonId?: string }>();
     const { getLesson, updateLesson, language } = useContext(AppContext);
     const navigate = useNavigate();
 
@@ -16,8 +16,8 @@ const WhiteboardPage: React.FC = () => {
     const { tempWhiteboardData, tempWhiteboardTitle, setTempWhiteboard } = useCosmicStore();
 
     useEffect(() => {
-        if (type === 'lesson' && subjectId && branchId && id) {
-            const lesson = getLesson(subjectId, branchId, id);
+        if (type === 'lesson' && subjectId && branchId && lessonId && id) {
+            const lesson = getLesson(subjectId, branchId, lessonId);
             if (lesson) {
                 const block = lesson.content.find(b => b.id === id);
                 if (block) {
@@ -40,8 +40,8 @@ const WhiteboardPage: React.FC = () => {
     }, [type, id, subjectId, branchId, getLesson, tempWhiteboardData, tempWhiteboardTitle]);
 
     const handleSave = async (data: string) => {
-        if (type === 'lesson' && subjectId && branchId && id) {
-            const lesson = getLesson(subjectId, branchId, id);
+        if (type === 'lesson' && subjectId && branchId && lessonId && id) {
+            const lesson = getLesson(subjectId, branchId, lessonId);
             if (lesson) {
                 const updatedContent = lesson.content.map(b =>
                     b.id === id ? { ...b, whiteboardData: data } : b
@@ -64,8 +64,8 @@ const WhiteboardPage: React.FC = () => {
     };
 
     const handleClose = () => {
-        if (type === 'lesson' && subjectId && branchId) {
-            navigate(`/subject/${subjectId}/branch/${branchId}/lesson/${id}`);
+        if (type === 'lesson' && subjectId && branchId && lessonId) {
+            navigate(`/subject/${subjectId}/branch/${branchId}/lesson/${lessonId}`);
         } else {
             navigate(-1);
         }
