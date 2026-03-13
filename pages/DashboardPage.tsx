@@ -99,34 +99,7 @@ const DashboardPage: React.FC = () => {
     const [isStudying, setIsStudying] = useState(false);
     const [startTime, setStartTime] = useState<number | null>(null);
 
-    // Debounced DuckDuckGo Integration
-    useEffect(() => {
-        if (!searchQuery.trim() || searchQuery.length < 3) return;
-
-        const timer = setTimeout(async () => {
-            try {
-                const response = await fetchTavilyResults(`${searchQuery} ثانوية عامة`, user);
-                if (response && response.results) {
-                    response.results.slice(0, 3).forEach(res => {
-                        useCosmicStore.getState().addTempNode({
-                            id: crypto.randomUUID(),
-                            name: res.title,
-                            type: 'temp',
-                            parentId: subjects[0]?.id,
-                            url: res.url,
-                            color: '#fbbf24',
-                            val: 12
-                        });
-                    });
-                }
-            } catch (e) {
-                console.warn("AI Search limit reached or failed");
-            }
-        }, 1000);
-
-        return () => clearTimeout(timer);
-    }, [searchQuery, subjects]);
-
+    // Space for effects if needed later
     useEffect(() => {
         const hour = new Date().getHours();
         if (hour < 12) setGreeting('Good Morning');

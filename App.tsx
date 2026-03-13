@@ -23,6 +23,7 @@ import AlkanesLab from './pages/AlkanesLab';
 import LabsPage from './pages/LabsPage';
 import ExplainLessonPage from './pages/ExplainLessonPage';
 import SettingsPage from './pages/SettingsPage';
+import HistoryPage from './pages/HistoryPage';
 import { useCosmicStore } from './store/useCosmicStore';
 import { supabase, isSupabaseConfigured } from './supabaseClient';
 import { rebuildSearchIndex, searchRadar, SearchResult, fetchTavilyResults } from './utils/searchRadar';
@@ -539,29 +540,6 @@ const App: React.FC = () => {
         }]);
         if (!error) {
             fetchData();
-
-            // DuckDuckGo Integration Trigger
-            const subject = subjects.find(s => s.branches.some(b => b.lessons.some(l => l.id === lessonId)));
-            if (subject) {
-                try {
-                    const response = await fetchTavilyResults(`${subject.name} ثانوية عامة`, user);
-                    if (response && response.results) {
-                        response.results.forEach(res => {
-                            useCosmicStore.getState().addTempNode({
-                                id: crypto.randomUUID(),
-                                name: res.title,
-                                type: 'temp',
-                                parentId: subject.id,
-                                url: res.url,
-                                color: '#fbbf24',
-                                val: 12
-                            });
-                        });
-                    }
-                } catch (e) {
-                    console.warn("AI Search limit reached or failed");
-                }
-            }
         }
     };
 
@@ -658,6 +636,7 @@ const App: React.FC = () => {
                         <Route path="/labs/function" element={<ProtectedRoute><DynamoLab /></ProtectedRoute>} />
                         <Route path="/labs/alkanes" element={<ProtectedRoute><AlkanesLab /></ProtectedRoute>} />
                         <Route path="/explain" element={<ProtectedRoute><ExplainLessonPage /></ProtectedRoute>} />
+                        <Route path="/history" element={<ProtectedRoute><HistoryPage /></ProtectedRoute>} />
                         <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
                         <Route path="*" element={<Navigate to={user ? "/" : "/login"} />} />
                     </Routes>

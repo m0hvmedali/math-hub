@@ -2,6 +2,7 @@ import React, { useEffect, useState, useContext } from 'react';
 import { XIcon, GlobeIcon, LinkIcon, PlusIcon, SparkleIcon } from './Icons';
 import { fetchTavilyResults, checkSearchLimit, TavilyResult } from '../utils/searchRadar';
 import { AppContext } from '../App';
+import { useCosmicStore } from '../store/useCosmicStore';
 
 interface GlobalSearchModalProps {
     isOpen: boolean;
@@ -13,55 +14,62 @@ interface GlobalSearchModalProps {
 }
 
 const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, onClose, query, initialQuery, embeddedMode, onResultSelect }) => {
-    const { user } = useContext(AppContext) as any;
+    const { user, subjects } = useContext(AppContext) as any;
+    const [searchTerm, setSearchTerm] = useState(query || initialQuery || '');
     const [results, setResults] = useState<TavilyResult[]>([]);
-    const [aiAnswer, setAiAnswer] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [usage, setUsage] = useState({ allowed: true, remaining: 10 });
     
-    const searchTerms = query || initialQuery;
-
     useEffect(() => {
         if (isOpen && user) {
             setUsage(checkSearchLimit(user));
+            // Sync internal state with props if provided
+            if (query || initialQuery) setSearchTerm((query || initialQuery) as string);
         }
-    }, [isOpen, user]);
+    }, [isOpen, user, query, initialQuery]);
 
-    useEffect(() => {
-        if (!isOpen || !searchTerms || !user) return;
+    const performSearch = async () => {
+        if (!searchTerm.trim() || !user) return;
 
-        const performSearch = async () => {
-            const limit = checkSearchLimit(user);
-            if (!limit.allowed) {
+        const limit = checkSearchLimit(user);
+        if (!limit.allowed) {
+            setError('LIMIT_EXCEEDED');
+            return;
+        }
+
+        setIsLoading(true);
+        setError(null);
+        
+        try {
+            const response = await fetchTavilyResults(searchTerm, user);
+            if (response && response.results) {
+                setResults(response.results);
+                
+                // 🚀 AUTO-INJECTION: Add all results as temp nodes immediately
+                response.results.forEach(res => {
+                    useCosmicStore.getState().addTempNode({
+                        id: crypto.randomUUID(),
+                        name: res.title,
+                        type: 'temp',
+                        parentId: subjects[0]?.id || 'root', 
+                        url: res.url,
+                        color: '#fbbf24',
+                        val: 12
+                    });
+                });
+            }
+            setUsage(checkSearchLimit(user));
+        } catch (err: any) {
+            if (err.message === 'LIMIT_EXCEEDED') {
                 setError('LIMIT_EXCEEDED');
-                return;
+            } else {
+                setError('FAILED');
             }
-
-            setIsLoading(true);
-            setError(null);
-            setAiAnswer(null);
-            
-            try {
-                const response = await fetchTavilyResults(searchTerms, user);
-                if (response) {
-                    setResults(response.results);
-                    setAiAnswer(response.answer || null);
-                }
-                setUsage(checkSearchLimit(user));
-            } catch (err: any) {
-                if (err.message === 'LIMIT_EXCEEDED') {
-                    setError('LIMIT_EXCEEDED');
-                } else {
-                    setError('FAILED');
-                }
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        performSearch();
-    }, [isOpen, searchTerms, user]);
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     if (!isOpen) return null;
 
@@ -69,18 +77,39 @@ const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, onClose, 
         <div className={`relative w-full ${embeddedMode ? 'h-full' : 'max-w-5xl h-[85vh]'} bg-white/10 backdrop-blur-2xl border border-white/20 rounded-[2.5rem] overflow-hidden shadow-2xl animate-scale-up flex flex-col`}>
                 {/* Header */}
                 <div className="px-8 py-6 flex items-center justify-between border-b border-white/10">
-                    <div>
-                        <div className="flex items-center gap-3 mb-1">
+                    <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-4">
                              <SparkleIcon className="w-5 h-5 text-accent-blue animate-pulse" />
                              <h2 className="text-2xl font-black text-white tracking-tight">
                                 {localStorage.getItem('language') === 'ar' ? 'ذكاء البحث العالمي' : 'Global AI Intelligence'}
                             </h2>
                         </div>
-                        <p className="text-xs text-accent-blue/60 font-medium uppercase tracking-widest">Tavily Neural Network Active</p>
+                        
+                        {/* Search Input Area */}
+                        <div className="flex gap-4 max-w-2xl">
+                            <input 
+                                type="text"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && performSearch()}
+                                placeholder={localStorage.getItem('language') === 'ar' ? 'عن ماذا تبحث؟' : 'What are you looking for?'}
+                                className="flex-1 px-6 py-4 bg-white/5 border border-white/10 rounded-2xl text-white outline-none focus:border-accent-blue/50 transition-all font-bold"
+                            />
+                            <button 
+                                onClick={performSearch}
+                                disabled={isLoading || !searchTerm.trim()}
+                                className="px-8 bg-accent-blue text-white rounded-2xl font-black uppercase tracking-widest text-xs hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:scale-100 flex items-center gap-3 shadow-lg shadow-accent-blue/20"
+                            >
+                                {isLoading ? (
+                                    <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+                                ) : <GlobeIcon className="w-5 h-5" />}
+                                {localStorage.getItem('language') === 'ar' ? 'بحث' : 'Search'}
+                            </button>
+                        </div>
                     </div>
                     <button
                         onClick={onClose}
-                        className="p-3 bg-white/5 hover:bg-white/10 text-white rounded-2xl transition-all"
+                        className="p-3 bg-white/5 hover:bg-white/10 text-white rounded-2xl transition-all self-start"
                     >
                         <XIcon className="w-6 h-6" />
                     </button>
@@ -116,26 +145,13 @@ const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, onClose, 
                         </div>
                     ) : (
                         <>
-                            {/* AI Answer Box */}
-                            {aiAnswer && (
-                                <div className="p-8 bg-accent-blue/5 border border-accent-blue/20 rounded-[2rem] relative overflow-hidden group">
-                                    <div className="absolute top-0 right-0 p-4 opacity-10">
-                                        <SparkleIcon className="w-20 h-20 text-accent-blue" />
-                                    </div>
-                                    <h4 className="text-accent-blue font-black uppercase tracking-widest text-[10px] mb-4 flex items-center gap-2">
-                                        <SparkleIcon className="w-3 h-3" />
-                                        AI Summary
-                                    </h4>
-                                    <p className="text-lg text-white/90 leading-relaxed font-medium">
-                                        {aiAnswer}
-                                    </p>
-                                </div>
-                            )}
-
                             {/* Search Results */}
                             {results.length > 0 ? (
                                 <div className="grid grid-cols-1 gap-4">
-                                    <div className="text-white/40 font-black uppercase tracking-widest text-[10px] mb-2 px-2">Verified Sources</div>
+                                    <div className="flex items-center justify-between mb-2 px-2">
+                                        <div className="text-white/40 font-black uppercase tracking-widest text-[10px]">Verified Sources (Auto-Injected)</div>
+                                        <div className="text-emerald-400 font-bold text-[10px] uppercase animate-pulse">Graph Updated Successfully</div>
+                                    </div>
                                     {results.map((res, i) => (
                                         <a
                                             key={i}
@@ -177,12 +193,12 @@ const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, onClose, 
                                         <GlobeIcon className="w-10 h-10 text-white/20" />
                                     </div>
                                     <div className="text-white/40 text-xl font-bold mb-4">
-                                        {localStorage.getItem('language') === 'ar' ? 'لم يتم العثور على بيانات' : 'No data discovered'}
+                                        {localStorage.getItem('language') === 'ar' ? 'بانتظار استعلامك' : 'Awaiting Query'}
                                     </div>
                                     <p className="text-sm text-white/20 max-w-md mx-auto mb-8">
                                         {localStorage.getItem('language') === 'ar' 
-                                            ? 'حاول تبسيط الكلمات المفتاحية للحصول على نتائج أدق من الشبكة العالمية.' 
-                                            : 'Try simplifying your query for deeper neural scanning results.'}
+                                            ? 'ادخل موضوع البحث واضغط انتر لبدء المسح العصبي للشبكة العالمية.' 
+                                            : 'Enter a topic and hit search to begin deep neural scanning.'}
                                     </p>
                                 </div>
                             )}

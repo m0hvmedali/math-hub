@@ -172,15 +172,15 @@ export const fetchTavilyResults = async (query: string, user: string): Promise<T
     }
 
     try {
-        console.log("🚀 AI Search: Querying Tavily Neural Network...");
+        console.log("🚀 AI Search: Manual Query Triggered...");
         const response = await fetch('https://api.tavily.com/search', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 api_key: TAVILY_API_KEY,
                 query: `${query} ثانوية عامة مصر`,
-                search_depth: "advanced",
-                include_answer: true,
+                search_depth: "basic", // Switched to basic to save units
+                include_answer: false, // Disabled to save units as requested
                 max_results: 5
             })
         });
@@ -188,18 +188,51 @@ export const fetchTavilyResults = async (query: string, user: string): Promise<T
         if (!response.ok) throw new Error(`Tavily HTTP Error ${response.status}`);
         
         const data = await response.json();
+        const results = (data.results || []).map((r: any) => ({
+            title: r.title,
+            url: r.url,
+            content: r.content
+        }));
+
         incrementSearchUsage(user);
+        saveSearchToHistory(user, query, results);
 
         return {
-            answer: data.answer,
-            results: (data.results || []).map((r: any) => ({
-                title: r.title,
-                url: r.url,
-                content: r.content
-            }))
+            results
         };
     } catch (error) {
         console.error("❌ AI Search Error:", error);
         return null;
     }
+};
+
+export interface HistoryItem {
+    id: string;
+    query: string;
+    timestamp: number;
+    results: TavilyResult[];
+}
+
+export const saveSearchToHistory = (user: string, query: string, results: TavilyResult[]) => {
+    const historyKey = `search_history_${user}`;
+    const history: HistoryItem[] = JSON.parse(localStorage.getItem(historyKey) || '[]');
+    
+    const newItem: HistoryItem = {
+        id: crypto.randomUUID(),
+        query,
+        timestamp: Date.now(),
+        results
+    };
+
+    const updatedHistory = [newItem, ...history].slice(0, 50); // Keep last 50
+    localStorage.setItem(historyKey, JSON.stringify(updatedHistory));
+};
+
+export const getSearchHistory = (user: string): HistoryItem[] => {
+    const historyKey = `search_history_${user}`;
+    return JSON.parse(localStorage.getItem(historyKey) || '[]');
+};
+
+export const clearSearchHistory = (user: string) => {
+    localStorage.removeItem(`search_history_${user}`);
 };
