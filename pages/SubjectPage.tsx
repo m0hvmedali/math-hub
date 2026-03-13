@@ -1,7 +1,7 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AppContext } from '../App';
-import { ArrowLeftIcon, PlusIcon, BookOpenIcon, ClockIcon } from '../components/Icons';
+import { ArrowLeftIcon, PlusIcon, BookOpenIcon, ClockIcon, TrashIcon } from '../components/Icons';
 import { supabase } from '../supabaseClient';
 import Sidebar from '../components/Sidebar';
 import CourseCard from '../components/CourseCard';
@@ -9,7 +9,7 @@ import { detectMagicLink } from '../utils/detectMagicLink';
 
 const SubjectPage: React.FC = () => {
     const { subjectId } = useParams<{ subjectId: string }>();
-    const { getSubject, addBranchToSubject, addLessonToBranch, language, user } = useContext(AppContext) as any;
+    const { getSubject, addBranchToSubject, updateCourseBranch, deleteCourseBranch, addLessonToBranch, deleteLesson, language, user } = useContext(AppContext) as any;
     const navigate = useNavigate();
 
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -18,6 +18,7 @@ const SubjectPage: React.FC = () => {
     const [addLessonBranchId, setAddLessonBranchId] = useState<string | null>(null);
     const [newLessonName, setNewLessonName] = useState('');
     const [magicUrl, setMagicUrl] = useState('');
+    const [editingBranch, setEditingBranch] = useState<{ id: string, name: string } | null>(null);
 
     const subject = getSubject(subjectId!);
 
@@ -158,10 +159,62 @@ const SubjectPage: React.FC = () => {
                         {subject.branches?.map((branch, index) => (
                             <section key={branch.id} className="w-full">
                                 <div className="flex items-center justify-between mb-6 gap-4">
-                                    <h2 className="text-2xl md:text-3xl font-bold text-white flex items-center gap-3">
-                                        <span className="text-gray-500 text-xl font-medium">{index + 1}.</span> {branch.name}
-                                    </h2>
-                                    {isOwner && (
+                                    {editingBranch?.id === branch.id ? (
+                                        <div className="flex-1 flex gap-2">
+                                            <input
+                                                type="text"
+                                                value={editingBranch.name}
+                                                onChange={(e) => setEditingBranch({ ...editingBranch, name: e.target.value })}
+                                                onKeyDown={async (e) => {
+                                                    if (e.key === 'Enter') {
+                                                        if (editingBranch.name.trim()) {
+                                                            await updateCourseBranch(subject.id, branch.id, editingBranch.name.trim());
+                                                            setEditingBranch(null);
+                                                        }
+                                                    }
+                                                }}
+                                                className="bg-[#121212] border border-brand-cyan/50 text-white px-4 py-2 rounded-xl focus:outline-none focus:border-brand-cyan transition-all w-full max-w-sm"
+                                                autoFocus
+                                            />
+                                            <button onClick={() => setEditingBranch(null)} className="px-3 text-gray-400 hover:text-white text-sm">
+                                                {language === 'ar' ? 'إلغاء' : 'Cancel'}
+                                            </button>
+                                            <button onClick={async () => {
+                                                if (editingBranch.name.trim()) {
+                                                    await updateCourseBranch(subject.id, branch.id, editingBranch.name.trim());
+                                                    setEditingBranch(null);
+                                                }
+                                            }} className="px-4 bg-brand-cyan text-white text-sm font-bold rounded-xl hover:bg-brand-cyan/80">
+                                                {language === 'ar' ? 'حفظ' : 'Save'}
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center gap-3">
+                                            <h2 className="text-2xl md:text-3xl font-bold text-white flex items-center gap-3">
+                                                <span className="text-gray-500 text-xl font-medium">{index + 1}.</span> {branch.name}
+                                            </h2>
+                                            {isOwner && (
+                                                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity" style={{ opacity: 1 /* override for mobile/easier UX */ }}>
+                                                    <button
+                                                        onClick={() => setEditingBranch({ id: branch.id, name: branch.name })}
+                                                        className="p-1.5 text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
+                                                        title="Edit Branch"
+                                                    >
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                                    </button>
+                                                    <button
+                                                        onClick={() => deleteCourseBranch(subject.id, branch.id)}
+                                                        className="p-1.5 text-gray-400 hover:text-red-500 bg-white/5 hover:bg-red-500/10 rounded-lg transition-colors"
+                                                        title="Delete Branch"
+                                                    >
+                                                        <TrashIcon className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+
+                                    {isOwner && editingBranch?.id !== branch.id && (
                                         <div className="flex items-center gap-4 shrink-0">
                                             {/* Magic Add Input */}
                                             <div className="hidden md:flex items-center relative group">
@@ -218,6 +271,7 @@ const SubjectPage: React.FC = () => {
                                                     link={`/subject/${subject.id}/branch/${branch.id}/lesson/${lesson.id}`}
                                                     badgeText={lesson.status === 'completed' ? (language === 'ar' ? 'مكتمل' : 'Done') : undefined}
                                                     progress={lesson.status === 'completed' ? 100 : (lesson.status === 'in_progress' ? 50 : 0)}
+                                                    onDelete={isOwner ? () => deleteLesson(subject.id, branch.id, lesson.id) : undefined}
                                                 />
                                             </div>
                                         ))}

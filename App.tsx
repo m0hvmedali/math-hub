@@ -39,6 +39,8 @@ export const AppContext = createContext<{
     getSubject: (subjectId: string) => Subject | undefined;
     getCourseBranch: (subjectId: string, branchId: string) => CourseBranch | undefined;
     getLesson: (subjectId: string, branchId: string, lessonId: string) => Lesson | undefined;
+    updateSubject: (subjectId: string, newName: string) => Promise<void>;
+    updateCourseBranch: (subjectId: string, branchId: string, newName: string) => Promise<void>;
     deleteSubject: (subjectId: string) => Promise<void>;
     deleteCourseBranch: (subjectId: string, branchId: string) => Promise<void>;
     deleteLesson: (subjectId: string, branchId: string, lessonId: string) => Promise<void>;
@@ -73,6 +75,8 @@ export const AppContext = createContext<{
     getSubject: () => undefined,
     getCourseBranch: () => undefined,
     getLesson: () => undefined,
+    updateSubject: async () => { },
+    updateCourseBranch: async () => { },
     deleteSubject: async () => { },
     deleteCourseBranch: async () => { },
     deleteLesson: async () => { },
@@ -407,6 +411,33 @@ const App: React.FC = () => {
         }
     };
 
+    const updateSubject = async (subjectId: string, newName: string) => {
+        if (!supabase) return;
+
+        setSubjects(prev => prev.map(s => s.id === subjectId ? { ...s, name: newName } : s));
+
+        const { error } = await supabase.from('subjects').update({ name: newName }).eq('id', subjectId);
+        if (error) {
+            console.error(error);
+            fetchData();
+        }
+    };
+
+    const updateCourseBranch = async (subjectId: string, branchId: string, newName: string) => {
+        if (!supabase) return;
+
+        setSubjects(prev => prev.map(s => s.id === subjectId ? {
+            ...s,
+            branches: s.branches.map(b => b.id === branchId ? { ...b, name: newName } : b)
+        } : s));
+
+        const { error } = await supabase.from('branches').update({ name: newName }).eq('id', branchId);
+        if (error) {
+            console.error(error);
+            fetchData();
+        }
+    };
+
     const deleteSubject = async (subjectId: string) => {
         if (!supabase || !window.confirm("Delete entire subject?")) return;
 
@@ -579,7 +610,7 @@ const App: React.FC = () => {
             language, setLanguage,
             theme, toggleTheme,
             addSubject, addBranchToSubject, addLessonToBranch,
-            updateLesson, deleteSubject, deleteCourseBranch, deleteLesson,
+            updateLesson, updateSubject, updateCourseBranch, deleteSubject, deleteCourseBranch, deleteLesson,
             getSubject, getCourseBranch, getLesson,
             studySessions, tasks, knowledgeErrors, addStudySession, addTask, updateTask,
             logKnowledgeError,

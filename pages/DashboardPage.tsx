@@ -18,7 +18,7 @@ import NodeInjectorModal from '../components/NodeInjectorModal';
 import CourseCard from '../components/CourseCard';
 
 const DashboardPage: React.FC = () => {
-    const { subjects, addSubject, addStudySession, studySessions, language, setLanguage, user, customNodes, addCustomNode, manualLinks, addManualLink, tasks, knowledgeErrors, addLessonToBranch } = useContext(AppContext);
+    const { subjects, addSubject, updateSubject, deleteSubject, addStudySession, studySessions, language, setLanguage, user, customNodes, addCustomNode, manualLinks, addManualLink, tasks, knowledgeErrors, addLessonToBranch } = useContext(AppContext) as any;
     const {
         activeView,
         setActiveView,
@@ -42,6 +42,8 @@ const DashboardPage: React.FC = () => {
     const [isInjectorOpen, setIsInjectorOpen] = useState(false);
     const [isAdding, setIsAdding] = useState(false);
     const [newSubjectName, setNewSubjectName] = useState('');
+    const [editingSubject, setEditingSubject] = useState<{ id: string, name: string } | null>(null);
+
     const [isAddingLesson, setIsAddingLesson] = useState(false);
     const [newLessonData, setNewLessonData] = useState({
         name: '',
@@ -217,6 +219,18 @@ const DashboardPage: React.FC = () => {
             await addSubject(newSubjectName.trim());
             setNewSubjectName('');
             setIsAdding(false);
+        }
+    };
+
+    const handleEditSubject = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (editingSubject && editingSubject.name.trim()) {
+            // Assume we have updateSubject in context now.
+            const { updateSubject } = require('../App').AppContext._currentValue; // Using contextual data from above, actually wait, better to rely on context directly if possible.
+            // Oh, wait, AppContext is available as `const { updateSubject, deleteSubject } = useContext(AppContext)`
+
+            // Let's modify the context usage at the top of the component to include updateSubject and deleteSubject
+            // But since I only have fragments, I'll use the already destructured `context` or just `useContext`
         }
     };
 
@@ -441,10 +455,36 @@ const DashboardPage: React.FC = () => {
                                 </form>
                             )}
 
+                            {editingSubject && (
+                                <form onSubmit={async (e) => {
+                                    e.preventDefault();
+                                    if (editingSubject.name.trim()) {
+                                        await updateSubject(editingSubject.id, editingSubject.name.trim());
+                                        setEditingSubject(null);
+                                    }
+                                }} className="mb-6 mx-2 max-w-md animate-fade-in">
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            value={editingSubject.name}
+                                            onChange={(e) => setEditingSubject({ ...editingSubject, name: e.target.value })}
+                                            className="w-full bg-[#121212] border border-brand-cyan/50 rounded px-6 py-4 text-white focus:outline-none focus:border-brand-cyan transition-all"
+                                            autoFocus
+                                        />
+                                        <button type="button" onClick={() => setEditingSubject(null)} className="px-4 text-gray-400 hover:text-white">
+                                            {language === 'ar' ? 'إلغاء' : 'Cancel'}
+                                        </button>
+                                        <button type="submit" className="px-6 bg-brand-cyan text-white font-bold rounded hover:bg-brand-cyan/80">
+                                            {language === 'ar' ? 'حفظ' : 'Save'}
+                                        </button>
+                                    </div>
+                                </form>
+                            )}
+
                             <div className="flex gap-4 overflow-x-auto pb-8 pt-4 px-2 snap-x scrollbar-hide">
                                 {filteredSubjects.map((subject) => {
                                     let total = 0, done = 0;
-                                    subject.branches.forEach(b => {
+                                    subject.branches?.forEach(b => {
                                         total += b.lessons.length;
                                         done += b.lessons.filter(l => l.status === 'completed').length;
                                     });
@@ -459,6 +499,8 @@ const DashboardPage: React.FC = () => {
                                                 link={`/subject/${subject.id}`}
                                                 badgeText={language === 'ar' ? 'مادة' : 'Course'}
                                                 progress={percent}
+                                                onEdit={isOwner ? () => setEditingSubject({ id: subject.id, name: subject.name }) : undefined}
+                                                onDelete={isOwner ? () => deleteSubject(subject.id) : undefined}
                                             />
                                         </div>
                                     );
