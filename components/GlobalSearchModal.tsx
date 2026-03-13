@@ -1,40 +1,38 @@
 import React, { useEffect, useState } from 'react';
-import { XIcon, GlobeIcon, LinkIcon } from './Icons';
+import { XIcon, GlobeIcon, LinkIcon, PlusIcon } from './Icons';
 import { fetchDuckDuckGoResults } from '../utils/searchRadar';
 
 interface GlobalSearchModalProps {
     isOpen: boolean;
     onClose: () => void;
-    query: string;
+    query?: string;
+    initialQuery?: string;
+    embeddedMode?: boolean;
+    onResultSelect?: (result: { title: string; url: string }) => void;
 }
 
-const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, onClose, query }) => {
+const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, onClose, query, initialQuery, embeddedMode, onResultSelect }) => {
     const [results, setResults] = useState<Array<{ title: string; url: string }>>([]);
     const [isLoading, setIsLoading] = useState(false);
+    const searchTerms = query || initialQuery;
 
     useEffect(() => {
-        if (!isOpen || !query) return;
+        if (!isOpen || !searchTerms) return;
 
         const performSearch = async () => {
             setIsLoading(true);
-            const ddgResults = await fetchDuckDuckGoResults(`${query} ثانوية عامة`);
+            const ddgResults = await fetchDuckDuckGoResults(`${searchTerms} ثانوية عامة`);
             setResults(ddgResults);
             setIsLoading(false);
         };
 
         performSearch();
-    }, [isOpen, query]);
+    }, [isOpen, searchTerms]);
 
     if (!isOpen) return null;
 
-    return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8">
-            <div
-                className="absolute inset-0 bg-black/60 backdrop-blur-md animate-fade-in"
-                onClick={onClose}
-            ></div>
-
-            <div className="relative w-full max-w-5xl h-[85vh] bg-white/10 backdrop-blur-2xl border border-white/20 rounded-[2.5rem] overflow-hidden shadow-2xl animate-scale-up flex flex-col">
+    const modalContent = (
+        <div className={`relative w-full ${embeddedMode ? 'h-full' : 'max-w-5xl h-[85vh]'} bg-white/10 backdrop-blur-2xl border border-white/20 rounded-[2.5rem] overflow-hidden shadow-2xl animate-scale-up flex flex-col`}>
                 {/* Header */}
                 <div className="px-8 py-6 flex items-center justify-between border-b border-white/10">
                     <div>
@@ -65,10 +63,16 @@ const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, onClose, 
                             {results.map((res, i) => (
                                 <a
                                     key={i}
-                                    href={res.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="p-6 bg-white/5 border border-white/10 rounded-3xl hover:bg-white/10 hover:border-accent-blue transition-all group flex items-start gap-4"
+                                    href={onResultSelect ? undefined : res.url}
+                                    onClick={(e) => {
+                                        if (onResultSelect) {
+                                            e.preventDefault();
+                                            onResultSelect(res);
+                                        }
+                                    }}
+                                    target={onResultSelect ? undefined : "_blank"}
+                                    rel={onResultSelect ? undefined : "noopener noreferrer"}
+                                    className="p-6 bg-white/5 border border-white/10 rounded-3xl hover:bg-white/10 hover:border-accent-blue transition-all group flex items-start gap-4 cursor-pointer"
                                 >
                                     <div className="p-3 bg-accent-blue/20 rounded-2xl text-accent-blue group-hover:scale-110 transition-transform">
                                         <LinkIcon className="w-6 h-6" />
@@ -77,6 +81,11 @@ const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, onClose, 
                                         <h3 className="text-xl font-bold text-white mb-2 truncate group-hover:text-accent-blue transition-colors">{res.title}</h3>
                                         <p className="text-xs text-white/40 truncate">{res.url}</p>
                                     </div>
+                                    {onResultSelect && (
+                                        <div className="p-3 bg-accent-blue text-white rounded-xl opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <PlusIcon className="w-4 h-4" />
+                                        </div>
+                                    )}
                                 </a>
                             ))}
                         </div>
@@ -93,6 +102,17 @@ const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, onClose, 
                     <span>Powered by DuckDuckGo Engine</span>
                 </div>
             </div>
+    );
+
+    if (embeddedMode) return modalContent;
+
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8">
+            <div
+                className="absolute inset-0 bg-black/60 backdrop-blur-md animate-fade-in"
+                onClick={onClose}
+            ></div>
+            {modalContent}
         </div>
     );
 };

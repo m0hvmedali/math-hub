@@ -5,7 +5,7 @@ import { BookOpenIcon, SparkleIcon, ChevronRightIcon, PlusIcon, TrashIcon, Clock
 import { quotes } from '../utils/quotes';
 import { translations } from '../utils/translations';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Lesson, Importance } from '../types';
+import { Lesson, Importance, KnowledgeError } from '../types';
 import CosmicGraph from '../components/CosmicGraph';
 import RadialMenu from '../components/RadialMenu';
 import { useCosmicStore } from '../store/useCosmicStore';
@@ -652,7 +652,7 @@ const DashboardPage: React.FC = () => {
                                         </p>
                                     </div>
                                     <div className="flex-1">
-                                        <GoogleSearchModal
+                                        <GlobalSearchModal
                                             isOpen={true}
                                             onClose={() => setPanelOpen(false)}
                                             initialQuery={`${reflexKeyword} ثانوية عامة مصر`}
@@ -743,6 +743,9 @@ const DashboardPage: React.FC = () => {
                         subjects={subjects}
                         searchQuery={searchQuery}
                         searchResults={searchResults}
+                        customNodes={customNodes}
+                        manualLinks={manualLinks}
+                        onOpenInjector={() => setIsInjectorOpen(true)}
                     />
                 </div>
             </section>
