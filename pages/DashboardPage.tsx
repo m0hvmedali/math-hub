@@ -9,7 +9,7 @@ import { Lesson, Importance, KnowledgeError } from '../types';
 import CosmicGraph from '../components/CosmicGraph';
 import RadialMenu from '../components/RadialMenu';
 import { useCosmicStore } from '../store/useCosmicStore';
-import { rebuildSearchIndex, searchRadar, SearchResult, fetchDuckDuckGoResults } from '../utils/searchRadar';
+import { rebuildSearchIndex, searchRadar, SearchResult, fetchTavilyResults } from '../utils/searchRadar';
 import OnboardingStories from '../components/OnboardingStories';
 import GlobalSearchModal from '../components/GlobalSearchModal';
 import PatternDashboard from '../components/PatternDashboard';
@@ -104,18 +104,24 @@ const DashboardPage: React.FC = () => {
         if (!searchQuery.trim() || searchQuery.length < 3) return;
 
         const timer = setTimeout(async () => {
-            const results = await fetchDuckDuckGoResults(`${searchQuery} ثانوية عامة`);
-            results.slice(0, 3).forEach(res => {
-                useCosmicStore.getState().addTempNode({
-                    id: crypto.randomUUID(),
-                    name: res.title,
-                    type: 'temp',
-                    parentId: subjects[0]?.id, // Default to first planet if no context
-                    url: res.url,
-                    color: '#fbbf24',
-                    val: 12
-                });
-            });
+            try {
+                const response = await fetchTavilyResults(`${searchQuery} ثانوية عامة`, user);
+                if (response && response.results) {
+                    response.results.slice(0, 3).forEach(res => {
+                        useCosmicStore.getState().addTempNode({
+                            id: crypto.randomUUID(),
+                            name: res.title,
+                            type: 'temp',
+                            parentId: subjects[0]?.id,
+                            url: res.url,
+                            color: '#fbbf24',
+                            val: 12
+                        });
+                    });
+                }
+            } catch (e) {
+                console.warn("AI Search limit reached or failed");
+            }
         }, 1000);
 
         return () => clearTimeout(timer);

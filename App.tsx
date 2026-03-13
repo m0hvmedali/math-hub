@@ -25,7 +25,7 @@ import ExplainLessonPage from './pages/ExplainLessonPage';
 import SettingsPage from './pages/SettingsPage';
 import { useCosmicStore } from './store/useCosmicStore';
 import { supabase, isSupabaseConfigured } from './supabaseClient';
-import { rebuildSearchIndex, searchRadar, SearchResult, fetchDuckDuckGoResults } from './utils/searchRadar';
+import { rebuildSearchIndex, searchRadar, SearchResult, fetchTavilyResults } from './utils/searchRadar';
 
 export const AppContext = createContext<{
     subjects: Subject[];
@@ -543,18 +543,24 @@ const App: React.FC = () => {
             // DuckDuckGo Integration Trigger
             const subject = subjects.find(s => s.branches.some(b => b.lessons.some(l => l.id === lessonId)));
             if (subject) {
-                const results = await fetchDuckDuckGoResults(`${subject.name} ثانوية عامة`);
-                results.forEach(res => {
-                    useCosmicStore.getState().addTempNode({
-                        id: crypto.randomUUID(),
-                        name: res.title,
-                        type: 'temp',
-                        parentId: subject.id,
-                        url: res.url,
-                        color: '#fbbf24',
-                        val: 12
-                    });
-                });
+                try {
+                    const response = await fetchTavilyResults(`${subject.name} ثانوية عامة`, user);
+                    if (response && response.results) {
+                        response.results.forEach(res => {
+                            useCosmicStore.getState().addTempNode({
+                                id: crypto.randomUUID(),
+                                name: res.title,
+                                type: 'temp',
+                                parentId: subject.id,
+                                url: res.url,
+                                color: '#fbbf24',
+                                val: 12
+                            });
+                        });
+                    }
+                } catch (e) {
+                    console.warn("AI Search limit reached or failed");
+                }
             }
         }
     };

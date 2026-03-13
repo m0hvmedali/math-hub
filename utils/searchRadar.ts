@@ -119,62 +119,87 @@ export const searchRadar = (query: string): SearchResult[] => {
     }
 };
 
-export const fetchDuckDuckGoResults = async (query: string): Promise<Array<{ title: string; url: string }>> => {
-    // List of proxies to try in order
-    const targetUrl = `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1&t=mathhub`;
-    
-    // Attempt 1: AllOrigins (JSON Wrapper - most permissive)
-    try {
-        console.log("🔍 Global Intelligence: Trying AllOrigins JSON Wrapper...");
-        const response = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`);
-        if (response.ok) {
-            const wrapper = await response.json();
-            if (wrapper.contents) {
-                const data = JSON.parse(wrapper.contents);
-                return parseDDGData(data);
-            }
-        }
-    } catch (e) {
-        console.warn("⚠️ AllOrigins failed, trying fallback...");
+export interface TavilyResult {
+    title: string;
+    url: string;
+    content: string;
+}
+
+export interface TavilyResponse {
+    answer?: string;
+    results: TavilyResult[];
+}
+
+const TAVILY_API_KEY = "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";
+
+export const checkSearchLimit = (user: string): { allowed: boolean; remaining: number } => {
+    if (user === '8128') return { allowed: true, remaining: Infinity };
+
+    const today = new Date().toISOString().split('T')[0];
+    const storageKey = `search_usage_${user}`;
+    const usageData = JSON.parse(localStorage.getItem(storageKey) || '{"date": "", "count": 0}');
+
+    if (usageData.date !== today) {
+        return { allowed: true, remaining: 10 };
     }
 
-    // Attempt 2: CodeTabs Proxy (Secondary)
-    try {
-        console.log("🔍 Global Intelligence: Trying CodeTabs Proxy...");
-        const response = await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`);
-        if (response.ok) {
-            const data = await response.json();
-            return parseDDGData(data);
-        }
-    } catch (e) {
-        console.error("❌ All proxies failed:", e);
-    }
-
-    return [];
+    return { 
+        allowed: usageData.count < 10, 
+        remaining: Math.max(0, 10 - usageData.count) 
+    };
 };
 
-// Helper to parse DuckDuckGo API response
-const parseDDGData = (data: any): Array<{ title: string; url: string }> => {
-    const results: Array<{ title: string; url: string }> = [];
+export const incrementSearchUsage = (user: string) => {
+    if (user === '8128') return;
 
-    if (data.AbstractURL) {
-        results.push({ title: data.AbstractSource || 'Main Answer', url: data.AbstractURL });
+    const today = new Date().toISOString().split('T')[0];
+    const storageKey = `search_usage_${user}`;
+    let usageData = JSON.parse(localStorage.getItem(storageKey) || '{"date": "", "count": 0}');
+
+    if (usageData.date !== today) {
+        usageData = { date: today, count: 1 };
+    } else {
+        usageData.count += 1;
     }
 
-    if (data.RelatedTopics && Array.isArray(data.RelatedTopics)) {
-        data.RelatedTopics.forEach((topic: any) => {
-            if (topic.Text && topic.FirstURL) {
-                results.push({ title: topic.Text, url: topic.FirstURL });
-            } else if (topic.Topics && Array.isArray(topic.Topics)) {
-                topic.Topics.forEach((sub: any) => {
-                    if (sub.Text && sub.FirstURL) {
-                        results.push({ title: sub.Text, url: sub.FirstURL });
-                    }
-                });
-            }
+    localStorage.setItem(storageKey, JSON.stringify(usageData));
+};
+
+export const fetchTavilyResults = async (query: string, user: string): Promise<TavilyResponse | null> => {
+    const limit = checkSearchLimit(user);
+    if (!limit.allowed) {
+        throw new Error("LIMIT_EXCEEDED");
+    }
+
+    try {
+        console.log("🚀 AI Search: Querying Tavily Neural Network...");
+        const response = await fetch('https://api.tavily.com/search', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                api_key: TAVILY_API_KEY,
+                query: `${query} ثانوية عامة مصر`,
+                search_depth: "advanced",
+                include_answer: true,
+                max_results: 5
+            })
         });
-    }
 
-    // Unique by URL
-    return Array.from(new Map(results.map(item => [item.url, item])).values()).slice(0, 8);
+        if (!response.ok) throw new Error(`Tavily HTTP Error ${response.status}`);
+        
+        const data = await response.json();
+        incrementSearchUsage(user);
+
+        return {
+            answer: data.answer,
+            results: (data.results || []).map((r: any) => ({
+                title: r.title,
+                url: r.url,
+                content: r.content
+            }))
+        };
+    } catch (error) {
+        console.error("❌ AI Search Error:", error);
+        return null;
+    }
 };
