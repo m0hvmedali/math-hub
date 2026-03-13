@@ -120,43 +120,61 @@ export const searchRadar = (query: string): SearchResult[] => {
 };
 
 export const fetchDuckDuckGoResults = async (query: string): Promise<Array<{ title: string; url: string }>> => {
+    // List of proxies to try in order
+    const targetUrl = `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1&t=mathhub`;
+    
+    // Attempt 1: AllOrigins (JSON Wrapper - most permissive)
     try {
-        const targetUrl = `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1`;
-        
-        // Switching to corsproxy.io which is often more reliable for passthrough
-        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
-        
-        console.log("🔍 Global Intelligence: Fetching through corsproxy.io...");
-        const response = await fetch(proxyUrl);
-        if (!response.ok) throw new Error(`HTTP Error ${response.status}`);
-        
-        const data = await response.json();
-        const results: Array<{ title: string; url: string }> = [];
-
-        // DuckDuckGo Instant Answer API structure
-        if (data.AbstractText && data.AbstractURL) {
-            results.push({ title: data.AbstractSource || 'Main Answer', url: data.AbstractURL });
+        console.log("🔍 Global Intelligence: Trying AllOrigins JSON Wrapper...");
+        const response = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`);
+        if (response.ok) {
+            const wrapper = await response.json();
+            if (wrapper.contents) {
+                const data = JSON.parse(wrapper.contents);
+                return parseDDGData(data);
+            }
         }
-
-        if (data.RelatedTopics && Array.isArray(data.RelatedTopics)) {
-            data.RelatedTopics.forEach((topic: any) => {
-                if (topic.Text && topic.FirstURL) {
-                    results.push({ title: topic.Text, url: topic.FirstURL });
-                } else if (topic.Topics && Array.isArray(topic.Topics)) {
-                    topic.Topics.forEach((sub: any) => {
-                        if (sub.Text && sub.FirstURL) {
-                            results.push({ title: sub.Text, url: sub.FirstURL });
-                        }
-                    });
-                }
-            });
-        }
-
-        // De-duplicate results by URL
-        const uniqueResults = Array.from(new Map(results.map(item => [item.url, item])).values());
-        return uniqueResults.slice(0, 10); 
-    } catch (error) {
-        console.error("❌ Global Intelligence Error (corsproxy.io):", error);
-        return [];
+    } catch (e) {
+        console.warn("⚠️ AllOrigins failed, trying fallback...");
     }
+
+    // Attempt 2: CodeTabs Proxy (Secondary)
+    try {
+        console.log("🔍 Global Intelligence: Trying CodeTabs Proxy...");
+        const response = await fetch(`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`);
+        if (response.ok) {
+            const data = await response.json();
+            return parseDDGData(data);
+        }
+    } catch (e) {
+        console.error("❌ All proxies failed:", e);
+    }
+
+    return [];
+};
+
+// Helper to parse DuckDuckGo API response
+const parseDDGData = (data: any): Array<{ title: string; url: string }> => {
+    const results: Array<{ title: string; url: string }> = [];
+
+    if (data.AbstractURL) {
+        results.push({ title: data.AbstractSource || 'Main Answer', url: data.AbstractURL });
+    }
+
+    if (data.RelatedTopics && Array.isArray(data.RelatedTopics)) {
+        data.RelatedTopics.forEach((topic: any) => {
+            if (topic.Text && topic.FirstURL) {
+                results.push({ title: topic.Text, url: topic.FirstURL });
+            } else if (topic.Topics && Array.isArray(topic.Topics)) {
+                topic.Topics.forEach((sub: any) => {
+                    if (sub.Text && sub.FirstURL) {
+                        results.push({ title: sub.Text, url: sub.FirstURL });
+                    }
+                });
+            }
+        });
+    }
+
+    // Unique by URL
+    return Array.from(new Map(results.map(item => [item.url, item])).values()).slice(0, 8);
 };
