@@ -121,18 +121,28 @@ export const searchRadar = (query: string): SearchResult[] => {
 
 export const fetchDuckDuckGoResults = async (query: string): Promise<Array<{ title: string; url: string }>> => {
     try {
-        const url = `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1`;
-        const response = await fetch(url);
+        const targetUrl = `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1`;
+        // Use allorigins.win proxy to bypass CORS. 
+        // Adding a timestamp to avoid cache issues
+        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}&timestamp=${Date.now()}`;
+        
+        console.log("🔍 Global Intelligence: Fetching through proxy...");
+        const response = await fetch(proxyUrl);
+        if (!response.ok) throw new Error(`HTTP Error ${response.status}`);
+        
         const data = await response.json();
-
         const results: Array<{ title: string; url: string }> = [];
 
-        if (data.RelatedTopics) {
+        // DuckDuckGo Instant Answer API structure
+        if (data.AbstractText && data.AbstractURL) {
+            results.push({ title: data.AbstractSource || 'Main Answer', url: data.AbstractURL });
+        }
+
+        if (data.RelatedTopics && Array.isArray(data.RelatedTopics)) {
             data.RelatedTopics.forEach((topic: any) => {
                 if (topic.Text && topic.FirstURL) {
                     results.push({ title: topic.Text, url: topic.FirstURL });
-                } else if (topic.Topics) {
-                    // Handle sub-topics
+                } else if (topic.Topics && Array.isArray(topic.Topics)) {
                     topic.Topics.forEach((sub: any) => {
                         if (sub.Text && sub.FirstURL) {
                             results.push({ title: sub.Text, url: sub.FirstURL });
@@ -142,9 +152,11 @@ export const fetchDuckDuckGoResults = async (query: string): Promise<Array<{ tit
             });
         }
 
-        return results.slice(0, 5); // Limit to 5 results
+        // De-duplicate results by URL
+        const uniqueResults = Array.from(new Map(results.map(item => [item.url, item])).values());
+        return uniqueResults.slice(0, 10); 
     } catch (error) {
-        console.error("DuckDuckGo fetch error:", error);
+        console.error("❌ Global Intelligence Error:", error);
         return [];
     }
 };

@@ -82,26 +82,50 @@ const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, onClose, 
                                         <p className="text-xs text-white/40 truncate">{res.url}</p>
                                     </div>
                                     {onResultSelect && (
-                                        <div className="p-3 bg-accent-blue text-white rounded-xl opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <div className="p-3 bg-accent-blue text-white rounded-xl opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap text-[10px] font-bold flex items-center gap-2 shadow-lg shadow-blue-500/20">
                                             <PlusIcon className="w-4 h-4" />
+                                            {localStorage.getItem('language') === 'ar' ? 'حقن المورد' : 'Inject Sector'}
                                         </div>
                                     )}
                                 </a>
                             ))}
                         </div>
                     ) : (
-                        <div className="text-center py-20 text-white/20 text-xl font-bold">
-                            No external sectors found for this query.
+                        <div className="text-center py-20 flex flex-col items-center animate-fade-in">
+                            <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-6 border border-white/10">
+                                <GlobeIcon className="w-10 h-10 text-white/20" />
+                            </div>
+                            <div className="text-white/40 text-xl font-bold mb-4">
+                                {localStorage.getItem('language') === 'ar' ? 'لم يتم العثور على قطاعات خارجية' : 'No global results found'}
+                            </div>
+                            <p className="text-sm text-white/20 max-w-md mx-auto mb-8">
+                                {localStorage.getItem('language') === 'ar' 
+                                    ? 'تعذر العثور على نتائج فورية لهذا الاستعلام في محرك البحث المصغر. يمكنك محاولة البحث مباشرة في المتصفح.' 
+                                    : 'Instant answers not available for this query. Try a more general topic or search directly on the web.'}
+                            </p>
+                            <a 
+                                href={`https://duckduckgo.com/?q=${encodeURIComponent(searchTerms || '')}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="px-8 py-3 bg-white/10 hover:bg-white/20 text-white rounded-2xl font-bold transition-all border border-white/10 flex items-center gap-3 active:scale-95 shadow-xl"
+                            >
+                                <GlobeIcon className="w-5 h-5 text-accent-blue" />
+                                {localStorage.getItem('language') === 'ar' ? 'البحث في DuckDuckGo' : 'Search on DuckDuckGo'}
+                            </a>
                         </div>
                     )}
                 </div>
 
                 {/* Footer Tip */}
                 <div className="px-8 py-4 bg-white/5 border-t border-white/10 text-[10px] items-center flex justify-between uppercase tracking-widest font-black text-white/40">
-                    <span>Target: Egyptian Curriculum</span>
-                    <span>Powered by DuckDuckGo Engine</span>
+                    <span className="flex items-center gap-2">
+                        <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                        Target: Egyptian Curriculum
+                    </span>
+                    <span>Powered by DuckDuckGo Neural Engine</span>
                 </div>
             </div>
+
     );
 
     if (embeddedMode) return modalContent;
