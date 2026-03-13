@@ -122,11 +122,11 @@ export const searchRadar = (query: string): SearchResult[] => {
 export const fetchDuckDuckGoResults = async (query: string): Promise<Array<{ title: string; url: string }>> => {
     try {
         const targetUrl = `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1`;
-        // Use allorigins.win proxy to bypass CORS. 
-        // Adding a timestamp to avoid cache issues
-        const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}&timestamp=${Date.now()}`;
         
-        console.log("🔍 Global Intelligence: Fetching through proxy...");
+        // Switching to corsproxy.io which is often more reliable for passthrough
+        const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
+        
+        console.log("🔍 Global Intelligence: Fetching through corsproxy.io...");
         const response = await fetch(proxyUrl);
         if (!response.ok) throw new Error(`HTTP Error ${response.status}`);
         
@@ -156,7 +156,7 @@ export const fetchDuckDuckGoResults = async (query: string): Promise<Array<{ tit
         const uniqueResults = Array.from(new Map(results.map(item => [item.url, item])).values());
         return uniqueResults.slice(0, 10); 
     } catch (error) {
-        console.error("❌ Global Intelligence Error:", error);
+        console.error("❌ Global Intelligence Error (corsproxy.io):", error);
         return [];
     }
 };
