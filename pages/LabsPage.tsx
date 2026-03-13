@@ -58,9 +58,8 @@ const IframeLabCard: React.FC<{
     title: string;
     description: string;
     url: string;
-    isAdmin: boolean;
     onDelete: (id: string) => void;
-}> = ({ id, title, description, url, isAdmin, onDelete }) => {
+}> = ({ id, title, description, url, onDelete }) => {
     const navigate = useNavigate();
 
     return (
@@ -73,16 +72,14 @@ const IframeLabCard: React.FC<{
                 iframe
             </div>
 
-            {/* Admin Delete */}
-            {isAdmin && (
-                <button
-                    onClick={(e) => { e.stopPropagation(); onDelete(id); }}
-                    className="absolute top-4 left-4 p-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl opacity-0 group-hover:opacity-100 transition-all"
-                    title="حذف المختبر"
-                >
-                    <TrashIcon className="w-4 h-4" />
-                </button>
-            )}
+            {/* Delete button — visible to all on hover */}
+            <button
+                onClick={(e) => { e.stopPropagation(); onDelete(id); }}
+                className="absolute top-4 left-4 p-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 rounded-xl opacity-0 group-hover:opacity-100 transition-all"
+                title="حذف المختبر"
+            >
+                <TrashIcon className="w-4 h-4" />
+            </button>
 
             <div className="flex flex-col gap-6">
                 <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-accent-blue/10 border border-accent-blue/20 shadow-lg group-hover:scale-110 transition-transform duration-500">
@@ -212,7 +209,6 @@ const AddLabModal: React.FC<{ onClose: () => void; onSave: () => void; language:
 // ─── Main Page ────────────────────────────────────────────────────────────
 const LabsPage: React.FC = () => {
     const { user, language } = useContext(AppContext) as any;
-    const isAdmin = user === '8128' || user === 'Mohamed';
     const [iframeLabs, setIframeLabs] = useState(getIframeLabs());
     const [showAddModal, setShowAddModal] = useState(false);
 
@@ -243,16 +239,14 @@ const LabsPage: React.FC = () => {
                     <p className="text-white/50 font-medium max-w-md text-lg hidden md:block">
                         A collection of high-performance mathematical engines and simulation environments.
                     </p>
-                    {/* Admin: Add Lab Button */}
-                    {isAdmin && (
-                        <button
-                            onClick={() => setShowAddModal(true)}
-                            className="flex items-center gap-3 px-6 py-4 bg-accent-blue text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-accent-blue/20 whitespace-nowrap"
-                        >
+                    {/* Add Lab Button — visible to everyone */}
+                    <button
+                        onClick={() => setShowAddModal(true)}
+                        className="flex items-center gap-3 px-6 py-4 bg-accent-blue text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-lg shadow-accent-blue/20 whitespace-nowrap"
+                    >
                             <PlusIcon className="w-5 h-5" />
                             {language === 'ar' ? 'إضافة مختبر' : 'Add Lab'}
-                        </button>
-                    )}
+                    </button>
                 </div>
             </header>
 
@@ -299,7 +293,6 @@ const LabsPage: React.FC = () => {
                         title={lab.title}
                         description={lab.description}
                         url={lab.url}
-                        isAdmin={isAdmin}
                         onDelete={handleDelete}
                     />
                 ))}
@@ -317,12 +310,10 @@ const LabsPage: React.FC = () => {
                             ? 'يمكنك إضافة أي محاكي خارجي عن طريق رابط iframe والوصول إليه مباشرة من هنا.'
                             : 'You can embed any external simulator via an iframe link and access it directly from here.'}
                     </p>
-                    {isAdmin && (
-                        <button onClick={() => setShowAddModal(true)} className="btn-power px-8 py-3 rounded-xl font-bold flex items-center gap-3">
-                            <PlusIcon className="w-5 h-5" />
-                            {language === 'ar' ? 'إضافة مختبر خارجي' : 'Add External Lab'}
-                        </button>
-                    )}
+                    <button onClick={() => setShowAddModal(true)} className="btn-power px-8 py-3 rounded-xl font-bold flex items-center gap-3">
+                        <PlusIcon className="w-5 h-5" />
+                        {language === 'ar' ? 'إضافة مختبر خارجي' : 'Add External Lab'}
+                    </button>
                 </div>
             </div>
 
