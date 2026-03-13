@@ -21,6 +21,7 @@ import GuidePage from './pages/GuidePage';
 import DynamoLab from './pages/DynamoLab';
 import AlkanesLab from './pages/AlkanesLab';
 import LabsPage from './pages/LabsPage';
+import IframeLabPage from './pages/IframeLabPage';
 import ExplainLessonPage from './pages/ExplainLessonPage';
 import SettingsPage from './pages/SettingsPage';
 import HistoryPage from './pages/HistoryPage';
@@ -633,6 +634,7 @@ const App: React.FC = () => {
                         <Route path="/crash" element={<ProtectedRoute><CrashTasksPage /></ProtectedRoute>} />
                         <Route path="/venting" element={<ProtectedRoute><VentingPage /></ProtectedRoute>} />
                         <Route path="/labs" element={<ProtectedRoute><LabsPage /></ProtectedRoute>} />
+                        <Route path="/labs/iframe/:labId" element={<ProtectedRoute><IframeLabPage /></ProtectedRoute>} />
                         <Route path="/labs/function" element={<ProtectedRoute><DynamoLab /></ProtectedRoute>} />
                         <Route path="/labs/alkanes" element={<ProtectedRoute><AlkanesLab /></ProtectedRoute>} />
                         <Route path="/explain" element={<ProtectedRoute><ExplainLessonPage /></ProtectedRoute>} />
