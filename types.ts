@@ -60,6 +60,7 @@ export interface CourseBranch {
   id: string;
   subject_id: string;
   name: string;
+  is_capsule?: boolean;
   lessons: Lesson[];
 }
 

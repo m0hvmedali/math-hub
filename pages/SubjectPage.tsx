@@ -14,7 +14,7 @@ const SubjectPage: React.FC = () => {
 
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [newBranchName, setNewBranchName] = useState('');
-    const [activeTab, setActiveTab] = useState<'content' | 'about'>('content');
+    const [activeTab, setActiveTab] = useState<'content' | 'capsule' | 'about'>('content');
     const [addLessonBranchId, setAddLessonBranchId] = useState<string | null>(null);
     const [newLessonName, setNewLessonName] = useState('');
     const [magicUrl, setMagicUrl] = useState('');
@@ -34,7 +34,8 @@ const SubjectPage: React.FC = () => {
 
     const handleAddBranch = async () => {
         if (newBranchName.trim() && isOwner) {
-            await addBranchToSubject(subject.id, newBranchName.trim());
+            const isCapsule = activeTab === 'capsule';
+            await addBranchToSubject(subject.id, newBranchName.trim(), isCapsule);
             setNewBranchName('');
             setIsSidebarOpen(false);
         }
@@ -66,6 +67,8 @@ const SubjectPage: React.FC = () => {
             setMagicUrl('');
         }
     };
+
+    const displayBranches = subject.branches?.filter(b => activeTab === 'capsule' ? b.is_capsule : !b.is_capsule) || [];
 
     return (
         <div className="w-full bg-black min-h-screen text-white pb-32 animate-fade-in relative -mt-16">
@@ -113,7 +116,7 @@ const SubjectPage: React.FC = () => {
                                 </button>
                             ) : isOwner ? (
                                 <button
-                                    onClick={() => setIsSidebarOpen(true)}
+                                    onClick={() => { setActiveTab('content'); setIsSidebarOpen(true); }}
                                     className="bg-ott-gradient text-white font-black px-10 py-4 flex items-center gap-3 rounded hover:shadow-glow-brand transition-all"
                                 >
                                     <PlusIcon className="w-6 h-6" />
@@ -135,6 +138,13 @@ const SubjectPage: React.FC = () => {
                     {activeTab === 'content' && <span className="absolute bottom-0 left-0 w-full h-[3px] bg-brand-purple rounded-t" />}
                 </button>
                 <button
+                    onClick={() => setActiveTab('capsule')}
+                    className={`px-8 py-5 font-bold text-lg md:text-xl transition-colors relative ${activeTab === 'capsule' ? 'text-white' : 'text-gray-500 hover:text-gray-300'}`}
+                >
+                    {language === 'ar' ? 'كبسولات' : 'Capsules'}
+                    {activeTab === 'capsule' && <span className="absolute bottom-0 left-0 w-full h-[3px] bg-brand-cyan rounded-t" />}
+                </button>
+                <button
                     onClick={() => setActiveTab('about')}
                     className={`px-8 py-5 font-bold text-lg md:text-xl transition-colors relative ${activeTab === 'about' ? 'text-white' : 'text-gray-500 hover:text-gray-300'}`}
                 >
@@ -145,18 +155,18 @@ const SubjectPage: React.FC = () => {
 
             {/* Content Display */}
             <div className="max-w-[1600px] mx-auto px-6 md:px-12 py-4">
-                {activeTab === 'content' && (
+                {(activeTab === 'content' || activeTab === 'capsule') && (
                     <div className="space-y-16">
                         {isOwner && (
                             <div className="flex justify-end mb-4">
-                                <button onClick={() => setIsSidebarOpen(true)} className="flex items-center gap-2 text-brand-cyan hover:text-white transition-colors font-bold text-sm">
+                                <button onClick={() => setIsSidebarOpen(true)} className={`flex items-center gap-2 transition-colors font-bold text-sm ${activeTab === 'capsule' ? 'text-brand-magenta hover:text-white' : 'text-brand-cyan hover:text-white'}`}>
                                     <PlusIcon className="w-5 h-5" />
-                                    {language === 'ar' ? 'إضافة فصل جديد' : 'Add New Chapter'}
+                                    {activeTab === 'capsule' ? (language === 'ar' ? 'إضافة كبسولة جديدة' : 'Add New Capsule') : (language === 'ar' ? 'إضافة فصل جديد' : 'Add New Chapter')}
                                 </button>
                             </div>
                         )}
 
-                        {subject.branches?.map((branch, index) => (
+                        {displayBranches.map((branch, index) => (
                             <section key={branch.id} className="w-full">
                                 <div className="flex items-center justify-between mb-6 gap-4">
                                     {editingBranch?.id === branch.id ? (
@@ -198,14 +208,14 @@ const SubjectPage: React.FC = () => {
                                                     <button
                                                         onClick={() => setEditingBranch({ id: branch.id, name: branch.name })}
                                                         className="p-1.5 text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
-                                                        title="Edit Branch"
+                                                        title={activeTab === 'capsule' ? "Edit Capsule" : "Edit Branch"}
                                                     >
                                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                                                     </button>
                                                     <button
                                                         onClick={() => deleteCourseBranch(subject.id, branch.id)}
                                                         className="p-1.5 text-gray-400 hover:text-red-500 bg-white/5 hover:bg-red-500/10 rounded-lg transition-colors"
-                                                        title="Delete Branch"
+                                                        title={activeTab === 'capsule' ? "Delete Capsule" : "Delete Branch"}
                                                     >
                                                         <TrashIcon className="w-4 h-4" />
                                                     </button>
@@ -237,7 +247,7 @@ const SubjectPage: React.FC = () => {
                                                         value={newLessonName}
                                                         onChange={e => setNewLessonName(e.target.value)}
                                                         onKeyDown={e => e.key === 'Enter' && handleAddLesson()}
-                                                        placeholder={language === 'ar' ? 'اسم الدرس...' : 'Lesson name...'}
+                                                        placeholder={language === 'ar' ? 'الاسم...' : 'Name...'}
                                                         className="bg-black border border-brand-cyan/40 text-white text-sm px-3 py-1.5 rounded-lg focus:outline-none focus:border-brand-cyan w-44"
                                                     />
                                                     <button onClick={handleAddLesson} className="text-xs font-black text-brand-cyan hover:text-white transition-colors px-2 py-1.5 bg-brand-cyan/20 rounded-lg border border-brand-cyan/30">
@@ -250,10 +260,10 @@ const SubjectPage: React.FC = () => {
                                             ) : (
                                                 <button
                                                     onClick={() => setAddLessonBranchId(branch.id)}
-                                                    className="flex items-center gap-1.5 text-xs font-bold text-brand-cyan hover:text-white bg-brand-cyan/10 hover:bg-brand-cyan/20 border border-brand-cyan/20 px-3 py-1.5 rounded-lg transition-all"
+                                                    className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg transition-all ${activeTab === 'capsule' ? 'text-brand-magenta hover:text-white bg-brand-magenta/10 hover:bg-brand-magenta/20 border border-brand-magenta/20' : 'text-brand-cyan hover:text-white bg-brand-cyan/10 hover:bg-brand-cyan/20 border border-brand-cyan/20'}`}
                                                 >
                                                     <PlusIcon className="w-3.5 h-3.5" />
-                                                    {language === 'ar' ? '+ درس' : '+ Lesson'}
+                                                    {activeTab === 'capsule' ? (language === 'ar' ? '+ إضافة' : '+ Item') : (language === 'ar' ? '+ درس' : '+ Lesson')}
                                                 </button>
                                             )}
                                         </div>
@@ -267,7 +277,7 @@ const SubjectPage: React.FC = () => {
                                                 <CourseCard
                                                     id={lesson.id}
                                                     title={lesson.name}
-                                                    subtitle={`${language === 'ar' ? 'الحلقة' : 'Episode'} ${idx + 1}`}
+                                                    subtitle={activeTab === 'capsule' ? (language === 'ar' ? 'عنصر' : 'Item') : `${language === 'ar' ? 'الحلقة' : 'Episode'} ${idx + 1}`}
                                                     link={`/subject/${subject.id}/branch/${branch.id}/lesson/${lesson.id}`}
                                                     badgeText={lesson.status === 'completed' ? (language === 'ar' ? 'مكتمل' : 'Done') : undefined}
                                                     progress={lesson.status === 'completed' ? 100 : (lesson.status === 'in_progress' ? 50 : 0)}
@@ -278,16 +288,13 @@ const SubjectPage: React.FC = () => {
                                     </div>
                                 ) : (
                                     <div className="py-12 px-6 border border-white/5 bg-white/5 rounded-xl text-center">
-                                        <p className="text-gray-500 font-bold mb-4">{language === 'ar' ? 'لا توجد دروس في هذا الفصل حتى الآن.' : 'No content available in this chapter yet.'}</p>
-                                        {isOwner && (
-                                            <p className="text-xs text-brand-purple opacity-80">{language === 'ar' ? 'يمكن إضافة الدروس من خلال المهرح أو واجهة المعماري' : 'Add content via Architect interface.'}</p>
-                                        )}
+                                        <p className="text-gray-500 font-bold mb-4">{activeTab === 'capsule' ? (language === 'ar' ? 'لا توجد كبسولات مضافة هنا.' : 'No capsules here yet.') : (language === 'ar' ? 'لا توجد دروس في هذا الفصل حتى الآن.' : 'No content available in this chapter yet.')}</p>
                                     </div>
                                 )}
                             </section>
                         ))}
 
-                        {(!subject.branches || subject.branches.length === 0) && (
+                        {displayBranches.length === 0 && (
                             <div className="py-24 text-center">
                                 <p className="text-gray-500 text-xl font-bold">{language === 'ar' ? 'المحتوى قريباً...' : 'Content Coming Soon...'}</p>
                             </div>
@@ -297,10 +304,10 @@ const SubjectPage: React.FC = () => {
                             <div className="py-8 flex justify-center">
                                 <button
                                     onClick={() => setIsSidebarOpen(true)}
-                                    className="flex items-center gap-2 px-6 py-3 border border-dashed border-brand-purple/40 text-brand-purple hover:border-brand-purple hover:bg-brand-purple/10 rounded-xl font-bold text-sm transition-all"
+                                    className={`flex items-center gap-2 px-6 py-3 border border-dashed rounded-xl font-bold text-sm transition-all ${activeTab === 'capsule' ? 'border-brand-magenta/40 text-brand-magenta hover:border-brand-magenta hover:bg-brand-magenta/10' : 'border-brand-purple/40 text-brand-purple hover:border-brand-purple hover:bg-brand-purple/10'}`}
                                 >
                                     <PlusIcon className="w-4 h-4" />
-                                    {language === 'ar' ? '+ إضافة فصل جديد' : '+ Add New Chapter'}
+                                    {activeTab === 'capsule' ? (language === 'ar' ? '+ إضافة كبسولة جديدة' : '+ Add New Capsule') : (language === 'ar' ? '+ إضافة فصل جديد' : '+ Add New Chapter')}
                                 </button>
                             </div>
                         )}

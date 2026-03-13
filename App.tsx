@@ -33,7 +33,7 @@ export const AppContext = createContext<{
     user: string | null;
     login: (name: string) => void;
     addSubject: (name: string) => Promise<void>;
-    addBranchToSubject: (subjectId: string, branchName: string) => Promise<void>;
+    addBranchToSubject: (subjectId: string, branchName: string, isCapsule?: boolean) => Promise<void>;
     addLessonToBranch: (subjectId: string, branchId: string, lessonName: string, initialContent?: any[], tags?: string[]) => Promise<void>;
     updateLesson: (subjectId: string, branchId: string, updatedLesson: Lesson) => Promise<void>;
     getSubject: (subjectId: string) => Subject | undefined;
@@ -313,7 +313,7 @@ const App: React.FC = () => {
         }
     };
 
-    const addBranchToSubject = async (subjectId: string, branchName: string) => {
+    const addBranchToSubject = async (subjectId: string, branchName: string, isCapsule: boolean = false) => {
         if (!supabase) return;
 
         // Optimistic Update
@@ -324,11 +324,12 @@ const App: React.FC = () => {
                 id: tempId,
                 subject_id: subjectId,
                 name: branchName,
+                is_capsule: isCapsule,
                 lessons: []
             } as any]
         } : s));
 
-        const { data, error } = await supabase.from('branches').insert([{ subject_id: subjectId, name: branchName }]).select();
+        const { data, error } = await supabase.from('branches').insert([{ subject_id: subjectId, name: branchName, is_capsule: isCapsule }]).select();
         if (error) {
             console.error(error);
             fetchData(); // Fallback to full fetch on error
