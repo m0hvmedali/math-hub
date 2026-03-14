@@ -1,8 +1,7 @@
-import React, { useContext, useState, useEffect } from 'react';
+import React, { useContext, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AppContext } from '../App';
-import { ArrowLeftIcon, PlusIcon, BookOpenIcon, ClockIcon, TrashIcon } from '../components/Icons';
-import { supabase } from '../supabaseClient';
+import { ArrowLeftIcon, PlusIcon, BookOpenIcon, TrashIcon, ChevronRightIcon } from '../components/Icons';
 import Sidebar from '../components/Sidebar';
 import CourseCard from '../components/CourseCard';
 import { detectMagicLink } from '../utils/detectMagicLink';
@@ -22,7 +21,7 @@ const SubjectPage: React.FC = () => {
 
     const subject = getSubject(subjectId!);
 
-    if (!subject) return <div className="p-10 text-white font-black text-center">COURSE NOT FOUND.</div>;
+    if (!subject) return <div className="p-10 text-white font-black text-center min-h-screen flex items-center justify-center">COURSE NOT FOUND.</div>;
 
     const isOwner = user === subject.user_id;
 
@@ -54,7 +53,6 @@ const SubjectPage: React.FC = () => {
         if (!url.trim() || !isOwner) return;
         const result = detectMagicLink(url.trim());
         if (result && addLessonToBranch) {
-            // Create a new lesson with a single content block based on the result
             const newContentBlock = {
                 id: crypto.randomUUID(),
                 type: result.type,
@@ -71,53 +69,56 @@ const SubjectPage: React.FC = () => {
     const displayBranches = subject.branches?.filter(b => activeTab === 'capsule' ? b.is_capsule : !b.is_capsule) || [];
 
     return (
-        <div className="w-full bg-black min-h-screen text-white pb-32 animate-fade-in relative -mt-16">
+        <div className="w-full bg-black min-h-screen text-white pb-32 animate-premium-fade relative">
+            
+            {/* Extended Cinematic Hero Banner */}
+            <div className="relative w-full min-h-[65vh] flex items-end pb-20 px-6 md:px-16 bg-[#050505]">
+                {/* Background Graphics */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent z-10" />
+                <div className="absolute top-0 right-0 w-full h-full opacity-10 pointer-events-none overflow-hidden">
+                    <BookOpenIcon className="absolute -top-20 -right-20 w-[100vh] h-[100vh] text-brand-cyan blur-3xl opacity-20" />
+                </div>
 
-            {/* OTT Course Hero Banner */}
-            <div className="relative w-full min-h-[55vh] flex items-end pb-12 px-6 md:px-12 bg-gradient-to-tr from-brand-black to-brand-purple/10">
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent z-10" />
-                <BookOpenIcon className="absolute top-1/2 right-1/4 -translate-y-1/2 w-[80vh] h-[80vh] opacity-5 object-cover pointer-events-none text-brand-purple" />
+                <div className="relative z-20 w-full max-w-[1600px] mx-auto animate-premium-fade">
+                    <button onClick={() => navigate('/curriculum')} className="mb-8 flex items-center text-gray-500 hover:text-white transition-all text-xs font-black uppercase tracking-widest group">
+                        <ArrowLeftIcon className={`w-4 h-4 mr-2 transition-transform group-hover:-translate-x-1 ${language === 'ar' ? 'ml-2 transform rotate-180 group-hover:translate-x-1 font-almarai' : ''}`} />
+                        {language === 'ar' ? 'العودة للمواد' : 'Back to Materials'}
+                    </button>
 
-                <div className="relative z-20 w-full max-w-[1600px] mx-auto flex flex-col md:flex-row items-start md:items-end justify-between gap-8 pt-24">
-                    <div className="max-w-3xl">
-                        <button onClick={() => navigate('/')} className="mb-6 flex items-center text-gray-400 hover:text-white transition-colors text-sm font-bold group">
-                            <ArrowLeftIcon className={`w-4 h-4 mr-2 ${language === 'ar' ? 'ml-2 transform rotate-180' : ''}`} />
-                            {language === 'ar' ? 'العودة الرئيسية' : 'Back to Home'}
-                        </button>
-
-                        <h1 className="text-5xl md:text-7xl font-black text-white mb-6 leading-tight tracking-tighter">{subject.name}</h1>
-
-                        <div className="flex flex-wrap items-center gap-4 md:gap-6 text-gray-300 font-bold text-sm mb-8">
-                            <span className="flex items-center gap-2">
-                                <span className="text-brand-magenta">★</span>
-                                {totalLessons} {language === 'ar' ? 'درس' : 'Lessons'}
+                    <div className="max-w-4xl space-y-6">
+                        <div className="flex items-center gap-3">
+                            <span className="bg-brand-cyan/20 text-brand-cyan px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border border-brand-cyan/30">
+                                {language === 'ar' ? 'مادة دراسية' : 'Academic Course'}
                             </span>
-                            <span className="flex items-center gap-2">
-                                <span className="text-brand-cyan">■</span>
-                                {subject.branches?.length || 0} {language === 'ar' ? 'فصل' : 'Chapters'}
-                            </span>
-                            <span className="flex border border-gray-600 rounded px-2 py-0.5 text-xs text-brand-purple">
-                                HD
-                            </span>
-                            <span className="flex items-center gap-1 border border-brand-cyan/30 bg-brand-cyan/10 text-brand-cyan rounded px-3 py-1 text-xs uppercase tracking-wider">
-                                {language === 'ar' ? 'متاح الآن' : 'Available Now'}
+                            <span className="text-gray-500 font-bold text-xs">•</span>
+                            <span className="text-gray-400 font-bold text-xs uppercase tracking-tighter">
+                                {totalLessons} {language === 'ar' ? 'حصة تعليمية' : 'Lessons'}
                             </span>
                         </div>
+                        
+                        <h1 className="text-6xl md:text-8xl lg:text-9xl font-black text-white leading-none tracking-tighter font-almarai">
+                            {subject.name}
+                        </h1>
 
-                        {/* Primary Call to Action */}
-                        <div className="flex gap-4">
+                        <p className="text-gray-400 text-lg font-medium max-w-2xl leading-relaxed">
+                            {language === 'ar' 
+                                ? 'استكشف المنهج الكامل بطريقة تفاعلية حديثة مع دعم الذكاء الاصطناعي والتحليل اليومي لمستواك.' 
+                                : 'Explore the full curriculum in a modern interactive way with AI support and daily analysis of your level.'}
+                        </p>
+
+                        <div className="flex flex-wrap gap-4 pt-6">
                             {subject.branches?.length > 0 && subject.branches[0].lessons?.length > 0 ? (
                                 <button
                                     onClick={() => navigate(`/subject/${subject.id}/branch/${subject.branches[0].id}/lesson/${subject.branches[0].lessons[0].id}`)}
-                                    className="bg-white text-black font-black px-10 py-4 flex items-center gap-3 rounded hover:bg-gray-200 transition-transform hover:scale-105"
+                                    className="bg-white text-black font-black px-12 py-5 flex items-center gap-3 rounded-2xl hover:scale-105 transition-all shadow-glow-white active:scale-95"
                                 >
                                     <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
-                                    {language === 'ar' ? 'ابدأ المشاهدة/الدراسة' : 'Start Watching'}
+                                    {language === 'ar' ? 'بدء التعلم الآن' : 'Start Learning Now'}
                                 </button>
                             ) : isOwner ? (
                                 <button
                                     onClick={() => { setActiveTab('content'); setIsSidebarOpen(true); }}
-                                    className="bg-ott-gradient text-white font-black px-10 py-4 flex items-center gap-3 rounded hover:shadow-glow-brand transition-all"
+                                    className="bg-brand-cyan text-white font-black px-12 py-5 flex items-center gap-3 rounded-2xl hover:shadow-glow-brand transition-all active:scale-95"
                                 >
                                     <PlusIcon className="w-6 h-6" />
                                     {language === 'ar' ? 'أضف الفصل الأول' : 'Add First Chapter'}
@@ -128,243 +129,198 @@ const SubjectPage: React.FC = () => {
                 </div>
             </div>
 
-            {/* Tabs Interface */}
-            <div className="max-w-[1600px] mx-auto px-6 md:px-12 flex border-b border-white/10 mb-8 pt-4">
-                <button
-                    onClick={() => setActiveTab('content')}
-                    className={`px-8 py-5 font-bold text-lg md:text-xl transition-colors relative ${activeTab === 'content' ? 'text-white' : 'text-gray-500 hover:text-gray-300'}`}
-                >
-                    {language === 'ar' ? 'المحتوى والحلقات' : 'Episodes & Content'}
-                    {activeTab === 'content' && <span className="absolute bottom-0 left-0 w-full h-[3px] bg-brand-purple rounded-t" />}
-                </button>
-                <button
-                    onClick={() => setActiveTab('capsule')}
-                    className={`px-8 py-5 font-bold text-lg md:text-xl transition-colors relative ${activeTab === 'capsule' ? 'text-white' : 'text-gray-500 hover:text-gray-300'}`}
-                >
-                    {language === 'ar' ? 'كبسولات' : 'Capsules'}
-                    {activeTab === 'capsule' && <span className="absolute bottom-0 left-0 w-full h-[3px] bg-brand-cyan rounded-t" />}
-                </button>
-                <button
-                    onClick={() => setActiveTab('about')}
-                    className={`px-8 py-5 font-bold text-lg md:text-xl transition-colors relative ${activeTab === 'about' ? 'text-white' : 'text-gray-500 hover:text-gray-300'}`}
-                >
-                    {language === 'ar' ? 'عن الدورة' : 'About'}
-                    {activeTab === 'about' && <span className="absolute bottom-0 left-0 w-full h-[3px] bg-brand-purple rounded-t" />}
-                </button>
+            {/* Premium Tabs Menu */}
+            <div className="sticky top-16 z-40 bg-black/80 backdrop-blur-xl border-b border-white/5">
+                <div className="max-w-[1600px] mx-auto px-6 md:px-16 flex gap-4">
+                    {[
+                        { id: 'content', label: language === 'ar' ? 'المحتوى والحلقات' : 'Episodes & Content' },
+                        { id: 'capsule', label: language === 'ar' ? 'كبسولات سريعة' : 'Flash Capsules' },
+                        { id: 'about', label: language === 'ar' ? 'عن المادة' : 'About Course' }
+                    ].map(tab => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id as any)}
+                            className={`px-6 py-6 font-black text-xs uppercase tracking-widest transition-all relative ${activeTab === tab.id ? 'text-brand-cyan' : 'text-gray-500 hover:text-gray-300'}`}
+                        >
+                            {tab.label}
+                            {activeTab === tab.id && (
+                                <span className="absolute bottom-0 left-0 w-full h-[2px] bg-brand-cyan shadow-glow-brand" />
+                            )}
+                        </button>
+                    ))}
+                </div>
             </div>
 
-            {/* Content Display */}
-            <div className="max-w-[1600px] mx-auto px-6 md:px-12 py-4">
+            {/* Content Display Grid */}
+            <main className="max-w-[1600px] mx-auto px-6 md:px-16 py-12">
                 {(activeTab === 'content' || activeTab === 'capsule') && (
-                    <div className="space-y-16">
+                    <div className="space-y-24">
                         {isOwner && (
-                            <div className="flex justify-end mb-4">
-                                <button onClick={() => setIsSidebarOpen(true)} className={`flex items-center gap-2 transition-colors font-bold text-sm ${activeTab === 'capsule' ? 'text-brand-magenta hover:text-white' : 'text-brand-cyan hover:text-white'}`}>
-                                    <PlusIcon className="w-5 h-5" />
-                                    {activeTab === 'capsule' ? (language === 'ar' ? 'إضافة كبسولة جديدة' : 'Add New Capsule') : (language === 'ar' ? 'إضافة فصل جديد' : 'Add New Chapter')}
+                            <div className="flex justify-end">
+                                <button 
+                                    onClick={() => setIsSidebarOpen(true)} 
+                                    className="group flex items-center gap-3 bg-white/5 hover:bg-white/10 px-6 py-3 rounded-2xl border border-white/10 transition-all font-black text-[10px] tracking-widest text-gray-400 hover:text-white"
+                                >
+                                    <PlusIcon className="w-5 h-5 text-brand-cyan" />
+                                    {activeTab === 'capsule' ? (language === 'ar' ? 'إضافة كبسولة' : 'ADD CAPSULE') : (language === 'ar' ? 'إضافة فصل' : 'ADD CHAPTER')}
                                 </button>
                             </div>
                         )}
 
                         {displayBranches.map((branch, index) => (
-                            <section key={branch.id} className="w-full">
-                                <div className="flex items-center justify-between mb-6 gap-4">
-                                    {editingBranch?.id === branch.id ? (
-                                        <div className="flex-1 flex gap-2">
-                                            <input
-                                                type="text"
-                                                value={editingBranch.name}
-                                                onChange={(e) => setEditingBranch({ ...editingBranch, name: e.target.value })}
-                                                onKeyDown={async (e) => {
-                                                    if (e.key === 'Enter') {
-                                                        if (editingBranch.name.trim()) {
-                                                            await updateCourseBranch(subject.id, branch.id, editingBranch.name.trim());
-                                                            setEditingBranch(null);
-                                                        }
-                                                    }
-                                                }}
-                                                className="bg-[#121212] border border-brand-cyan/50 text-white px-4 py-2 rounded-xl focus:outline-none focus:border-brand-cyan transition-all w-full max-w-sm"
-                                                autoFocus
-                                            />
-                                            <button onClick={() => setEditingBranch(null)} className="px-3 text-gray-400 hover:text-white text-sm">
-                                                {language === 'ar' ? 'إلغاء' : 'Cancel'}
-                                            </button>
-                                            <button onClick={async () => {
-                                                if (editingBranch.name.trim()) {
-                                                    await updateCourseBranch(subject.id, branch.id, editingBranch.name.trim());
-                                                    setEditingBranch(null);
-                                                }
-                                            }} className="px-4 bg-brand-cyan text-white text-sm font-bold rounded-xl hover:bg-brand-cyan/80">
-                                                {language === 'ar' ? 'حفظ' : 'Save'}
-                                            </button>
+                            <section key={branch.id} className="animate-premium-fade">
+                                <div className="flex flex-col md:flex-row md:items-center justify-between mb-10 gap-6">
+                                    <div className="flex items-center gap-6">
+                                        <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center font-black text-2xl text-brand-cyan shadow-inner">
+                                            {(index + 1).toString().padStart(2, '0')}
                                         </div>
-                                    ) : (
-                                        <div className="flex items-center gap-3">
-                                            <h2 className="text-2xl md:text-3xl font-bold text-white flex items-center gap-3">
-                                                <span className="text-gray-500 text-xl font-medium">{index + 1}.</span> {branch.name}
-                                            </h2>
+                                        <h2 className="text-3xl md:text-4xl font-black text-white tracking-tight font-almarai group flex items-center gap-4">
+                                            {branch.name}
                                             {isOwner && (
-                                                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity" style={{ opacity: 1 /* override for mobile/easier UX */ }}>
-                                                    <button
-                                                        onClick={() => setEditingBranch({ id: branch.id, name: branch.name })}
-                                                        className="p-1.5 text-gray-400 hover:text-white bg-white/5 hover:bg-white/10 rounded-lg transition-colors"
-                                                        title={activeTab === 'capsule' ? "Edit Capsule" : "Edit Branch"}
-                                                    >
-                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                                                    </button>
-                                                    <button
-                                                        onClick={() => deleteCourseBranch(subject.id, branch.id)}
-                                                        className="p-1.5 text-gray-400 hover:text-red-500 bg-white/5 hover:bg-red-500/10 rounded-lg transition-colors"
-                                                        title={activeTab === 'capsule' ? "Delete Capsule" : "Delete Branch"}
-                                                    >
-                                                        <TrashIcon className="w-4 h-4" />
-                                                    </button>
+                                                <div className="flex gap-2">
+                                                    <button onClick={() => setEditingBranch({ id: branch.id, name: branch.name })} className="p-2 text-gray-600 hover:text-white transition-colors"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
+                                                    <button onClick={() => deleteCourseBranch(subject.id, branch.id)} className="p-2 text-gray-600 hover:text-red-500 transition-colors"><TrashIcon className="w-4 h-4" /></button>
                                                 </div>
                                             )}
-                                        </div>
-                                    )}
+                                        </h2>
+                                    </div>
 
-                                    {isOwner && editingBranch?.id !== branch.id && (
-                                        <div className="flex items-center gap-4 shrink-0">
-                                            {/* Magic Add Input */}
-                                            <div className="hidden md:flex items-center relative group">
+                                    {isOwner && (
+                                        <div className="flex items-center gap-4">
+                                             <div className="relative group/magic">
                                                 <input
                                                     type="url"
                                                     value={addLessonBranchId === branch.id ? '' : magicUrl}
                                                     onChange={(e) => setMagicUrl(e.target.value)}
                                                     onKeyDown={(e) => e.key === 'Enter' && handleMagicAdd(branch.id, magicUrl)}
-                                                    placeholder={language === 'ar' ? 'الصق رابط سحري...' : 'Paste Magic Link...'}
-                                                    className="bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-brand-purple/50 w-48 transition-all group-hover:w-64 placeholder:text-gray-600"
+                                                    placeholder={language === 'ar' ? 'رابط سحري...' : 'Magic Link...'}
+                                                    className="bg-white/5 border border-white/5 rounded-2xl px-5 py-3 text-xs text-white focus:outline-none focus:border-brand-cyan/50 w-40 hover:w-60 focus:w-60 transition-all placeholder:text-gray-700 font-bold"
                                                 />
-                                                <div className="absolute right-2 text-[10px] text-gray-500 pointer-events-none group-hover:opacity-0 transition-opacity">✨</div>
+                                                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-xs opacity-40 group-hover/magic:opacity-100 transition-opacity">✨</div>
                                             </div>
 
-                                            {addLessonBranchId === branch.id ? (
-                                                <div className="flex items-center gap-2">
-                                                    <input
-                                                        autoFocus
-                                                        type="text"
-                                                        value={newLessonName}
-                                                        onChange={e => setNewLessonName(e.target.value)}
-                                                        onKeyDown={e => e.key === 'Enter' && handleAddLesson()}
-                                                        placeholder={language === 'ar' ? 'الاسم...' : 'Name...'}
-                                                        className="bg-black border border-brand-cyan/40 text-white text-sm px-3 py-1.5 rounded-lg focus:outline-none focus:border-brand-cyan w-44"
-                                                    />
-                                                    <button onClick={handleAddLesson} className="text-xs font-black text-brand-cyan hover:text-white transition-colors px-2 py-1.5 bg-brand-cyan/20 rounded-lg border border-brand-cyan/30">
-                                                        {language === 'ar' ? 'حفظ' : 'Save'}
-                                                    </button>
-                                                    <button onClick={() => { setAddLessonBranchId(null); setNewLessonName(''); }} className="text-xs text-gray-500 hover:text-white transition-colors">
-                                                        ✕
-                                                    </button>
-                                                </div>
-                                            ) : (
-                                                <button
-                                                    onClick={() => setAddLessonBranchId(branch.id)}
-                                                    className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg transition-all ${activeTab === 'capsule' ? 'text-brand-magenta hover:text-white bg-brand-magenta/10 hover:bg-brand-magenta/20 border border-brand-magenta/20' : 'text-brand-cyan hover:text-white bg-brand-cyan/10 hover:bg-brand-cyan/20 border border-brand-cyan/20'}`}
-                                                >
-                                                    <PlusIcon className="w-3.5 h-3.5" />
-                                                    {activeTab === 'capsule' ? (language === 'ar' ? '+ إضافة' : '+ Item') : (language === 'ar' ? '+ درس' : '+ Lesson')}
-                                                </button>
-                                            )}
+                                            <button
+                                                onClick={() => setAddLessonBranchId(branch.id)}
+                                                className="bg-brand-cyan text-black px-6 py-3 rounded-2xl font-black text-[10px] tracking-widest hover:scale-105 active:scale-95 transition-all shadow-glow-brand"
+                                            >
+                                                {language === 'ar' ? '+ إضافة درس' : '+ ADD LESSON'}
+                                            </button>
                                         </div>
                                     )}
                                 </div>
 
                                 {branch.lessons && branch.lessons.length > 0 ? (
-                                    <div className="flex gap-4 overflow-x-auto pb-8 snap-x scrollbar-hide">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                                         {branch.lessons.map((lesson, idx) => (
-                                            <div className="snap-start" key={lesson.id}>
-                                                <CourseCard
-                                                    id={lesson.id}
-                                                    title={lesson.name}
-                                                    subtitle={activeTab === 'capsule' ? (language === 'ar' ? 'عنصر' : 'Item') : `${language === 'ar' ? 'الحلقة' : 'Episode'} ${idx + 1}`}
-                                                    link={`/subject/${subject.id}/branch/${branch.id}/lesson/${lesson.id}`}
-                                                    badgeText={lesson.status === 'completed' ? (language === 'ar' ? 'مكتمل' : 'Done') : undefined}
-                                                    progress={lesson.status === 'completed' ? 100 : (lesson.status === 'in_progress' ? 50 : 0)}
-                                                    onDelete={isOwner ? () => deleteLesson(subject.id, branch.id, lesson.id) : undefined}
-                                                />
-                                            </div>
+                                            <CourseCard
+                                                key={lesson.id}
+                                                id={lesson.id}
+                                                title={lesson.name}
+                                                subtitle={activeTab === 'capsule' ? (language === 'ar' ? 'كبسولة مهارات' : 'Skill Capsule') : `${language === 'ar' ? 'الحلقة' : 'Episode'} ${idx + 1}`}
+                                                link={`/subject/${subject.id}/branch/${branch.id}/lesson/${lesson.id}`}
+                                                badgeText={lesson.status === 'completed' ? (language === 'ar' ? 'مهمة منجزة' : 'Done') : undefined}
+                                                progress={lesson.status === 'completed' ? 100 : (lesson.status === 'in_progress' ? 50 : 0)}
+                                                onDelete={isOwner ? () => deleteLesson(subject.id, branch.id, lesson.id) : undefined}
+                                            />
                                         ))}
                                     </div>
                                 ) : (
-                                    <div className="py-12 px-6 border border-white/5 bg-white/5 rounded-xl text-center">
-                                        <p className="text-gray-500 font-bold mb-4">{activeTab === 'capsule' ? (language === 'ar' ? 'لا توجد كبسولات مضافة هنا.' : 'No capsules here yet.') : (language === 'ar' ? 'لا توجد دروس في هذا الفصل حتى الآن.' : 'No content available in this chapter yet.')}</p>
+                                    <div className="py-20 flex flex-col items-center justify-center border border-dashed border-white/5 rounded-3xl bg-white/[0.02]">
+                                        <p className="text-gray-600 font-black text-xs uppercase tracking-[0.3em]">No Transmission Detected</p>
                                     </div>
                                 )}
                             </section>
                         ))}
 
                         {displayBranches.length === 0 && (
-                            <div className="py-24 text-center">
-                                <p className="text-gray-500 text-xl font-bold">{language === 'ar' ? 'المحتوى قريباً...' : 'Content Coming Soon...'}</p>
-                            </div>
-                        )}
-
-                        {isOwner && (
-                            <div className="py-8 flex justify-center">
-                                <button
-                                    onClick={() => setIsSidebarOpen(true)}
-                                    className={`flex items-center gap-2 px-6 py-3 border border-dashed rounded-xl font-bold text-sm transition-all ${activeTab === 'capsule' ? 'border-brand-magenta/40 text-brand-magenta hover:border-brand-magenta hover:bg-brand-magenta/10' : 'border-brand-purple/40 text-brand-purple hover:border-brand-purple hover:bg-brand-purple/10'}`}
-                                >
-                                    <PlusIcon className="w-4 h-4" />
-                                    {activeTab === 'capsule' ? (language === 'ar' ? '+ إضافة كبسولة جديدة' : '+ Add New Capsule') : (language === 'ar' ? '+ إضافة فصل جديد' : '+ Add New Chapter')}
-                                </button>
+                            <div className="py-40 text-center animate-pulse">
+                                <h3 className="text-4xl font-black text-white/20 uppercase tracking-[0.5em]">{language === 'ar' ? 'المحتوى قريباً' : 'TRANS-COMING SOON'}</h3>
                             </div>
                         )}
                     </div>
                 )}
 
                 {activeTab === 'about' && (
-                    <div className="max-w-3xl space-y-8 animate-fade-in text-gray-300 leading-relaxed text-lg">
-                        <p>
-                            {language === 'ar'
-                                ? `هذه الدورة تركز على إتقان مهارات ${subject.name} باستخدام المحتوى التفاعلي وأساليب التكرار المتباعد.`
-                                : `This course zeroes in on mastering ${subject.name} through interactive content and spaced repetition methods.`}
-                        </p>
-                        <div className="grid grid-cols-2 gap-8 pt-8 border-t border-white/10">
-                            <div>
-                                <h3 className="text-white font-bold mb-2">{language === 'ar' ? 'اللغة' : 'Language'}</h3>
-                                <p>{language === 'ar' ? 'العربية' : 'Arabic'}</p>
-                            </div>
-                            <div>
-                                <h3 className="text-white font-bold mb-2">{language === 'ar' ? 'المستوى' : 'Level'}</h3>
-                                <p>{language === 'ar' ? 'لجميع المستويات' : 'All Levels'}</p>
-                            </div>
+                    <div className="max-w-4xl space-y-12 animate-premium-fade">
+                        <div className="bg-white/5 border border-white/10 p-12 rounded-[3rem]">
+                            <h3 className="text-2xl font-black text-white mb-6 font-almarai">{language === 'ar' ? 'وصف المادة' : 'Course Overview'}</h3>
+                            <p className="text-xl text-gray-400 leading-relaxed font-medium">
+                                {language === 'ar'
+                                    ? `هذه الدورة تركز على إتقان مهارات ${subject.name} باستخدام المحتوى التفاعلي وأساليب التكرار المتباعد.`
+                                    : `This course zeroes in on mastering ${subject.name} through interactive content and spaced repetition methods.`}
+                            </p>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            {[
+                                { label: language === 'ar' ? 'اللغة' : 'Language', value: language === 'ar' ? 'العربية' : 'Arabic' },
+                                { label: language === 'ar' ? 'المستوى' : 'Level', value: language === 'ar' ? 'لجميع المستويات' : 'All Levels' },
+                                { label: language === 'ar' ? 'التحديثات' : 'Updates', value: language === 'ar' ? 'يومية' : 'Daily' }
+                            ].map((stat, i) => (
+                                <div key={i} className="bg-white/5 border border-white/5 p-8 rounded-3xl text-center">
+                                    <div className="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em] mb-2">{stat.label}</div>
+                                    <div className="text-xl font-black text-brand-cyan">{stat.value}</div>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 )}
-            </div>
+            </main>
 
-            {/* Sidebar for Add Branch */}
+            {/* Sidebar for Add/Edit */}
             <Sidebar
                 isOpen={isSidebarOpen}
                 onClose={() => setIsSidebarOpen(false)}
-                title={language === 'ar' ? 'إضافة فصل جديد' : 'Initialize Branch'}
+                title={language === 'ar' ? 'تهيئة فصل جديد' : 'Initialize Chapter'}
             >
-                <div className="space-y-6">
-                    <p className="text-gray-400 font-bold text-sm leading-relaxed">
-                        {language === 'ar' ? 'الفصل هو حاوية للدروس والحلقات. قم بتسميته.' : 'Define a new operational module to hold lessons.'}
+                <div className="space-y-8 p-4">
+                    <p className="text-gray-500 font-bold text-sm leading-relaxed">
+                        {language === 'ar' ? 'الفصل هو حاوية منطقية للدروس والكبسولات التعليمية.' : 'Define a new logical container for lessons and capsules.'}
                     </p>
-                    <div>
-                        <input
-                            type="text"
-                            value={newBranchName}
-                            onChange={(e) => setNewBranchName(e.target.value)}
-                            placeholder={language === 'ar' ? 'مثال: الجبر المتقدم' : 'e.g. Advanced Algebra'}
-                            className="w-full bg-[#121212] border border-white/10 rounded px-6 py-4 text-white focus:outline-none focus:border-brand-purple transition-all placeholder-gray-600"
-                            autoFocus
-                            onKeyDown={(e) => e.key === 'Enter' && handleAddBranch()}
-                        />
-                    </div>
+                    <input
+                        type="text"
+                        value={newBranchName}
+                        onChange={(e) => setNewBranchName(e.target.value)}
+                        placeholder={language === 'ar' ? 'اسم الفصل...' : 'Chapter Name...'}
+                        className="w-full bg-black border border-white/10 rounded-2xl px-6 py-5 text-white focus:outline-none focus:border-brand-cyan transition-all font-bold"
+                        autoFocus
+                        onKeyDown={(e) => e.key === 'Enter' && handleAddBranch()}
+                    />
                     <button
                         onClick={handleAddBranch}
                         disabled={!newBranchName.trim()}
-                        className="w-full bg-ott-gradient py-4 rounded font-black text-white disabled:opacity-50 transition-transform hover:scale-[1.02]"
+                        className="w-full bg-ott-gradient py-5 rounded-2xl font-black text-white hover:shadow-glow-brand transition-all active:scale-95 disabled:opacity-50"
                     >
-                        {language === 'ar' ? 'إضافة الفصل' : 'Add Chapter'}
+                        {language === 'ar' ? 'تأكيد الإضافة' : 'Confirm Initialization'}
                     </button>
                 </div>
             </Sidebar>
+
+            {/* In-page Add Lesson Modal */}
+            {addLessonBranchId && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/60 backdrop-blur-md animate-fade-in">
+                    <div className="bg-space-900 border border-white/10 p-10 rounded-[2.5rem] shadow-2xl w-full max-w-lg transform animate-scale-up">
+                        <h2 className="text-2xl font-black text-white mb-8 tracking-tighter uppercase">{language === 'ar' ? 'إضافة درس جديد' : 'Create New Lesson'}</h2>
+                        <input
+                            autoFocus
+                            type="text"
+                            value={newLessonName}
+                            onChange={e => setNewLessonName(e.target.value)}
+                            onKeyDown={e => e.key === 'Enter' && handleAddLesson()}
+                            placeholder={language === 'ar' ? 'عنوان الدرس...' : 'Lesson Title...'}
+                            className="w-full bg-black border border-white/10 rounded-2xl px-6 py-5 text-white focus:outline-none focus:border-brand-cyan transition-all mb-8 font-bold"
+                        />
+                        <div className="flex gap-4">
+                            <button onClick={() => setAddLessonBranchId(null)} className="flex-1 py-4 bg-white/5 text-white rounded-2xl font-black hover:bg-white/10">
+                                {language === 'ar' ? 'إلغاء' : 'Cancel'}
+                            </button>
+                            <button onClick={handleAddLesson} className="flex-1 py-4 bg-brand-cyan text-white rounded-2xl font-black hover:bg-brand-cyan/80 shadow-glow-brand">
+                                {language === 'ar' ? 'حفظ الدرس' : 'Save Lesson'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

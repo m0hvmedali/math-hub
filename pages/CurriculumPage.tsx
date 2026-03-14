@@ -1,11 +1,10 @@
 import React, { useContext, useState } from 'react';
 import { AppContext } from '../App';
-import { NavLink } from 'react-router-dom';
-import { ChevronRightIcon, PlusIcon, TrashIcon } from '../components/Icons';
+import { PlusIcon } from '../components/Icons';
+import MaterialCard from '../components/MaterialCard';
 
 const CurriculumPage: React.FC = () => {
-    // Fixed: Use subjects, addSubject, deleteSubject from AppContext
-    const { subjects, addSubject, deleteSubject } = useContext(AppContext);
+    const { subjects, addSubject, language } = useContext(AppContext);
     const [newSubjectName, setNewSubjectName] = useState('');
     const [isAdding, setIsAdding] = useState(false);
 
@@ -19,94 +18,102 @@ const CurriculumPage: React.FC = () => {
     };
 
     return (
-        <div className="p-6 md:p-12 max-w-5xl mx-auto min-h-screen">
-             <div className="flex items-center justify-between mb-8">
-                <h1 className="text-3xl font-bold text-white">Curriculum Roadmap</h1>
-                <button 
-                    onClick={() => setIsAdding(!isAdding)}
-                    className="bg-neon-violet hover:bg-neon-violet/80 text-white p-2 rounded-lg transition-colors"
-                >
-                    <PlusIcon className="w-6 h-6" />
-                </button>
-            </div>
+        <div className="p-6 md:p-12 max-w-[1600px] mx-auto min-h-screen animate-premium-fade">
+            {/* Header Section */}
+            <header className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-16">
+                <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                        <div className="w-2 h-8 bg-brand-cyan rounded-full shadow-glow-brand" />
+                        <span className="text-xs font-black tracking-[0.3em] text-brand-cyan uppercase font-outfit">
+                            {language === 'ar' ? 'المناهج الدراسية' : 'Academic Curriculum'}
+                        </span>
+                    </div>
+                    <h1 className="text-5xl md:text-7xl font-black text-white tracking-tighter">
+                        {language === 'ar' ? 'موادي والمناهج' : 'My Materials'}
+                    </h1>
+                </div>
 
+                <div className="flex items-center gap-4">
+                    <button 
+                        onClick={() => setIsAdding(!isAdding)}
+                        className="bg-ott-gradient hover:shadow-glow-brand text-white px-8 py-4 rounded-2xl font-black text-sm uppercase tracking-widest transition-all hover:scale-105 active:scale-95 flex items-center gap-3"
+                    >
+                        <PlusIcon className="w-5 h-5" />
+                        {language === 'ar' ? 'إضافة مادة' : 'Add Subject'}
+                    </button>
+                </div>
+            </header>
+
+            {/* Add Subject Modal/Form Overlay */}
             {isAdding && (
-                <form onSubmit={handleAddSubject} className="mb-8 animate-fade-in bg-space-800 p-4 rounded-xl border border-space-700">
-                    <div className="flex gap-2">
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 animate-fade-in backdrop-blur-md bg-black/40">
+                    <form onSubmit={handleAddSubject} className="bg-space-900 border border-white/10 p-10 rounded-[2.5rem] shadow-2xl w-full max-w-lg transform animate-scale-up">
+                        <h2 className="text-2xl font-black text-white mb-8 tracking-tighter uppercase">
+                            {language === 'ar' ? 'إنشاء مادة جديدة' : 'Create New Subject'}
+                        </h2>
                         <input
                             type="text"
                             value={newSubjectName}
                             onChange={(e) => setNewSubjectName(e.target.value)}
-                            placeholder="Subject Name (e.g., Calculus II)"
-                            className="flex-1 bg-space-900 border border-space-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-neon-violet"
+                            placeholder={language === 'ar' ? 'اسم المادة (مثلاً: الكيمياء العضوية)' : 'Subject Name (e.g., Organic Chem)'}
+                            className="w-full bg-black border border-white/10 rounded-2xl px-6 py-4 text-white focus:outline-none focus:border-brand-cyan transition-all mb-6 font-bold"
                             autoFocus
                         />
-                        <button type="submit" className="bg-white text-black font-bold px-6 py-2 rounded-lg hover:bg-gray-200">
-                            Create
-                        </button>
-                    </div>
-                </form>
+                        <div className="flex gap-4">
+                            <button 
+                                type="button" 
+                                onClick={() => setIsAdding(false)}
+                                className="flex-1 py-4 bg-white/5 text-white rounded-2xl font-black hover:bg-white/10 transition-colors"
+                            >
+                                {language === 'ar' ? 'إلغاء' : 'Cancel'}
+                            </button>
+                            <button 
+                                type="submit" 
+                                className="flex-1 py-4 bg-brand-cyan text-white rounded-2xl font-black hover:bg-brand-cyan/80 transition-all hover:scale-[1.02]"
+                            >
+                                {language === 'ar' ? 'تأكيد' : 'Confirm'}
+                            </button>
+                        </div>
+                    </form>
+                </div>
             )}
 
-            <div className="grid grid-cols-1 gap-4">
+            {/* Materials Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
                 {subjects.map((subject) => {
-                     // Calculate stats across all branches in the subject
+                     // Calculate stats
                      const total = subject.branches.reduce((acc, b) => acc + (b.lessons?.length || 0), 0);
                      const completed = subject.branches.reduce((acc, b) => acc + (b.lessons?.filter(l => l.status === 'completed').length || 0), 0);
                      const percent = total === 0 ? 0 : Math.round((completed / total) * 100);
 
                     return (
-                        <div key={subject.id} className="group bg-space-900 border border-space-800 hover:border-neon-cyan/50 rounded-xl p-6 transition-all duration-300 relative overflow-hidden">
-                             <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-neon-cyan to-neon-violet opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                             
-                             <div className="flex items-start justify-between relative z-10">
-                                <div className="flex-1">
-                                    <h3 className="text-xl font-bold text-white mb-2 group-hover:text-neon-cyan transition-colors">{subject.name}</h3>
-                                    <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
-                                        <span>{subject.branches.length} Branches</span>
-                                        <span>•</span>
-                                        <span>{percent}% Complete</span>
-                                    </div>
-                                    
-                                    {/* Progress Bar */}
-                                    <div className="w-full bg-space-800 h-1.5 rounded-full overflow-hidden max-w-md">
-                                        <div 
-                                            className="bg-neon-cyan h-full rounded-full" 
-                                            style={{ width: `${percent}%` }}
-                                        ></div>
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center gap-2">
-                                    <NavLink 
-                                        to={`/subject/${subject.id}`}
-                                        className="p-2 bg-space-800 rounded-full hover:bg-neon-cyan hover:text-black transition-colors"
-                                    >
-                                        <ChevronRightIcon className="w-5 h-5" />
-                                    </NavLink>
-                                    
-                                    <button 
-                                        onClick={() => deleteSubject(subject.id)}
-                                        className="p-2 text-gray-600 hover:text-red-500 transition-colors"
-                                    >
-                                        <TrashIcon className="w-4 h-4" />
-                                    </button>
-                                </div>
-                             </div>
-
-                             {subject.branches.length === 0 && (
-                                <div className="mt-4 pt-4 border-t border-space-800 flex justify-end">
-                                    <span className="text-xs text-gray-500">No branches yet.</span>
-                                </div>
-                             )}
-                        </div>
+                        <MaterialCard
+                            key={subject.id}
+                            id={subject.id}
+                            title={subject.name}
+                            subtitle={`${subject.branches.length} ${language === 'ar' ? 'فصل' : 'Branches'}`}
+                            link={`/subject/${subject.id}`}
+                            progress={percent}
+                            badgeText={percent === 100 ? (language === 'ar' ? 'مكتمل' : 'Mastered') : (language === 'ar' ? 'قيد الدراسة' : 'In Progress')}
+                            instructor={language === 'ar' ? 'أكاديمية Madrasetna' : 'Madrasetna Academy'}
+                        />
                     );
                 })}
 
                 {subjects.length === 0 && (
-                    <div className="text-center py-20 bg-space-900/50 rounded-xl border border-dashed border-space-700">
-                        <p className="text-gray-400 mb-4">Your curriculum is empty.</p>
-                        <button onClick={() => setIsAdding(true)} className="text-neon-cyan hover:underline">Start by adding a Subject</button>
+                    <div className="col-span-full py-32 flex flex-col items-center justify-center text-center bg-white/5 border border-dashed border-white/10 rounded-[3rem] animate-pulse">
+                        <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-6">
+                            <span className="text-4xl">📚</span>
+                        </div>
+                        <h3 className="text-2xl font-black text-white mb-2">
+                            {language === 'ar' ? 'مكتبتك فارغة' : 'Your Library is Empty'}
+                        </h3>
+                        <p className="text-gray-500 font-bold mb-8">
+                            {language === 'ar' ? 'ابدأ بإضافة المواد الدراسية الخاصة بك هنا' : 'Start by adding your study materials here.'}
+                        </p>
+                        <button onClick={() => setIsAdding(true)} className="text-brand-cyan font-black hover:underline uppercase tracking-widest text-xs">
+                            {language === 'ar' ? '+ أضف أول مادة' : '+ Add Your First Subject'}
+                        </button>
                     </div>
                 )}
             </div>
