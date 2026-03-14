@@ -201,19 +201,21 @@ const SubjectPage: React.FC = () => {
 
             {/* Sidebar for Add/Edit */}
             <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} title={language === 'ar' ? 'تهيئة فصل جديد' : 'Chapter Management'}>
-                <div className="space-y-8 p-4">
-                    <input
-                        type="text"
-                        value={newBranchName}
-                        onChange={(e) => setNewBranchName(e.target.value)}
-                        placeholder={language === 'ar' ? 'اسم الفصل...' : 'Chapter Name...'}
-                        className="w-full bg-black border border-white/10 rounded-2xl px-6 py-5 text-white focus:outline-none focus:border-brand-cyan transition-all font-bold"
-                        autoFocus
-                    />
-                    <button onClick={handleAddBranch} className="w-full bg-brand-cyan py-5 rounded-2xl font-black text-white hover:shadow-glow-brand transition-all">
-                        {language === 'ar' ? 'تأكيد الإضافة' : 'Confirm Initialization'}
-                    </button>
-                </div>
+                {isSidebarOpen && (
+                    <div className="space-y-8 p-4">
+                        <input
+                            type="text"
+                            value={newBranchName}
+                            onChange={(e) => setNewBranchName(e.target.value)}
+                            placeholder={language === 'ar' ? 'اسم الفصل...' : 'Chapter Name...'}
+                            className="w-full bg-black border border-white/10 rounded-2xl px-6 py-5 text-white focus:outline-none focus:border-brand-cyan transition-all font-bold"
+                            autoFocus
+                        />
+                        <button onClick={handleAddBranch} className="w-full bg-brand-cyan py-5 rounded-2xl font-black text-white hover:shadow-glow-brand transition-all">
+                            {language === 'ar' ? 'تأكيد الإضافة' : 'Confirm Initialization'}
+                        </button>
+                    </div>
+                )}
             </Sidebar>
 
             {/* Add Lesson Modal */}

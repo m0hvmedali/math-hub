@@ -22,8 +22,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, title, children }) =
             {/* Sidebar Content */}
             <div className={`
                 fixed top-0 right-0 h-full w-full max-w-md glass-card shadow-2xl z-[70] 
-                transform transition-transform duration-500 ease-out flex flex-col !rounded-none !rounded-l-3xl
-                ${isOpen ? 'translate-x-0' : 'translate-x-full'}
+                transform transition-all duration-500 ease-out flex flex-col !rounded-none !rounded-l-3xl
+                ${isOpen ? 'translate-x-0 opacity-100 visible' : 'translate-x-full opacity-0 invisible pointer-events-none'}
             `}>
                 <header className="p-6 border-b border-[var(--glass-border)] flex items-center justify-between">
                     <h2 className="text-2xl font-black text-[var(--text-primary)] tracking-tight">{title}</h2>

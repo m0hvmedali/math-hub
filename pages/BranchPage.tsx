@@ -733,45 +733,47 @@ const BranchPage: React.FC = () => {
                 onClose={() => setIsConfigOpen(false)}
                 title={t.intel}
             >
-                <div className="space-y-10">
-                    <div>
-                        <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-4">{t.mastery}</label>
-                        <div className="flex flex-col gap-2">
-                            {(['weak', 'average', 'strong'] as const).map((level) => (
-                                <button
-                                    key={level}
-                                    onClick={() => handleUpdateMetadata({ understanding_level: level })}
-                                    className={`w-full p-4 rounded text-xs font-black tracking-widest transition-all flex items-center justify-between ${activeLesson.understanding_level === level
-                                        ? level === 'weak' ? 'bg-red-500 text-white' : level === 'average' ? 'bg-yellow-500 text-black' : 'bg-brand-cyan text-black'
-                                        : 'bg-white/5 text-gray-500 border border-white/10 hover:border-white/20'
-                                        }`}
-                                >
-                                    {level.toUpperCase()}
-                                    {activeLesson.understanding_level === level && <CheckCircleIcon className="w-5 h-5" />}
-                                </button>
-                            ))}
+                {isConfigOpen && (
+                    <div className="space-y-10">
+                        <div>
+                            <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-4">{t.mastery}</label>
+                            <div className="flex flex-col gap-2">
+                                {(['weak', 'average', 'strong'] as const).map((level) => (
+                                    <button
+                                        key={level}
+                                        onClick={() => handleUpdateMetadata({ understanding_level: level })}
+                                        className={`w-full p-4 rounded text-xs font-black tracking-widest transition-all flex items-center justify-between ${activeLesson.understanding_level === level
+                                            ? level === 'weak' ? 'bg-red-500 text-white' : level === 'average' ? 'bg-yellow-500 text-black' : 'bg-brand-cyan text-black'
+                                            : 'bg-white/5 text-gray-500 border border-white/10 hover:border-white/20'
+                                            }`}
+                                    >
+                                        {level.toUpperCase()}
+                                        {activeLesson.understanding_level === level && <CheckCircleIcon className="w-5 h-5" />}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
-                    </div>
 
-                    <div>
-                        <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-4">{t.complexity}</label>
-                        <div className="flex flex-col gap-2">
-                            {(['easy', 'medium', 'hard'] as const).map((diff) => (
-                                <button
-                                    key={diff}
-                                    onClick={() => handleUpdateMetadata({ difficulty: diff })}
-                                    className={`w-full p-4 rounded text-xs font-black tracking-widest transition-all flex items-center justify-between ${activeLesson.difficulty === diff
-                                        ? 'bg-brand-purple text-white shadow-glow-brand'
-                                        : 'bg-white/5 text-gray-500 border border-white/10 hover:border-white/20'
-                                        }`}
-                                >
-                                    {diff.toUpperCase()}
-                                    {activeLesson.difficulty === diff && <CheckCircleIcon className="w-5 h-5" />}
-                                </button>
-                            ))}
+                        <div>
+                            <label className="block text-xs font-black text-gray-500 uppercase tracking-widest mb-4">{t.complexity}</label>
+                            <div className="flex flex-col gap-2">
+                                {(['easy', 'medium', 'hard'] as const).map((diff) => (
+                                    <button
+                                        key={diff}
+                                        onClick={() => handleUpdateMetadata({ difficulty: diff })}
+                                        className={`w-full p-4 rounded text-xs font-black tracking-widest transition-all flex items-center justify-between ${activeLesson.difficulty === diff
+                                            ? 'bg-brand-purple text-white shadow-glow-brand'
+                                            : 'bg-white/5 text-gray-500 border border-white/10 hover:border-white/20'
+                                            }`}
+                                    >
+                                        {diff.toUpperCase()}
+                                        {activeLesson.difficulty === diff && <CheckCircleIcon className="w-5 h-5" />}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                     </div>
-                </div>
+                )}
             </Sidebar>
 
             {/* Modals */}
