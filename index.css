@@ -458,7 +458,62 @@ math-field:focus-within {
 }
 
 .sci-fi {
-  /* Container for futuristic grouping */
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+/* ══════════════════════════════════════
+   Premium Global Animations
+   ══════════════════════════════════════ */
+@keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
+}
+
+@keyframes pulse-glow {
+    0% { box-shadow: 0 0 5px rgba(45, 212, 191, 0.2); }
+    50% { box-shadow: 0 0 20px rgba(45, 212, 191, 0.4); }
+    100% { box-shadow: 0 0 5px rgba(45, 212, 191, 0.2); }
+}
+
+@keyframes cinematic-entry {
+    0% { opacity: 0; transform: translateY(20px) scale(0.98); filter: blur(10px); }
+    100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+
+.animate-float {
+    animation: float 6s ease-in-out infinite;
+}
+
+.animate-glow {
+    animation: pulse-glow 3s ease-in-out infinite;
+}
+
+.animate-cinematic {
+    animation: cinematic-entry 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Smooth Scrolling */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Custom Scrollbar Premium */
+::-webkit-scrollbar {
+    width: 6px;
+}
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: var(--brand-cyan);
 }
 
 .bg-primSky-950\/50 {

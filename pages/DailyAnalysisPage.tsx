@@ -106,7 +106,7 @@ const DailyAnalysisPage: React.FC = () => {
     };
 
     return (
-        <div className="p-6 md:p-12 max-w-4xl mx-auto pb-32 animate-fade-in">
+        <div className="p-6 md:p-12 max-w-4xl mx-auto pb-32 animate-cinematic">
             <header className="mb-12">
                 <h1 className="text-4xl font-black text-white mb-2 flex items-center gap-3">
                     <TrendingUpIcon className="w-10 h-10 text-brand-cyan" />

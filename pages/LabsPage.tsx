@@ -222,7 +222,7 @@ const LabsPage: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen p-6 md:p-12 animate-fade-in max-w-7xl mx-auto">
+        <div className="min-h-screen p-6 md:p-12 animate-cinematic max-w-7xl mx-auto">
             <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16">
                 <div>
                     <div className="flex items-center gap-3 mb-4">

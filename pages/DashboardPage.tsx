@@ -214,7 +214,7 @@ const DashboardPage: React.FC = () => {
     };
 
     return (
-        <div className="w-full bg-black min-h-screen text-white overflow-x-hidden pb-32 animate-fade-in relative">
+        <div className="w-full bg-black min-h-screen text-white overflow-x-hidden pb-32 animate-cinematic relative">
             {showManual && <OnboardingStories onComplete={() => setShowManual(false)} />}
             <GlobalSearchModal
                 isOpen={showGlobalSearch}
@@ -345,7 +345,7 @@ const DashboardPage: React.FC = () => {
                         </ResponsiveContainer>
                     </div>
                     <div className="text-center font-bold text-accent-green mt-2">
-                        Avg: {studySessions.length > 0 ? Math.round(studySessions.reduce((a, b) => a + b.focus_score, 0) / studySessions.length) : 0}%
+                        Avg: {studySessions.length > 0 ? Math.round(studySessions.reduce((a, b) => a + (Number(b.focus_score) || 0), 0) / studySessions.length) : 0}%
                     </div>
                 </div>
 
@@ -369,7 +369,7 @@ const DashboardPage: React.FC = () => {
             </div>
 
             {/* Main Content Area */}
-            <div className="relative z-30 -mt-16 px-6 md:px-12 w-full max-w-[1600px] mx-auto space-y-16 pb-32">
+            <div className="relative z-30 px-6 md:px-12 w-full max-w-[1600px] mx-auto space-y-16 pb-32">
                 {activeView === 'space' ? (
                     <div className="h-[70vh] w-full flex flex-col items-center justify-center bg-gray-900/80 backdrop-blur-md rounded-[2rem] p-12 text-center border border-white/10 animate-fade-in shadow-2xl">
                         <div className="p-6 bg-brand-purple/20 rounded-full mb-8 animate-pulse text-brand-purple">
@@ -460,27 +460,66 @@ const DashboardPage: React.FC = () => {
                                 </form>
                             )}
 
-                            <div className="flex gap-4 overflow-x-auto pb-8 pt-4 px-2 snap-x scrollbar-hide">
+                            <div className="flex flex-col gap-8 px-2">
                                 {filteredSubjects.map((subject) => {
-                                    let total = 0, done = 0;
-                                    subject.branches?.forEach(b => {
-                                        total += b.lessons.length;
-                                        done += b.lessons.filter(l => l.status === 'completed').length;
-                                    });
-                                    const percent = total > 0 ? Math.round((done / total) * 100) : 0;
+                                    const totalLessons = subject.branches.reduce((acc, b) => acc + (b.lessons?.length || 0), 0);
+                                    const completedLessons = subject.branches.reduce((acc, b) => acc + (b.lessons?.filter(l => l.status === 'completed').length || 0), 0);
+                                    const percent = totalLessons === 0 ? 0 : Math.round((completedLessons / totalLessons) * 100);
 
                                     return (
-                                        <div className="snap-start" key={subject.id}>
-                                            <CourseCard
-                                                id={subject.id}
-                                                title={subject.name}
-                                                subtitle={`${total} ${language === 'ar' ? 'دروس' : 'Lessons'}`}
-                                                link={`/subject/${subject.id}`}
-                                                badgeText={language === 'ar' ? 'مادة' : 'Course'}
-                                                progress={percent}
-                                                onEdit={isOwner ? () => setEditingSubject({ id: subject.id, name: subject.name }) : undefined}
-                                                onDelete={isOwner ? () => deleteSubject(subject.id) : undefined}
-                                            />
+                                        <div 
+                                            key={subject.id}
+                                            className="bg-[#0A0D14] border-2 border-white/5 p-8 rounded-[2.5rem] transition-all cursor-pointer group hover:border-brand-cyan/30 hover:bg-[#0F141F] shadow-xl w-full"
+                                            onClick={() => navigate(`/subject/${subject.id}`)}
+                                        >
+                                            <div className="flex items-start justify-between">
+                                                <div className="flex items-start gap-6">
+                                                    {/* Left: Decorative Icon */}
+                                                    <div className="text-gray-500 w-8 h-8 flex items-center justify-center">
+                                                        <div className="w-1.5 h-1.5 rounded-full bg-brand-cyan" />
+                                                    </div>
+                                                    
+                                                    {/* Middle: Content */}
+                                                    <div className="space-y-4">
+                                                        <h2 className="text-4xl md:text-5xl font-black text-white leading-none group-hover:text-brand-cyan transition-colors">
+                                                            {subject.name}
+                                                        </h2>
+                                                        <div className="flex flex-col gap-1 text-gray-500 text-sm font-bold">
+                                                            <div className="text-brand-cyan text-[10px] mb-2 uppercase tracking-[0.2em]">
+                                                                {subject.branches.length} {language === 'ar' ? 'فصل' : 'Branches'} • {totalLessons} {language === 'ar' ? 'درس' : 'Lessons'}
+                                                            </div>
+                                                            {subject.branches.slice(0, 3).map((branch) => (
+                                                                <div key={branch.id} className="flex items-center gap-2">
+                                                                    <div className="w-1 h-1 rounded-full bg-gray-800" />
+                                                                    {branch.name}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+
+                                                        {/* Progress Stats */}
+                                                        <div className="pt-4 max-w-[200px]">
+                                                            <div className="flex justify-between text-[8px] font-black uppercase tracking-widest text-gray-600 mb-2">
+                                                                <span>{language === 'ar' ? 'نسبة الإنجاز' : 'Subject Completion'}</span>
+                                                                <span className="text-brand-cyan">{percent}%</span>
+                                                            </div>
+                                                            <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                                                                <div 
+                                                                    className="h-full bg-gradient-to-r from-brand-purple to-brand-cyan transition-all duration-1000 ease-out" 
+                                                                    style={{ width: `${percent}%` }}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                {/* Right: Action Icon */}
+                                                <div className="w-14 h-14 bg-white/5 rounded-2xl flex items-center justify-center text-brand-magenta/80 shadow-inner group-hover:scale-110 transition-transform">
+                                                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z" />
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                                                    </svg>
+                                                </div>
+                                            </div>
                                         </div>
                                     );
                                 })}

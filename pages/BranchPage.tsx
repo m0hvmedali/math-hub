@@ -544,7 +544,7 @@ const BranchPage: React.FC = () => {
     const focusedBlock = activeLesson.content?.[focusedBlockIndex];
 
     return (
-        <div className="flex flex-col min-h-screen bg-black relative -mt-16 z-10 w-full overflow-x-hidden">
+        <div className="flex flex-col min-h-screen bg-black relative -mt-16 z-10 w-full overflow-x-hidden animate-cinematic">
             {/* Cinematic Top Navigation Overlay */}
             <div className="absolute top-0 left-0 w-full p-6 flex justify-between items-center z-50 bg-gradient-to-b from-black via-black/80 to-transparent">
                 <button

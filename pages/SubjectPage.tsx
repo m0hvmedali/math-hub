@@ -53,7 +53,7 @@ const SubjectPage: React.FC = () => {
     const displayBranches = subject.branches?.filter(b => activeTab === 'capsule' ? b.is_capsule : !b.is_capsule) || [];
 
     return (
-        <div className="w-full bg-black min-h-screen text-white pb-32 animate-premium-fade relative font-almarai">
+        <div className="w-full bg-black min-h-screen text-white pb-32 animate-cinematic relative font-almarai">
             
             {/* Extended Cinematic Hero Banner */}
             <div className="relative w-full min-h-[50vh] flex items-end pb-20 px-6 md:px-16 bg-[#050505]">

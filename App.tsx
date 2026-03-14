@@ -2,6 +2,7 @@ import React, { useState, useCallback, createContext, useEffect } from 'react';
 import { Routes, Route, Navigate, NavLink } from 'react-router-dom';
 import WhiteboardPage from './pages/WhiteboardPage';
 import { Subject, CourseBranch, Lesson, StudySession, Task, Importance, Competition, CrashTask, ErrorCause, KnowledgeError, CustomNode, ManualLink } from './types';
+import { GlobeIcon } from './components/Icons';
 import Navigation from './components/Navigation';
 import DashboardPage from './pages/DashboardPage';
 import SubjectPage from './pages/SubjectPage';
@@ -25,6 +26,7 @@ import IframeLabPage from './pages/IframeLabPage';
 import ExplainLessonPage from './pages/ExplainLessonPage';
 import SettingsPage from './pages/SettingsPage';
 import HistoryPage from './pages/HistoryPage';
+import CurriculumPage from './pages/CurriculumPage';
 import { useCosmicStore } from './store/useCosmicStore';
 import { supabase, isSupabaseConfigured } from './supabaseClient';
 import { rebuildSearchIndex, searchRadar, SearchResult, fetchTavilyResults } from './utils/searchRadar';
@@ -621,6 +623,7 @@ const App: React.FC = () => {
                         <Route path="/login" element={user ? <Navigate to="/" /> : <LoginPage onLogin={login} />} />
                         <Route path="/guide" element={<GuidePage />} />
                         <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+                        <Route path="/curriculum" element={<ProtectedRoute><CurriculumPage /></ProtectedRoute>} />
                         <Route path="/subject/:subjectId" element={<ProtectedRoute><SubjectPage /></ProtectedRoute>} />
                         <Route path="/subject/:subjectId/branch/:branchId/lesson/:lessonId" element={<ProtectedRoute><BranchPage /></ProtectedRoute>} />
                         <Route path="/whiteboard/:type/:id" element={<ProtectedRoute><WhiteboardPage /></ProtectedRoute>} />
@@ -677,6 +680,10 @@ const App: React.FC = () => {
                     <a href="#/" className="flex flex-col items-center gap-1 text-[var(--text-muted)] hover:text-brand-cyan transition-colors z-[100]">
                         <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
                         <span className="text-[10px] font-black uppercase tracking-widest">{language === 'ar' ? 'الرئيسية' : 'Home'}</span>
+                    </a>
+                    <a href="#/curriculum" className="flex flex-col items-center gap-1 text-[var(--text-muted)] hover:text-brand-cyan transition-colors z-[100]">
+                        <GlobeIcon className="w-6 h-6" />
+                        <span className="text-[10px] font-black uppercase tracking-widest">{language === 'ar' ? 'المواد' : 'Materials'}</span>
                     </a>
                     <a href="#/schedule" className="flex flex-col items-center gap-1 text-[var(--text-muted)] hover:text-brand-cyan transition-colors z-[100]">
                         <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
