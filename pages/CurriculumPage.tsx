@@ -1,17 +1,24 @@
 // d:\Download\math-hub\pages\CurriculumPage.tsx
 import React, { useContext, useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AppContext } from '../App';
 import { PlusIcon, ChevronRightIcon } from '../components/Icons';
-import MaterialCard from '../components/MaterialCard';
-
 const CurriculumPage: React.FC = () => {
     const { subjects, addSubject, language } = useContext(AppContext);
     const [newSubjectName, setNewSubjectName] = useState('');
     const [isAdding, setIsAdding] = useState(false);
+    const navigate = useNavigate();
     
     // UI state for the new patterns
     const [activePackage, setActivePackage] = useState<'packages' | 'separate'>('packages');
-    const [selectedSubjectId, setSelectedSubjectId] = useState<string | null>(subjects[0]?.id || null);
+    const [selectedSubjectId, setSelectedSubjectId] = useState<string | null>(null);
+
+    // Initialize selected subject once subjects load
+    React.useEffect(() => {
+        if (!selectedSubjectId && subjects.length > 0) {
+            setSelectedSubjectId(subjects[0].id);
+        }
+    }, [subjects, selectedSubjectId]);
 
     const handleAddSubject = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -23,7 +30,7 @@ const CurriculumPage: React.FC = () => {
     };
 
     const filteredSubjects = useMemo(() => {
-        if (!selectedSubjectId) return subjects;
+        if (!selectedSubjectId) return subjects; // Show all if none or explicitly "All"
         return subjects.filter(s => s.id === selectedSubjectId);
     }, [subjects, selectedSubjectId]);
 
@@ -125,24 +132,70 @@ const CurriculumPage: React.FC = () => {
                 </div>
             )}
 
-            {/* Materials Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            {/* Materials Grid - Redesigned to Lecture Card Style (List) */}
+            <div className="flex flex-col gap-8 max-w-[1000px] mx-auto">
                 {filteredSubjects.map((subject) => {
-                     const total = subject.branches.reduce((acc, b) => acc + (b.lessons?.length || 0), 0);
-                     const completed = subject.branches.reduce((acc, b) => acc + (b.lessons?.filter(l => l.status === 'completed').length || 0), 0);
-                     const percent = total === 0 ? 0 : Math.round((completed / total) * 100);
+                    const totalLessons = subject.branches.reduce((acc, b) => acc + (b.lessons?.length || 0), 0);
+                    const completedLessons = subject.branches.reduce((acc, b) => acc + (b.lessons?.filter(l => l.status === 'completed').length || 0), 0);
+                    const percent = totalLessons === 0 ? 0 : Math.round((completedLessons / totalLessons) * 100);
 
                     return (
-                        <MaterialCard
+                        <div 
                             key={subject.id}
-                            id={subject.id}
-                            title={subject.name}
-                            subtitle={`${subject.branches.length} ${language === 'ar' ? 'فصل' : 'Branches'}`}
-                            link={`/subject/${subject.id}`}
-                            progress={percent}
-                            badgeText={percent === 100 ? (language === 'ar' ? 'مكتمل' : 'Mastered') : (language === 'ar' ? 'قيد الدراسة' : 'In Progress')}
-                            instructor={language === 'ar' ? 'أكاديمية Madrasetna' : 'Madrasetna Academy'}
-                        />
+                            className="bg-[#0A0D14] border-2 border-white/5 p-8 rounded-[2.5rem] transition-all cursor-pointer group hover:border-brand-cyan/30 hover:bg-[#0F141F] shadow-xl"
+                            onClick={() => navigate(`/subject/${subject.id}`)}
+                        >
+                            <div className="flex items-start justify-between">
+                                <div className="flex items-start gap-6">
+                                    {/* Left: Icon/Letter Badge */}
+                                    <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-brand-cyan/20 to-brand-purple/20 flex items-center justify-center border border-white/10 group-hover:scale-110 transition-transform">
+                                        <span className="text-3xl font-black text-white">{subject.name.charAt(0)}</span>
+                                    </div>
+                                    
+                                    {/* Middle: Content */}
+                                    <div className="space-y-4">
+                                        <h2 className="text-4xl md:text-5xl font-black text-white leading-none group-hover:text-brand-cyan transition-colors">
+                                            {subject.name}
+                                        </h2>
+                                        <div className="flex flex-col gap-1 text-gray-500 text-sm font-bold">
+                                            <div className="text-brand-cyan text-xs mb-2 uppercase tracking-widest">
+                                                {subject.branches.length} {language === 'ar' ? 'فصل' : 'Branches'} • {totalLessons} {language === 'ar' ? 'درس' : 'Lessons'}
+                                            </div>
+                                            {subject.branches.slice(0, 3).map((branch) => (
+                                                <div key={branch.id} className="flex items-center gap-2">
+                                                    <div className="w-1.5 h-1.5 rounded-full bg-gray-700" />
+                                                    {branch.name}
+                                                </div>
+                                            ))}
+                                            {subject.branches.length > 3 && (
+                                                <div className="text-gray-600 text-[10px] mt-1 italic">
+                                                    +{subject.branches.length - 3} {language === 'ar' ? 'فصول إضافية' : 'More Chapters'}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Progress Stats */}
+                                        <div className="pt-4 max-w-[200px]">
+                                            <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">
+                                                <span>{language === 'ar' ? 'الإنجاز' : 'Progress'}</span>
+                                                <span className="text-brand-cyan">{percent}%</span>
+                                            </div>
+                                            <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                                                <div 
+                                                    className="h-full bg-gradient-to-r from-brand-purple to-brand-cyan transition-all duration-1000 ease-out" 
+                                                    style={{ width: `${percent}%` }}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Right: Action Arrow */}
+                                <div className="w-14 h-14 bg-white/5 rounded-2xl flex items-center justify-center text-brand-cyan shadow-inner group-hover:bg-brand-cyan group-hover:text-black transition-all">
+                                    <ChevronRightIcon className={`w-8 h-8 ${language === 'ar' ? 'transform rotate-180' : ''}`} />
+                                </div>
+                            </div>
+                        </div>
                     );
                 })}
 
