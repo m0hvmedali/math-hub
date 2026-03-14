@@ -30,38 +30,43 @@ const CurriculumPage: React.FC = () => {
     return (
         <div className="p-6 md:p-12 max-w-[1600px] mx-auto min-h-screen animate-premium-fade space-y-12">
             
-            {/* Image 1 Pattern: Package Toggle */}
-            <div className="flex flex-col items-center space-y-8">
-                <div className="bg-[#0A0D14] border border-white/5 p-1.5 rounded-2xl flex items-center gap-1">
-                    <button 
-                        onClick={() => setActivePackage('separate')}
-                        className={`px-8 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${activePackage === 'separate' ? 'text-white bg-white/5' : 'text-gray-500 hover:text-white'}`}
-                    >
-                        {language === 'ar' ? 'محاضرات منفصلة' : 'Separate Lectures'}
-                    </button>
-                    <button 
-                        onClick={() => setActivePackage('packages')}
-                        className={`px-8 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all ${activePackage === 'packages' ? 'text-white bg-brand-cyan shadow-glow-brand' : 'text-gray-500 hover:text-white'}`}
-                    >
-                        {language === 'ar' ? 'الباقات وكورسات الشهور' : 'Monthly Packages'}
-                    </button>
+            {/* Image 1 Pattern: Package Toggle specialized card */}
+            <div className="max-w-2xl mx-auto w-full">
+                <div className="bg-[#0A0D14] border border-white/5 p-8 rounded-[2rem] shadow-2xl flex flex-col items-center space-y-6">
+                    <h2 className="text-sm font-black text-gray-300 tracking-[0.2em] uppercase text-center">
+                        {language === 'ar' ? 'باقة الشهور و الثلث الشهور ولا المحاضرات ؟' : 'Monthly Packages or Separate Lectures?'}
+                    </h2>
+                    <div className="bg-black/40 border border-white/5 p-1.5 rounded-2xl flex items-center gap-1 w-full max-w-md">
+                        <button 
+                            onClick={() => setActivePackage('separate')}
+                            className={`flex-1 px-4 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${activePackage === 'separate' ? 'text-white bg-white/10 shadow-lg' : 'text-gray-500 hover:text-gray-300'}`}
+                        >
+                            {language === 'ar' ? 'المحاضرات منفصلة' : 'Separate Lectures'}
+                        </button>
+                        <button 
+                            onClick={() => setActivePackage('packages')}
+                            className={`flex-1 px-4 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${activePackage === 'packages' ? 'text-white bg-brand-cyan shadow-glow-brand' : 'text-gray-500 hover:text-gray-300'}`}
+                        >
+                            {language === 'ar' ? 'الباقات وكورسات الشهور' : 'Monthly Packages'}
+                        </button>
+                    </div>
                 </div>
-                <h2 className="text-xl font-black text-white tracking-tighter text-center">
-                    {language === 'ar' ? 'أختر المادة المراد عرض الإشتراكات الخاصة بها' : 'Choose the subject to view its specific content'}
-                </h2>
             </div>
 
-            {/* Image 1 Pattern: Subject Pill Selector */}
-            <div className="bg-[#0A0D14]/60 border border-white/5 p-8 rounded-[2rem] shadow-2xl">
-                <div className="flex flex-wrap items-center justify-center gap-4">
+            {/* Image 1 Pattern: Subject Pill Selector inside its own card */}
+            <div className="bg-[#0A0D14]/80 border border-white/5 p-12 rounded-[2.5rem] shadow-2xl space-y-10">
+                <h3 className="text-xl font-black text-white tracking-tighter text-center">
+                    {language === 'ar' ? 'أختر المادة المراد عرض الإشتراكات الخاصة بها' : 'Choose the subject to view its specific subscriptions'}
+                </h3>
+                <div className="flex flex-wrap items-center justify-center gap-3">
                     {subjects.map((subject) => (
                         <button
                             key={subject.id}
                             onClick={() => setSelectedSubjectId(subject.id)}
-                            className={`px-6 py-3 rounded-xl font-black text-xs uppercase tracking-widest border transition-all ${
+                            className={`px-6 py-3.5 rounded-xl font-black text-[11px] uppercase tracking-widest border transition-all duration-300 ${
                                 selectedSubjectId === subject.id 
                                 ? 'bg-brand-cyan border-brand-cyan text-white shadow-glow-brand translate-y-[-2px]' 
-                                : 'bg-black/40 border-white/5 text-gray-400 hover:border-white/20 hover:text-white'
+                                : 'bg-black/60 border-white/5 text-gray-400 hover:border-white/20 hover:text-white hover:bg-black/80'
                             }`}
                         >
                             {subject.name}
@@ -69,7 +74,7 @@ const CurriculumPage: React.FC = () => {
                     ))}
                     <button 
                         onClick={() => setIsAdding(true)}
-                        className="w-10 h-10 rounded-xl bg-white/5 border border-white/5 text-gray-500 flex items-center justify-center hover:bg-white/10 hover:text-white transition-all shadow-xl"
+                        className="w-11 h-11 rounded-xl bg-white/5 border border-white/5 text-gray-500 flex items-center justify-center hover:bg-white/10 hover:text-white transition-all shadow-xl hover:scale-110 active:scale-95"
                     >
                         <PlusIcon className="w-5 h-5" />
                     </button>
