@@ -53,31 +53,33 @@ const CurriculumPage: React.FC = () => {
                 </div>
             </div>
 
-            {/* Image 1 Pattern: Subject Pill Selector inside its own card */}
-            <div className="bg-[#0A0D14]/80 border border-white/5 p-12 rounded-[2.5rem] shadow-2xl space-y-10">
-                <h3 className="text-xl font-black text-white tracking-tighter text-center">
+            {/* Image 4 Pattern: Precise Subject Selector Card */}
+            <div className="flex-center-both gap-2 pt-2 flex-col bg-primSky-950/50 hover:bg-yellow-100 dark:hover:bg-cyan-800 dark:bg-slate-800/50 smooth shadow-md px-4 py-8 rounded-[2rem]">
+                <span className="clr-text-primary smooth text-lg text-center font-semibold mb-6">
                     {language === 'ar' ? 'أختر المادة المراد عرض الإشتراكات الخاصة بها' : 'Choose the subject to view its specific subscriptions'}
-                </h3>
-                <div className="flex flex-wrap items-center justify-center gap-3">
-                    {subjects.map((subject) => (
-                        <button
-                            key={subject.id}
-                            onClick={() => setSelectedSubjectId(subject.id)}
-                            className={`px-6 py-3.5 rounded-xl font-black text-[11px] uppercase tracking-widest border transition-all duration-300 ${
-                                selectedSubjectId === subject.id 
-                                ? 'bg-brand-cyan border-brand-cyan text-white shadow-glow-brand translate-y-[-2px]' 
-                                : 'bg-black/60 border-white/5 text-gray-400 hover:border-white/20 hover:text-white hover:bg-black/80'
-                            }`}
-                        >
-                            {subject.name}
-                        </button>
-                    ))}
-                    <button 
-                        onClick={() => setIsAdding(true)}
-                        className="w-11 h-11 rounded-xl bg-white/5 border border-white/5 text-gray-500 flex items-center justify-center hover:bg-white/10 hover:text-white transition-all shadow-xl hover:scale-110 active:scale-95"
-                    >
-                        <PlusIcon className="w-5 h-5" />
-                    </button>
+                </span>
+                <div className="react-select__outer-container relative w-full">
+                    <div className="w-full flex-center-both flex-col space-y-3 sci-fi">
+                        <div className="selector w-full flex flex-wrap justify-center gap-3">
+                            {subjects.map((subject) => (
+                                <span 
+                                    key={subject.id}
+                                    onClick={() => setSelectedSubjectId(subject.id)}
+                                    data-id={subject.id}
+                                    className={`selection smooth py-2 px-3 clr-text-primary text-center flex-col space-y-3 ${selectedSubjectId === subject.id ? 'selected' : ''}`}
+                                >
+                                    <div className="font-w-bold">{subject.name}</div>
+                                </span>
+                            ))}
+                            {/* Inline Add Button Styled to match */}
+                            <button 
+                                onClick={() => setIsAdding(true)}
+                                className="selection smooth py-2 px-3 clr-text-primary text-center hover:bg-white/10"
+                            >
+                                <PlusIcon className="w-5 h-5" />
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
 

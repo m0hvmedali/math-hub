@@ -404,3 +404,63 @@ math-field:focus-within {
 .mathfield-keyboard-btn:active {
   transform: scale(.95);
 }
+
+/* ══════════════════════════════════════
+   Subject Selector System (bassthalk style)
+   ══════════════════════════════════════ */
+.flex-center-both {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.clr-text-primary {
+  color: var(--text-primary) !important;
+}
+
+.smooth {
+  transition: all 0.3s ease-in-out;
+}
+
+.selection {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.03);
+  user-select: none;
+  transition: all 0.3s ease;
+}
+
+.selection:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.selection.selected {
+  background: var(--brand-cyan) !important;
+  color: white !important;
+  border-color: var(--brand-cyan);
+  box-shadow: 0 0 15px rgba(45, 212, 191, 0.4);
+}
+
+.selector {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.font-w-bold {
+  font-weight: 700;
+}
+
+.sci-fi {
+  /* Container for futuristic grouping */
+}
+
+.bg-primSky-950\/50 {
+  background-color: rgba(8, 47, 73, 0.5);
+}
