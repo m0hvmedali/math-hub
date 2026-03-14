@@ -269,6 +269,14 @@ const LabsPage: React.FC = () => {
                     status="active"
                 />
                 <LabCard
+                    title="Your Smart board"
+                    description="Professional interactive whiteboard system with multi-tool support, advanced geometry drawing, and real-time collaboration space."
+                    icon={SparkleIcon}
+                    path="/labs/smartboard"
+                    color="brand-purple"
+                    status="active"
+                />
+                <LabCard
                     title="Matrix Engine"
                     description="Linear algebra playground for vector spaces, transformation matrices, and eigen-decomposition visualization."
                     icon={CpuIcon}

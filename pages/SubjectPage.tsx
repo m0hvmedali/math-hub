@@ -20,6 +20,11 @@ const SubjectPage: React.FC = () => {
     const [expandedBranches, setExpandedBranches] = useState<Record<string, boolean>>({});
 
     const subject = getSubject(subjectId!);
+    
+    // Safety Guard: Explicitly ensure sidebar is closed on mount
+    React.useEffect(() => {
+        setIsSidebarOpen(false);
+    }, []);
 
     if (!subject) return <div className="p-10 text-white font-black text-center min-h-screen flex items-center justify-center">COURSE NOT FOUND.</div>;
 

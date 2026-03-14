@@ -635,6 +635,7 @@ const App: React.FC = () => {
                         <Route path="/venting" element={<ProtectedRoute><VentingPage /></ProtectedRoute>} />
                         <Route path="/labs" element={<ProtectedRoute><LabsPage /></ProtectedRoute>} />
                         <Route path="/labs/iframe/:labId" element={<ProtectedRoute><IframeLabPage /></ProtectedRoute>} />
+                        <Route path="/labs/smartboard" element={<ProtectedRoute><IframeLabPage manualUrl="https://claude.site/public/artifacts/2c741e5f-a623-4486-a872-18e70fc51a8f/embed" manualTitle="Your Smart board" /></ProtectedRoute>} />
                         <Route path="/labs/function" element={<ProtectedRoute><DynamoLab /></ProtectedRoute>} />
                         <Route path="/labs/alkanes" element={<ProtectedRoute><AlkanesLab /></ProtectedRoute>} />
                         <Route path="/explain" element={<ProtectedRoute><ExplainLessonPage /></ProtectedRoute>} />

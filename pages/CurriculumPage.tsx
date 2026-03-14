@@ -147,9 +147,9 @@ const CurriculumPage: React.FC = () => {
                         >
                             <div className="flex items-start justify-between">
                                 <div className="flex items-start gap-6">
-                                    {/* Left: Icon/Letter Badge */}
-                                    <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-brand-cyan/20 to-brand-purple/20 flex items-center justify-center border border-white/10 group-hover:scale-110 transition-transform">
-                                        <span className="text-3xl font-black text-white">{subject.name.charAt(0)}</span>
+                                    {/* Left: Decorative Icon (matching expansion space) */}
+                                    <div className="text-gray-500 w-8 h-8 flex items-center justify-center">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-brand-cyan" />
                                     </div>
                                     
                                     {/* Middle: Content */}
@@ -158,29 +158,24 @@ const CurriculumPage: React.FC = () => {
                                             {subject.name}
                                         </h2>
                                         <div className="flex flex-col gap-1 text-gray-500 text-sm font-bold">
-                                            <div className="text-brand-cyan text-xs mb-2 uppercase tracking-widest">
+                                            <div className="text-brand-cyan text-[10px] mb-2 uppercase tracking-[0.2em]">
                                                 {subject.branches.length} {language === 'ar' ? 'فصل' : 'Branches'} • {totalLessons} {language === 'ar' ? 'درس' : 'Lessons'}
                                             </div>
                                             {subject.branches.slice(0, 3).map((branch) => (
                                                 <div key={branch.id} className="flex items-center gap-2">
-                                                    <div className="w-1.5 h-1.5 rounded-full bg-gray-700" />
+                                                    <div className="w-1 h-1 rounded-full bg-gray-800" />
                                                     {branch.name}
                                                 </div>
                                             ))}
-                                            {subject.branches.length > 3 && (
-                                                <div className="text-gray-600 text-[10px] mt-1 italic">
-                                                    +{subject.branches.length - 3} {language === 'ar' ? 'فصول إضافية' : 'More Chapters'}
-                                                </div>
-                                            )}
                                         </div>
 
-                                        {/* Progress Stats */}
+                                        {/* Progress Stats - Integrated lower than branches */}
                                         <div className="pt-4 max-w-[200px]">
-                                            <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">
-                                                <span>{language === 'ar' ? 'الإنجاز' : 'Progress'}</span>
+                                            <div className="flex justify-between text-[8px] font-black uppercase tracking-widest text-gray-600 mb-2">
+                                                <span>{language === 'ar' ? 'نسبة الإنجاز' : 'Subject Completion'}</span>
                                                 <span className="text-brand-cyan">{percent}%</span>
                                             </div>
-                                            <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                                            <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
                                                 <div 
                                                     className="h-full bg-gradient-to-r from-brand-purple to-brand-cyan transition-all duration-1000 ease-out" 
                                                     style={{ width: `${percent}%` }}
@@ -190,9 +185,12 @@ const CurriculumPage: React.FC = () => {
                                     </div>
                                 </div>
 
-                                {/* Right: Action Arrow */}
-                                <div className="w-14 h-14 bg-white/5 rounded-2xl flex items-center justify-center text-brand-cyan shadow-inner group-hover:bg-brand-cyan group-hover:text-black transition-all">
-                                    <ChevronRightIcon className={`w-8 h-8 ${language === 'ar' ? 'transform rotate-180' : ''}`} />
+                                {/* Right: Grid Icon (matching SubjectPage style) */}
+                                <div className="w-14 h-14 bg-white/5 rounded-2xl flex items-center justify-center text-brand-magenta/80 shadow-inner group-hover:scale-110 transition-transform">
+                                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z" />
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                                    </svg>
                                 </div>
                             </div>
                         </div>

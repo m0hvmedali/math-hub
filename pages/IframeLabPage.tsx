@@ -34,19 +34,32 @@ export const deleteIframeLab = (id: string) => {
 };
 
 // ─── Full-page iframe renderer ─────────────────────────────────────────────
-const IframeLabPage: React.FC = () => {
+interface IframeLabPageProps {
+  manualUrl?: string;
+  manualTitle?: string;
+}
+
+const IframeLabPage: React.FC<IframeLabPageProps> = ({ manualUrl, manualTitle }) => {
   const { labId } = useParams<{ labId: string }>();
   const navigate = useNavigate();
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [lab, setLab] = useState<IframeLabData | null>(null);
+  const [lab, setLab] = useState<IframeLabData | null>(manualUrl ? {
+    id: 'manual',
+    title: manualTitle || 'Lab',
+    description: '',
+    url: manualUrl,
+    color: 'accent-blue',
+    createdAt: Date.now()
+  } : null);
 
   useEffect(() => {
+    if (manualUrl) return;
     const found = getIframeLabs().find(l => l.id === labId);
     if (found) setLab(found);
     else navigate('/labs');
-  }, [labId]);
+  }, [labId, manualUrl]);
 
   const refresh = () => {
     if (iframeRef.current) {
