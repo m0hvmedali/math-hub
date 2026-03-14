@@ -21,10 +21,10 @@ const SubjectPage: React.FC = () => {
 
     const subject = getSubject(subjectId!);
     
-    // Safety Guard: Explicitly ensure sidebar is closed on mount
+    // Safety Guard: Explicitly ensure sidebar is closed on mount or when subject changes
     React.useEffect(() => {
         setIsSidebarOpen(false);
-    }, []);
+    }, [subjectId]);
 
     if (!subject) return <div className="p-10 text-white font-black text-center min-h-screen flex items-center justify-center">COURSE NOT FOUND.</div>;
 

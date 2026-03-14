@@ -11,6 +11,7 @@ interface MaterialCardProps {
     badgeText?: string;
     progress?: number;
     instructor?: string;
+    subItems?: { id: string, name: string }[];
 }
 
 const MaterialCard: React.FC<MaterialCardProps> = ({ 
@@ -21,15 +22,16 @@ const MaterialCard: React.FC<MaterialCardProps> = ({
     imageUrl, 
     badgeText, 
     progress,
-    instructor
+    instructor,
+    subItems
 }) => {
     return (
         <NavLink
             to={link}
-            className="group relative flex flex-col bg-cinematic-card border border-white/5 rounded-3xl overflow-hidden transition-all duration-500 hover:-translate-y-2 hover:border-brand-cyan/40 hover:shadow-glow-brand"
+            className="group relative flex flex-col md:flex-row items-center gap-8 bg-[#0A0D14] border-2 border-white/5 p-8 rounded-[2.5rem] transition-all duration-500 hover:border-brand-cyan/30 hover:bg-[#0F141F] hover:shadow-glow-brand"
         >
-            {/* Header Image Area */}
-            <div className="relative h-48 w-full overflow-hidden bg-space-900">
+            {/* Left/Top: Image or Icon Area */}
+            <div className="relative w-full md:w-60 h-44 rounded-[1.5rem] overflow-hidden bg-space-900 flex-shrink-0">
                 {imageUrl ? (
                     <img 
                         src={imageUrl} 
@@ -38,71 +40,67 @@ const MaterialCard: React.FC<MaterialCardProps> = ({
                     />
                 ) : (
                     <div className="w-full h-full bg-gradient-to-br from-brand-purple/20 to-brand-cyan/5 flex items-center justify-center">
-                        <span className="text-4xl font-black text-white/10">{title.charAt(0)}</span>
+                        <span className="text-6xl font-black text-white/10">{title.charAt(0)}</span>
                     </div>
                 )}
                 
-                {/* Status Badge (Top Right) */}
                 {badgeText && (
-                    <div className="absolute top-4 right-4 bg-brand-cyan text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-lg uppercase tracking-wider z-10 animate-fade-in">
+                    <div className="absolute top-4 right-4 bg-brand-cyan text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-lg">
                         {badgeText}
                     </div>
                 )}
-
-                {/* Overlay Gradient */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
             </div>
 
-            {/* Content Area */}
-            <div className="p-6 flex flex-col flex-1">
-                <div className="flex items-start justify-between mb-2">
-                    <h3 className="text-xl font-black text-white group-hover:text-brand-cyan transition-colors line-clamp-1 font-almarai">
-                        {title}
-                    </h3>
-                </div>
+            {/* Middle: Content Info */}
+            <div className="flex-1 space-y-4">
+                <h3 className="text-4xl md:text-5xl font-black text-white leading-none tracking-tighter group-hover:text-brand-cyan transition-colors font-almarai">
+                    {title}
+                </h3>
                 
-                <p className="text-sm text-gray-500 font-bold mb-4 line-clamp-1">{subtitle}</p>
-                
-                {instructor && (
-                    <div className="flex items-center gap-2 mb-6 text-xs text-gray-400 font-medium">
-                        <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center">
-                            <span className="text-[10px]">👤</span>
-                        </div>
-                        {instructor}
-                    </div>
-                )}
-
-                <div className="mt-auto">
-                    {/* Progress Stats */}
-                    {progress !== undefined && (
-                        <div className="mb-4">
-                            <div className="flex justify-between text-[10px] font-black uppercase tracking-tighter text-gray-400 mb-1.5">
-                                <span>Completion</span>
-                                <span className="text-brand-cyan">{progress}%</span>
-                            </div>
-                            <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                                <div 
-                                    className="h-full bg-gradient-to-r from-brand-purple to-brand-cyan transition-all duration-1000 ease-out" 
-                                    style={{ width: `${progress}%` }}
-                                />
-                            </div>
+                <div className="flex flex-col gap-1 text-gray-500 text-sm font-bold">
+                    <p className="line-clamp-1">{subtitle}</p>
+                    {subItems && subItems.length > 0 && (
+                        <div className="mt-2 space-y-1">
+                            {subItems.slice(0, 3).map(item => (
+                                <div key={item.id} className="flex items-center gap-2">
+                                    <div className="w-1 h-1 rounded-full bg-gray-800" />
+                                    <span className="text-xs">{item.name}</span>
+                                </div>
+                            ))}
                         </div>
                     )}
+                    {instructor && (
+                        <div className="flex items-center gap-2 mt-1 py-1 px-3 bg-white/5 rounded-lg w-fit">
+                            <span className="text-[10px]">👤</span>
+                            <span className="text-[10px] uppercase tracking-widest">{instructor}</span>
+                        </div>
+                    )}
+                </div>
 
-                    {/* Footer Action */}
-                    <div className="flex items-center justify-between pt-2">
-                        <span className="text-[10px] font-black text-brand-cyan uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
-                            View Materials
-                        </span>
-                        <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center group-hover:bg-brand-cyan group-hover:text-black transition-all">
-                            <ChevronRightIcon className="w-4 h-4" />
+                {progress !== undefined && (
+                    <div className="pt-4 max-w-xs">
+                        <div className="flex justify-between text-[10px] font-black uppercase tracking-widest text-brand-cyan/60 mb-2">
+                            <span>Mission Progress</span>
+                            <span>{progress}%</span>
+                        </div>
+                        <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                            <div 
+                                className="h-full bg-gradient-to-r from-brand-purple to-brand-cyan transition-all duration-1000 ease-out shadow-glow-brand" 
+                                style={{ width: `${progress}%` }}
+                            />
                         </div>
                     </div>
-                </div>
+                )}
             </div>
 
-            {/* Subtle Inner Glow */}
-            <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-brand-cyan/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            {/* Right Side: Premium Icon Overlay */}
+            <div className="hidden md:flex w-20 h-20 bg-white/5 rounded-3xl items-center justify-center text-brand-magenta/40 group-hover:scale-110 group-hover:text-brand-magenta transition-all">
+                <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                </svg>
+            </div>
         </NavLink>
     );
 };

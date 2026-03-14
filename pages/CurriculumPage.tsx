@@ -3,12 +3,13 @@ import React, { useContext, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AppContext } from '../App';
 import { PlusIcon, ChevronRightIcon } from '../components/Icons';
+import MaterialCard from '../components/MaterialCard';
 const CurriculumPage: React.FC = () => {
     const { subjects, addSubject, language } = useContext(AppContext);
     const [newSubjectName, setNewSubjectName] = useState('');
     const [isAdding, setIsAdding] = useState(false);
     const navigate = useNavigate();
-    
+
     // UI state for the new patterns
     const [activePackage, setActivePackage] = useState<'packages' | 'separate'>('packages');
     const [selectedSubjectId, setSelectedSubjectId] = useState<string | null>(null);
@@ -36,25 +37,25 @@ const CurriculumPage: React.FC = () => {
 
     return (
         <div className="p-6 md:p-12 max-w-[1600px] mx-auto min-h-screen animate-premium-fade space-y-12">
-            
+
             {/* Image 1 Pattern: Package Toggle specialized card */}
             <div className="max-w-2xl mx-auto w-full">
                 <div className="bg-[#0A0D14] border border-white/5 p-8 rounded-[2rem] shadow-2xl flex flex-col items-center space-y-6">
                     <h2 className="text-sm font-black text-gray-300 tracking-[0.2em] uppercase text-center">
-                        {language === 'ar' ? 'باقة الشهور و الثلث الشهور ولا المحاضرات ؟' : 'Monthly Packages or Separate Lectures?'}
+                        {language === 'ar' ? '=   ' : 'Monthly Packages or Separate Lectures?'}
                     </h2>
                     <div className="bg-black/40 border border-white/5 p-1.5 rounded-2xl flex items-center gap-1 w-full max-w-md">
-                        <button 
+                        <button
                             onClick={() => setActivePackage('separate')}
                             className={`flex-1 px-4 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${activePackage === 'separate' ? 'text-white bg-white/10 shadow-lg' : 'text-gray-500 hover:text-gray-300'}`}
                         >
-                            {language === 'ar' ? 'المحاضرات منفصلة' : 'Separate Lectures'}
+                            {language === 'ar' ? 'المحاضرات' : 'Separate Lectures'}
                         </button>
-                        <button 
+                        <button
                             onClick={() => setActivePackage('packages')}
                             className={`flex-1 px-4 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${activePackage === 'packages' ? 'text-white bg-brand-cyan shadow-glow-brand' : 'text-gray-500 hover:text-gray-300'}`}
                         >
-                            {language === 'ar' ? 'الباقات وكورسات الشهور' : 'Monthly Packages'}
+                            {language === 'ar' ? 'الباقات' : 'Monthly Packages'}
                         </button>
                     </div>
                 </div>
@@ -63,13 +64,13 @@ const CurriculumPage: React.FC = () => {
             {/* Image 4 Pattern: Precise Subject Selector Card */}
             <div className="flex-center-both gap-2 pt-2 flex-col bg-primSky-950/50 hover:bg-yellow-100 dark:hover:bg-cyan-800 dark:bg-slate-800/50 smooth shadow-md px-4 py-8 rounded-[2rem]">
                 <span className="clr-text-primary smooth text-lg text-center font-semibold mb-6">
-                    {language === 'ar' ? 'أختر المادة المراد عرض الإشتراكات الخاصة بها' : 'Choose the subject to view its specific subscriptions'}
+                    {language === 'ar' ? 'أختر المادة المراد عرضها' : 'Choose the subject to view its specific subscriptions'}
                 </span>
                 <div className="react-select__outer-container relative w-full">
                     <div className="w-full flex-center-both flex-col space-y-3 sci-fi">
                         <div className="selector w-full flex flex-wrap justify-center gap-3">
                             {subjects.map((subject) => (
-                                <span 
+                                <span
                                     key={subject.id}
                                     onClick={() => setSelectedSubjectId(subject.id)}
                                     data-id={subject.id}
@@ -79,7 +80,7 @@ const CurriculumPage: React.FC = () => {
                                 </span>
                             ))}
                             {/* Inline Add Button Styled to match */}
-                            <button 
+                            <button
                                 onClick={() => setIsAdding(true)}
                                 className="selection smooth py-2 px-3 clr-text-primary text-center hover:bg-white/10"
                             >
@@ -134,66 +135,21 @@ const CurriculumPage: React.FC = () => {
 
             {/* Materials Grid - Redesigned to Lecture Card Style (List) */}
             <div className="flex flex-col gap-8 max-w-[1000px] mx-auto">
-                {filteredSubjects.map((subject) => {
-                    const totalLessons = subject.branches.reduce((acc, b) => acc + (b.lessons?.length || 0), 0);
-                    const completedLessons = subject.branches.reduce((acc, b) => acc + (b.lessons?.filter(l => l.status === 'completed').length || 0), 0);
+                {filteredSubjects.map((subject: any) => {
+                    const totalLessons = subject.branches.reduce((acc: number, b: any) => acc + (b.lessons?.length || 0), 0);
+                    const completedLessons = subject.branches.reduce((acc: number, b: any) => acc + (b.lessons?.filter((l: any) => l.status === 'completed').length || 0), 0);
                     const percent = totalLessons === 0 ? 0 : Math.round((completedLessons / totalLessons) * 100);
 
                     return (
-                        <div 
+                        <MaterialCard
                             key={subject.id}
-                            className="bg-[#0A0D14] border-2 border-white/5 p-8 rounded-[2.5rem] transition-all cursor-pointer group hover:border-brand-cyan/30 hover:bg-[#0F141F] shadow-xl"
-                            onClick={() => navigate(`/subject/${subject.id}`)}
-                        >
-                            <div className="flex items-start justify-between">
-                                <div className="flex items-start gap-6">
-                                    {/* Left: Decorative Icon (matching expansion space) */}
-                                    <div className="text-gray-500 w-8 h-8 flex items-center justify-center">
-                                        <div className="w-1.5 h-1.5 rounded-full bg-brand-cyan" />
-                                    </div>
-                                    
-                                    {/* Middle: Content */}
-                                    <div className="space-y-4">
-                                        <h2 className="text-4xl md:text-5xl font-black text-white leading-none group-hover:text-brand-cyan transition-colors">
-                                            {subject.name}
-                                        </h2>
-                                        <div className="flex flex-col gap-1 text-gray-500 text-sm font-bold">
-                                            <div className="text-brand-cyan text-[10px] mb-2 uppercase tracking-[0.2em]">
-                                                {subject.branches.length} {language === 'ar' ? 'فصل' : 'Branches'} • {totalLessons} {language === 'ar' ? 'درس' : 'Lessons'}
-                                            </div>
-                                            {subject.branches.slice(0, 3).map((branch) => (
-                                                <div key={branch.id} className="flex items-center gap-2">
-                                                    <div className="w-1 h-1 rounded-full bg-gray-800" />
-                                                    {branch.name}
-                                                </div>
-                                            ))}
-                                        </div>
-
-                                        {/* Progress Stats - Integrated lower than branches */}
-                                        <div className="pt-4 max-w-[200px]">
-                                            <div className="flex justify-between text-[8px] font-black uppercase tracking-widest text-gray-600 mb-2">
-                                                <span>{language === 'ar' ? 'نسبة الإنجاز' : 'Subject Completion'}</span>
-                                                <span className="text-brand-cyan">{percent}%</span>
-                                            </div>
-                                            <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
-                                                <div 
-                                                    className="h-full bg-gradient-to-r from-brand-purple to-brand-cyan transition-all duration-1000 ease-out" 
-                                                    style={{ width: `${percent}%` }}
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Right: Grid Icon (matching SubjectPage style) */}
-                                <div className="w-14 h-14 bg-white/5 rounded-2xl flex items-center justify-center text-brand-magenta/80 shadow-inner group-hover:scale-110 transition-transform">
-                                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6z" />
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                                    </svg>
-                                </div>
-                            </div>
-                        </div>
+                            id={subject.id}
+                            title={subject.name}
+                            subtitle={`${subject.branches.length} ${language === 'ar' ? 'فصل' : 'Branches'} • ${totalLessons} ${language === 'ar' ? 'درس' : 'Lessons'}`}
+                            link={`/subject/${subject.id}`}
+                            progress={percent}
+                            subItems={subject.branches}
+                        />
                     );
                 })}
 
