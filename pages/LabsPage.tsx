@@ -277,6 +277,14 @@ const LabsPage: React.FC = () => {
                     status="active"
                 />
                 <LabCard
+                    title="Study English with me"
+                    description="Interactive English language learning environment with Claude-powered artifacts for grammar, vocabulary, and conversation practice."
+                    icon={SparkleIcon}
+                    path="/labs/iframe/study-english"
+                    color="brand-cyan"
+                    status="active"
+                />
+                <LabCard
                     title="Matrix Engine"
                     description="Linear algebra playground for vector spaces, transformation matrices, and eigen-decomposition visualization."
                     icon={CpuIcon}

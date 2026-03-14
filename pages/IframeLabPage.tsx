@@ -56,6 +56,17 @@ const IframeLabPage: React.FC<IframeLabPageProps> = ({ manualUrl, manualTitle })
 
   useEffect(() => {
     if (manualUrl) return;
+    if (labId === 'study-english') {
+      setLab({
+        id: 'study-english',
+        title: 'Study English with me',
+        description: 'Interactive English language learning environment.',
+        url: 'https://claude.site/public/artifacts/7659ede0-2331-46be-b3f2-25c32b2aca84/embed',
+        color: 'brand-cyan',
+        createdAt: Date.now()
+      });
+      return;
+    }
     const found = getIframeLabs().find(l => l.id === labId);
     if (found) setLab(found);
     else navigate('/labs');
