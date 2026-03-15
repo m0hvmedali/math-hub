@@ -1,6 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import notificationsData from '../utils/notifications.json';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Copy, Check } from 'lucide-react';
+
+// Flatten the categorized data for the shuffle engine
+const allNotifications = Object.values(notificationsData).flat() as string[];
 
 const shuffleArray = (array: string[]) => {
     const shuffled = [...array];
@@ -15,31 +18,43 @@ const NeuralNotifications: React.FC = () => {
     const [shuffledNotifications, setShuffledNotifications] = useState<string[]>([]);
     const [currentIndex, setCurrentIndex] = useState(0);
     const [fade, setFade] = useState(true);
+    const [copied, setCopied] = useState(false);
 
     useEffect(() => {
-        setShuffledNotifications(shuffleArray(notificationsData));
+        setShuffledNotifications(shuffleArray(allNotifications));
     }, []);
+
+    const handleNext = useCallback(() => {
+        setFade(false);
+        setTimeout(() => {
+            setCurrentIndex((prev) => {
+                const next = prev + 1;
+                if (next >= shuffledNotifications.length) {
+                    setShuffledNotifications(shuffleArray(allNotifications));
+                    return 0;
+                }
+                return next;
+            });
+            setFade(true);
+        }, 1000);
+    }, [shuffledNotifications]);
 
     useEffect(() => {
         if (shuffledNotifications.length === 0) return;
-
-        const interval = setInterval(() => {
-            setFade(false);
-            setTimeout(() => {
-                setCurrentIndex((prev) => {
-                    const next = prev + 1;
-                    if (next >= shuffledNotifications.length) {
-                        setShuffledNotifications(shuffleArray(notificationsData));
-                        return 0;
-                    }
-                    return next;
-                });
-                setFade(true);
-            }, 1000); // Wait for fade out
-        }, 15000);
-
+        const interval = setInterval(handleNext, 15000);
         return () => clearInterval(interval);
-    }, [shuffledNotifications]);
+    }, [shuffledNotifications, handleNext]);
+
+    const copyToClipboard = async () => {
+        const textToCopy = shuffledNotifications[currentIndex];
+        try {
+            await navigator.clipboard.writeText(textToCopy);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        } catch (err) {
+            console.error('Failed to copy text: ', err);
+        }
+    };
 
     if (shuffledNotifications.length === 0) return null;
 
@@ -50,10 +65,24 @@ const NeuralNotifications: React.FC = () => {
                     <Sparkles className="w-5 h-5 text-brand-cyan" />
                 </div>
                 
-                <div className={`transition-all duration-1000 ease-in-out flex-1 text-center ${fade ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-4 scale-95'}`}>
-                    <p className="text-sm md:text-base font-black tracking-wide text-white/90 font-arabic leading-relaxed drop-shadow-sm">
+                <div 
+                    onClick={copyToClipboard}
+                    className={`transition-all duration-1000 ease-in-out flex-1 text-center cursor-pointer hover:scale-[1.01] active:scale-95 relative group/text ${fade ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-4 scale-95'}`}
+                    title="اضغط للنسخ"
+                >
+                    <p className="text-sm md:text-base font-black tracking-wide text-white/90 font-arabic leading-relaxed drop-shadow-sm px-4">
                         {shuffledNotifications[currentIndex]}
                     </p>
+                    
+                    {/* Floating Copy Feedback */}
+                    <div className={`absolute -top-8 left-1/2 -translate-x-1/2 transition-all duration-300 flex items-center gap-2 bg-brand-cyan text-black px-3 py-1 rounded-full text-[10px] font-bold shadow-lg ${copied ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2 pointer-events-none'}`}>
+                        <Check className="w-3 h-3" />
+                        تم النسخ!
+                    </div>
+
+                    <div className="absolute top-1/2 -right-4 -translate-y-1/2 opacity-0 group-hover/text:opacity-40 transition-opacity">
+                       <Copy className="w-4 h-4 text-white" />
+                    </div>
                 </div>
 
                 <div className="flex-shrink-0 text-[10px] font-black text-white/30 uppercase tracking-[0.4em] font-mono ordinal hidden lg:block bg-white/5 px-3 py-1 rounded-full border border-white/10">
