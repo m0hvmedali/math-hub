@@ -16,7 +16,7 @@ import DailyAnalysisPage from './pages/DailyAnalysisPage';
 import StudyTimerPage from './pages/StudyTimerPage';
 import CrashTasksPage from './pages/CrashTasksPage';
 import OnboardingStories from './components/OnboardingStories';
-import IslandOdyssey from './components/IslandOdyssey';
+import LabAnnouncement from './components/LabAnnouncement';
 import SpacePage from './pages/SpacePage';
 import GuidePage from './pages/GuidePage';
 import DynamoLab from './pages/DynamoLab';
@@ -619,6 +619,7 @@ const App: React.FC = () => {
                         <NeuralNotifications />
                     </div>
                 )}
+                {user && <LabAnnouncement />}
                 {showOnboarding && <OnboardingStories onComplete={handleOnboardingComplete} />}
                 <main className="flex-1 w-full flex flex-col">
                     <Routes>
