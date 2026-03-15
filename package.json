@@ -30,6 +30,7 @@
     "algebrite": "^1.4.0",
     "cytoscape": "^3.30.0",
     "fabric": "^7.2.0",
+    "framer-motion": "^12.36.0",
     "function-plot": "^1.25.3",
     "katex": "^0.16.28",
     "lucide-react": "^0.363.0",

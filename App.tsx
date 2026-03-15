@@ -29,6 +29,7 @@ import SettingsPage from './pages/SettingsPage';
 import HistoryPage from './pages/HistoryPage';
 import CurriculumPage from './pages/CurriculumPage';
 import MeasuringDevicesLab from './pages/MeasuringDevicesLab';
+import OrganicLabPage from './pages/OrganicLabPage';
 import { useCosmicStore } from './store/useCosmicStore';
 import { supabase, isSupabaseConfigured } from './supabaseClient';
 import { rebuildSearchIndex, searchRadar, SearchResult, fetchTavilyResults } from './utils/searchRadar';
@@ -644,8 +645,9 @@ const App: React.FC = () => {
                         <Route path="/labs/smartboard" element={<ProtectedRoute><IframeLabPage manualUrl="https://claude.site/public/artifacts/2c741e5f-a623-4486-a872-18e70fc51a8f/embed" manualTitle="Your Smart board" /></ProtectedRoute>} />
                         <Route path="/labs/function" element={<ProtectedRoute><DynamoLab /></ProtectedRoute>} />
                         <Route path="/labs/alkanes" element={<ProtectedRoute><AlkanesLab /></ProtectedRoute>} />
-                        <Route path="/labs/measuring-devices" element={<ProtectedRoute><MeasuringDevicesLab /></ProtectedRoute>} />
-                        <Route path="/explain" element={<ProtectedRoute><ExplainLessonPage /></ProtectedRoute>} />
+                        <Route path="/labs/measuring-devices" element={<MeasuringDevicesLab />} />
+                        <Route path="/labs/organic" element={<OrganicLabPage />} />
+                        <Route path="/explain/:subjectId/:branchId/:lessonId" element={<ExplainLessonPage />} />
                         <Route path="/history" element={<ProtectedRoute><HistoryPage /></ProtectedRoute>} />
                         <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
                         <Route path="*" element={<Navigate to={user ? "/" : "/login"} />} />

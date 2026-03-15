@@ -1,0 +1,20 @@
+[
+  {
+    "id": "re-001",
+    "name": "Dehydration",
+    "reactants": ["Ethanol"],
+    "products": ["Ethene"],
+    "reagents": "conc. H2SO4",
+    "conditions": "180°C",
+    "mechanism_type": "Elimination"
+  },
+  {
+    "id": "re-002",
+    "name": "Oxidation",
+    "reactants": ["Ethanol"],
+    "products": ["Ethanal"],
+    "reagents": "K2Cr2O7 / H+",
+    "conditions": "Distill",
+    "mechanism_type": "Oxidation"
+  }
+]

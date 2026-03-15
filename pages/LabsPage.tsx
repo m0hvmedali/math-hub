@@ -277,6 +277,14 @@ const LabsPage: React.FC = () => {
                     status="active"
                 />
                 <LabCard
+                    title="مختبر الكيمياء العضوية"
+                    description="Interactive reaction map, chemical pathfinder, and organic synthesis simulator for secondary curriculum."
+                    icon={BeakerIcon}
+                    path="/labs/organic"
+                    color="brand-magenta"
+                    status="active"
+                />
+                <LabCard
                     title="Your Smart board"
                     description="Professional interactive whiteboard system with multi-tool support, advanced geometry drawing, and real-time collaboration space."
                     icon={SparkleIcon}

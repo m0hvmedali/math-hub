@@ -1,0 +1,34 @@
+[
+  {
+    "id": "eth-001",
+    "name_ar": "إيثانول",
+    "name_en": "Ethanol",
+    "formula": "C2H5OH",
+    "tags": ["alcohol", "primary"],
+    "description": "كحول أولي، سائل شفاف."
+  },
+  {
+    "id": "etn-001",
+    "name_ar": "إيثين",
+    "name_en": "Ethene",
+    "formula": "C2H4",
+    "tags": ["alkene"],
+    "description": "أبسط الألكينات."
+  },
+  {
+    "id": "eta-001",
+    "name_ar": "إيثانال",
+    "name_en": "Ethanal",
+    "formula": "CH3CHO",
+    "tags": ["aldehyde"],
+    "description": "أسيتالدهيد."
+  },
+  {
+    "id": "aac-001",
+    "name_ar": "حمض الأسيتيك",
+    "name_en": "Acetic Acid",
+    "formula": "CH3COOH",
+    "tags": ["acid", "carboxylic"],
+    "description": "حمض عضوي ضعيف."
+  }
+]
