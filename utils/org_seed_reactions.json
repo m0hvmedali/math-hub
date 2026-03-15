@@ -2,8 +2,12 @@
   {
     "id": "re-001",
     "name": "Dehydration",
-    "reactants": ["Ethanol"],
-    "products": ["Ethene"],
+    "reactants": [
+      "Ethanol"
+    ],
+    "products": [
+      "Ethene"
+    ],
     "reagents": "conc. H2SO4",
     "conditions": "180°C",
     "mechanism_type": "Elimination"
@@ -11,19 +15,177 @@
   {
     "id": "re-002",
     "name": "Oxidation",
-    "reactants": ["Ethanol"],
-    "products": ["Ethanal"],
+    "reactants": [
+      "Ethanol"
+    ],
+    "products": [
+      "Ethanal"
+    ],
     "reagents": "K2Cr2O7 / H+",
     "conditions": "Distill",
     "mechanism_type": "Oxidation"
   },
   {
     "id": "re-003",
-    "name": "Urea Synthesis (Wohler)",
-    "reactants": ["Ammonium Cyanate"],
-    "products": ["Urea"],
+    "name": "Urea Synthesis (Wohler) - Method 1",
+    "reactants": [
+      "Ammonium Cyanate"
+    ],
+    "products": [
+      "Urea"
+    ],
     "reagents": "Heat",
-    "conditions": "Evaporation",
-    "mechanism_type": "Rearrangement"
+    "conditions": "Gentle heating / 60°C / Evaporation near flame",
+    "mechanism_type": "Rearrangement",
+    "notes": "تجربة فولر الأصلية (1828). حطّمت نظرية القوة الحيوية لبرزيليوس. سيانات الأمونيوم تتحول بالتسخين إلى اليوريا بإعادة تشكّل دون تغيير في الصيغة الجزيئية. الناتج الثانوي عند تحضيره من NH4Cl + AgCNO هو AgCl (راسب أبيض)."
+  },
+  {
+    "id": "re-004",
+    "name": "Urea Synthesis - From Silver Cyanate and Ammonium Chloride",
+    "reactants": [
+      "Silver Cyanate",
+      "Ammonium Chloride"
+    ],
+    "products": [
+      "Urea",
+      "Silver Chloride"
+    ],
+    "reagents": "Heat",
+    "conditions": "Gentle heating",
+    "mechanism_type": "Double Displacement + Rearrangement",
+    "equation": "NH4Cl + AgCNO → NH4CNO + AgCl↓  then  NH4CNO → NH2CONH2",
+    "notes": "يمكن استبدال AgCNO بـ KCNO أو NaCNO لتغيير الناتج الثانوي مع بقاء اليوريا هي الناتج الرئيسي."
+  },
+  {
+    "id": "re-005",
+    "name": "Urea Synthesis - Method 2 (from Cyanic Acid and Ammonia)",
+    "reactants": [
+      "Cyanic Acid (HCNO)",
+      "Ammonia (NH3)"
+    ],
+    "products": [
+      "Ammonium Cyanate",
+      "Urea"
+    ],
+    "reagents": "Heat",
+    "conditions": "Heating",
+    "mechanism_type": "Acid-Base + Rearrangement",
+    "equation": "HCNO + NH3 → NH4CNO → NH2CONH2",
+    "notes": "طريقة بديلة لتحضير اليوريا. حمض الفلمنك مع النشادر يعطيان سيانات الأمونيوم التي تتحول بالتسخين إلى اليوريا."
+  },
+  {
+    "id": "re-006",
+    "name": "Detection of Carbon in Organic Compounds - Carbon + CuO",
+    "reactants": [
+      "Carbon (from organic compound)",
+      "Copper(II) Oxide"
+    ],
+    "products": [
+      "Carbon Dioxide",
+      "Copper metal"
+    ],
+    "reagents": "Heat",
+    "conditions": "Heating with oxidizing agent",
+    "mechanism_type": "Oxidation-Reduction",
+    "equation": "2C + 2CuO → 2CO2 + 2Cu  (unbalanced: C + CuO → CO2 + Cu, balanced: 2CuO + 2C → 2Cu + 2CO2)",
+    "notes": "الكشف عن الكربون: ثاني أكسيد الكربون الناتج يُعكّر ماء الجير الرائق. لا يُستخدم ZnO لأنه فوق الهيدروجين في سلسلة الجهود وليس عاملاً مؤكسداً."
+  },
+  {
+    "id": "re-007",
+    "name": "Detection of Hydrogen in Organic Compounds - Hydrogen + CuO",
+    "reactants": [
+      "Hydrogen (from organic compound)",
+      "Copper(II) Oxide"
+    ],
+    "products": [
+      "Water vapor",
+      "Copper metal"
+    ],
+    "reagents": "Heat",
+    "conditions": "Heating",
+    "mechanism_type": "Oxidation-Reduction",
+    "equation": "2H + CuO → H2O↑ + Cu  (balanced: 2CuO + 2H2 → 2Cu + 2H2O)",
+    "notes": "الكشف عن الهيدروجين: بخار الماء الناتج يحوّل كبريتات النحاس اللامائية البيضاء إلى كبريتات النحاس الزرقاء (المائية). المادة المؤكسدة يجب أن تكون تحت الهيدروجين في سلسلة الجهود (مثل CuO أو Ag2O)."
+  },
+  {
+    "id": "re-008",
+    "name": "CO2 Detection - Limewater Test",
+    "reactants": [
+      "Carbon Dioxide",
+      "Calcium Hydroxide"
+    ],
+    "products": [
+      "Calcium Carbonate (precipitate)",
+      "Water"
+    ],
+    "reagents": "Limewater",
+    "conditions": "Short duration",
+    "mechanism_type": "Acid-Base",
+    "equation": "CO2 + Ca(OH)2 → CaCO3↓ + H2O",
+    "notes": "يتعكر ماء الجير لمدة قصيرة. عند الاستمرار يزول التعكر: CaCO3 + CO2 + H2O → Ca(HCO3)2 (ذائب). يمكن استبدال Ca(OH)2 بـ Ba(OH)2 أو Sr(OH)2 أو Mg(OH)2 مع الحصول على تعكر. لا يُستبدل بـ NaOH أو KOH أو NH4OH لأن كربوناتها تذوب في الماء فلا يحدث تعكر."
+  },
+  {
+    "id": "re-009",
+    "name": "Water Detection - Anhydrous CuSO4 Test",
+    "reactants": [
+      "Water (vapor)",
+      "Anhydrous Copper Sulfate"
+    ],
+    "products": [
+      "Copper Sulfate pentahydrate (blue)"
+    ],
+    "reagents": "None",
+    "conditions": "Contact with water/vapor",
+    "mechanism_type": "Hydration",
+    "equation": "CuSO4 (white) + 5H2O → CuSO4·5H2O (blue)",
+    "notes": "تحوّل اللون من الأبيض إلى الأزرق يدل على وجود الماء، وبالتالي وجود الهيدروجين في المركب العضوي. إذا استُخدمت كبريتات النحاس المائية (الزرقاء) من البداية فلن يحدث تغيير في اللون ولن نستطيع الكشف عن الهيدروجين."
+  },
+  {
+    "id": "re-010",
+    "name": "Ethanol with Sodium",
+    "reactants": [
+      "Ethanol",
+      "Sodium"
+    ],
+    "products": [
+      "Sodium Ethoxide",
+      "Hydrogen gas"
+    ],
+    "reagents": "Na metal",
+    "conditions": "Room temperature",
+    "mechanism_type": "Substitution",
+    "equation": "2C2H5OH + 2Na → 2C2H5ONa + H2↑",
+    "notes": "الهيدروجين الناتج يشتعل بفرقعة عند تقريب شعلة مشتعلة. يُستخدم للتفريق بين الكحول الإيثيلي وإيثر ثنائي الميثيل. إيثر ثنائي الميثيل لا يتفاعل مع الصوديوم."
+  },
+  {
+    "id": "re-011",
+    "name": "Dimethyl Ether with Sodium (No Reaction)",
+    "reactants": [
+      "Dimethyl Ether",
+      "Sodium"
+    ],
+    "products": [],
+    "reagents": "Na metal",
+    "conditions": "Room temperature",
+    "mechanism_type": "No Reaction",
+    "equation": "CH3OCH3 + Na → لا يحدث تفاعل",
+    "notes": "الإيثر لا يتفاعل مع الصوديوم. هذا الفرق يُستخدم لتمييزه عن الكحول الإيثيلي."
+  },
+  {
+    "id": "re-012",
+    "name": "Ammonium Cyanate Formation (Wohler Step 1)",
+    "reactants": [
+      "Ammonium Chloride",
+      "Silver Cyanate"
+    ],
+    "products": [
+      "Ammonium Cyanate",
+      "Silver Chloride"
+    ],
+    "reagents": "None",
+    "conditions": "Aqueous solution, no heating",
+    "mechanism_type": "Double Displacement",
+    "equation": "NH4Cl + AgCNO → NH4CNO + AgCl↓",
+    "notes": "بدون تسخين: الناتج هو سيانات الأمونيوم وكلوريد الفضة. مع التسخين: تتحول سيانات الأمونيوم إلى اليوريا. كلوريد الفضة راسب أبيض يتحول للبنفسجي عند التعرض للضوء."
   }
 ]
