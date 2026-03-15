@@ -1,36 +1,98 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, ExternalLink, Maximize2, Minimize2, RefreshCw } from 'lucide-react';
+import { supabase } from '../supabaseClient';
 
 interface IframeLabData {
   id: string;
   title: string;
   description: string;
   url: string;
+  icon?: string;
   color: string;
   createdAt: number;
 }
 
 const LABS_STORAGE_KEY = 'iframe_labs';
 
-export const getIframeLabs = (): IframeLabData[] => {
-  try {
-    return JSON.parse(localStorage.getItem(LABS_STORAGE_KEY) || '[]');
-  } catch {
-    return [];
+// Migration helper - move local labs to Supabase if any exist
+export const migrateLabsToSupabase = async () => {
+  const localLabs = JSON.parse(localStorage.getItem(LABS_STORAGE_KEY) || '[]');
+  if (localLabs.length > 0 && supabase) {
+    for (const lab of localLabs) {
+        await supabase.from('iframe_labs').insert([{
+            id: lab.id,
+            title: lab.title,
+            description: lab.description,
+            url: lab.url,
+            icon: 'Globe',
+            color: lab.color,
+            created_at: new Date(lab.createdAt).toISOString()
+        }]);
+    }
+    localStorage.removeItem(LABS_STORAGE_KEY);
   }
 };
 
-export const saveIframeLab = (lab: Omit<IframeLabData, 'id' | 'createdAt'>) => {
-  const labs = getIframeLabs();
-  const newLab: IframeLabData = { ...lab, id: crypto.randomUUID(), createdAt: Date.now() };
-  localStorage.setItem(LABS_STORAGE_KEY, JSON.stringify([...labs, newLab]));
-  return newLab;
+export const getIframeLabs = async (): Promise<IframeLabData[]> => {
+  if (!supabase) return [];
+  const { data, error } = await supabase
+    .from('iframe_labs')
+    .select('*')
+    .order('created_at', { ascending: false });
+  
+  if (error) {
+    console.error('Error fetching labs:', error);
+    return [];
+  }
+  
+  return data.map(d => ({
+    id: d.id,
+    title: d.title,
+    description: d.description,
+    url: d.url,
+    icon: d.icon,
+    color: d.color,
+    createdAt: new Date(d.created_at).getTime()
+  }));
 };
 
-export const deleteIframeLab = (id: string) => {
-  const labs = getIframeLabs().filter(l => l.id !== id);
-  localStorage.setItem(LABS_STORAGE_KEY, JSON.stringify(labs));
+export const saveIframeLab = async (lab: Omit<IframeLabData, 'id' | 'createdAt'>) => {
+  if (!supabase) return null;
+  const newLab = {
+    title: lab.title,
+    description: lab.description,
+    url: lab.url,
+    icon: lab.icon || 'Globe',
+    color: lab.color,
+    created_at: new Date().toISOString()
+  };
+  
+  const { data, error } = await supabase
+    .from('iframe_labs')
+    .insert([newLab])
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error saving lab:', error);
+    throw error;
+  }
+  
+  return data;
+};
+
+export const deleteIframeLab = async (id: string) => {
+  if (!supabase) return;
+  const { error } = await supabase
+    .from('iframe_labs')
+    .delete()
+    .eq('id', id);
+    
+  if (error) {
+    console.error('Error deleting lab:', error);
+    throw error;
+  }
 };
 
 // ─── Full-page iframe renderer ─────────────────────────────────────────────
@@ -55,21 +117,44 @@ const IframeLabPage: React.FC<IframeLabPageProps> = ({ manualUrl, manualTitle })
   } : null);
 
   useEffect(() => {
-    if (manualUrl) return;
-    if (labId === 'study-english') {
-      setLab({
-        id: 'study-english',
-        title: 'Study English with me',
-        description: 'Interactive English language learning environment.',
-        url: 'https://claude.site/public/artifacts/f3e3bf68-e68d-4ba3-99d3-676a45050812/embed',
-        color: 'brand-cyan',
-        createdAt: Date.now()
-      });
-      return;
-    }
-    const found = getIframeLabs().find(l => l.id === labId);
-    if (found) setLab(found);
-    else navigate('/labs');
+    const loadLab = async () => {
+        if (manualUrl) return;
+        if (labId === 'study-english') {
+          setLab({
+            id: 'study-english',
+            title: 'Study English with me',
+            description: 'Interactive English language learning environment.',
+            url: 'https://claude.site/public/artifacts/f3e3bf68-e68d-4ba3-99d3-676a45050812/embed',
+            color: 'brand-cyan',
+            createdAt: Date.now(),
+            icon: 'SparkleIcon'
+          });
+          return;
+        }
+        
+        if (!supabase) return;
+        const { data, error } = await supabase
+            .from('iframe_labs')
+            .select('*')
+            .eq('id', labId)
+            .single();
+
+        if (data && !error) {
+            setLab({
+                id: data.id,
+                title: data.title,
+                description: data.description,
+                url: data.url,
+                icon: data.icon,
+                color: data.color,
+                createdAt: new Date(data.created_at).getTime()
+            });
+        } else {
+            navigate('/labs');
+        }
+    };
+    
+    loadLab();
   }, [labId, manualUrl]);
 
   const refresh = () => {

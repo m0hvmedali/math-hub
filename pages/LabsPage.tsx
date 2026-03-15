@@ -1,9 +1,33 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BeakerIcon, ActivityIcon, CpuIcon, SparkleIcon, PlusIcon, TrashIcon } from '../components/Icons';
+import { BeakerIcon, ActivityIcon, CpuIcon, SparkleIcon, PlusIcon, TrashIcon, BrainIcon, RocketIcon, ZapIcon, GlobeIcon } from '../components/Icons';
 import { ArrowLeft, X, Globe, Link } from 'lucide-react';
 import { AppContext } from '../App';
-import { getIframeLabs, saveIframeLab, deleteIframeLab } from './IframeLabPage';
+import { getIframeLabs, saveIframeLab, deleteIframeLab, migrateLabsToSupabase } from './IframeLabPage';
+
+const IconMap: Record<string, any> = {
+    Globe: Globe,
+    BeakerIcon: BeakerIcon,
+    ActivityIcon: ActivityIcon,
+    CpuIcon: CpuIcon,
+    SparkleIcon: SparkleIcon,
+    BrainIcon: BrainIcon,
+    RocketIcon: RocketIcon,
+    ZapIcon: ZapIcon,
+    GlobeIcon: GlobeIcon
+};
+
+const IconList = [
+    { name: 'Globe', icon: Globe },
+    { name: 'BeakerIcon', icon: BeakerIcon },
+    { name: 'ActivityIcon', icon: ActivityIcon },
+    { name: 'CpuIcon', icon: CpuIcon },
+    { name: 'SparkleIcon', icon: SparkleIcon },
+    { name: 'BrainIcon', icon: BrainIcon },
+    { name: 'RocketIcon', icon: RocketIcon },
+    { name: 'ZapIcon', icon: ZapIcon },
+    { name: 'GlobeIcon', icon: GlobeIcon }
+];
 
 // ─── LabCard (internal nav labs) ──────────────────────────────────────────
 const LabCard: React.FC<{
@@ -58,9 +82,11 @@ const IframeLabCard: React.FC<{
     title: string;
     description: string;
     url: string;
+    icon?: string;
     onDelete: (id: string) => void;
-}> = ({ id, title, description, url, onDelete }) => {
+}> = ({ id, title, description, url, icon, onDelete }) => {
     const navigate = useNavigate();
+    const IconComponent = icon && IconMap[icon] ? IconMap[icon] : Globe;
 
     return (
         <div
@@ -83,7 +109,7 @@ const IframeLabCard: React.FC<{
 
             <div className="flex flex-col gap-6">
                 <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-accent-blue/10 border border-accent-blue/20 shadow-lg group-hover:scale-110 transition-transform duration-500">
-                    <Globe className="w-8 h-8 text-accent-blue" />
+                    <IconComponent className="w-8 h-8 text-accent-blue" />
                 </div>
                 <div>
                     <h3 className="text-2xl font-black text-white mb-2 tracking-tight group-hover:text-accent-blue transition-colors lowercase">
@@ -108,9 +134,10 @@ const AddLabModal: React.FC<{ onClose: () => void; onSave: () => void; language:
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [url, setUrl] = useState('');
+    const [selectedIcon, setSelectedIcon] = useState('Globe');
     const [error, setError] = useState('');
 
-    const handleSave = () => {
+    const handleSave = async () => {
         if (!title.trim() || !url.trim()) {
             setError(language === 'ar' ? 'يرجى ملء الحقول المطلوبة' : 'Please fill required fields');
             return;
@@ -121,9 +148,13 @@ const AddLabModal: React.FC<{ onClose: () => void; onSave: () => void; language:
             return;
         }
         const finalUrl = url.includes('://') ? url : `https://${url}`;
-        saveIframeLab({ title, description, url: finalUrl, color: 'accent-blue' });
-        onSave();
-        onClose();
+        try {
+            await saveIframeLab({ title, description, url: finalUrl, color: 'accent-blue', icon: selectedIcon });
+            onSave();
+            onClose();
+        } catch (err) {
+            setError(language === 'ar' ? 'فشل الحفظ' : 'Failed to save');
+        }
     };
 
     return (
@@ -173,6 +204,25 @@ const AddLabModal: React.FC<{ onClose: () => void; onSave: () => void; language:
                         </div>
                     </div>
 
+                    {/* Icon Picker */}
+                    <div>
+                        <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">
+                            {language === 'ar' ? 'اختر أيقونة' : 'Select Icon'}
+                        </label>
+                        <div className="flex flex-wrap gap-2 p-2 bg-white/5 border border-white/10 rounded-2xl">
+                            {IconList.map(({ name, icon: Icon }) => (
+                                <button
+                                    key={name}
+                                    onClick={() => setSelectedIcon(name)}
+                                    className={`p-3 rounded-xl transition-all ${selectedIcon === name ? 'bg-accent-blue text-white shadow-lg' : 'bg-white/5 text-white/40 hover:bg-white/10 hover:text-white'}`}
+                                    title={name}
+                                >
+                                    <Icon className="w-5 h-5" />
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
                     {/* Description */}
                     <div>
                         <label className="block text-[10px] font-black text-white/40 uppercase tracking-widest mb-2">
@@ -209,14 +259,28 @@ const AddLabModal: React.FC<{ onClose: () => void; onSave: () => void; language:
 // ─── Main Page ────────────────────────────────────────────────────────────
 const LabsPage: React.FC = () => {
     const { user, language } = useContext(AppContext) as any;
-    const [iframeLabs, setIframeLabs] = useState(getIframeLabs());
+    const [iframeLabs, setIframeLabs] = useState<any[]>([]);
     const [showAddModal, setShowAddModal] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
 
-    const refresh = () => setIframeLabs(getIframeLabs());
+    const refresh = async () => {
+        setIsLoading(true);
+        const labs = await getIframeLabs();
+        setIframeLabs(labs);
+        setIsLoading(false);
+    };
 
-    const handleDelete = (id: string) => {
+    useEffect(() => {
+        const init = async () => {
+            await migrateLabsToSupabase();
+            await refresh();
+        };
+        init();
+    }, []);
+
+    const handleDelete = async (id: string) => {
         if (window.confirm(language === 'ar' ? 'هل تريد حذف هذا المختبر؟' : 'Delete this lab?')) {
-            deleteIframeLab(id);
+            await deleteIframeLab(id);
             refresh();
         }
     };
@@ -318,16 +382,23 @@ const LabsPage: React.FC = () => {
                 />
 
                 {/* Dynamic iFrame Labs */}
-                {iframeLabs.map(lab => (
-                    <IframeLabCard
-                        key={lab.id}
-                        id={lab.id}
-                        title={lab.title}
-                        description={lab.description}
-                        url={lab.url}
-                        onDelete={handleDelete}
-                    />
-                ))}
+                {isLoading ? (
+                    <div className="md:col-span-3 flex justify-center py-20">
+                        <div className="w-12 h-12 border-4 border-brand-cyan/20 border-t-brand-cyan rounded-full animate-spin"></div>
+                    </div>
+                ) : (
+                    iframeLabs.map(lab => (
+                        <IframeLabCard
+                            key={lab.id}
+                            id={lab.id}
+                            title={lab.title}
+                            description={lab.description}
+                            url={lab.url}
+                            icon={lab.icon}
+                            onDelete={handleDelete}
+                        />
+                    ))
+                )}
             </div>
 
             {/* Footer CTA */}
