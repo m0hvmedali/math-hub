@@ -269,6 +269,14 @@ const LabsPage: React.FC = () => {
                     status="active"
                 />
                 <LabCard
+                    title="أجهزة القياس"
+                    description="High-fidelity simulator for building and calibrating electrical measuring instruments like Ammeters and Voltmeters."
+                    icon={ActivityIcon}
+                    path="/labs/measuring-devices"
+                    color="brand-cyan"
+                    status="active"
+                />
+                <LabCard
                     title="Your Smart board"
                     description="Professional interactive whiteboard system with multi-tool support, advanced geometry drawing, and real-time collaboration space."
                     icon={SparkleIcon}
