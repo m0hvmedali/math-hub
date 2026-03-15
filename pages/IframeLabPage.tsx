@@ -61,7 +61,7 @@ const IframeLabPage: React.FC<IframeLabPageProps> = ({ manualUrl, manualTitle })
         id: 'study-english',
         title: 'Study English with me',
         description: 'Interactive English language learning environment.',
-        url: 'https://claude.site/public/artifacts/7659ede0-2331-46be-b3f2-25c32b2aca84/embed',
+        url: 'https://claude.site/public/artifacts/f3e3bf68-e68d-4ba3-99d3-676a45050812/embed',
         color: 'brand-cyan',
         createdAt: Date.now()
       });
