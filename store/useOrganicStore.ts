@@ -40,15 +40,34 @@ export const useOrganicStore = create<OrganicState>((set, get) => ({
             const compounds = compRes.data?.length ? compRes.data : seedCompounds as any[];
             const reactions = reactRes.data?.length ? reactRes.data : seedReactions as any[];
             
-            // Auto-generate edges for seeds if needed
+            // Derive edges from reactions if not explicitly provided
             let finalEdges = edgeRes.data || [];
-            if (!finalEdges.length && compounds.length && reactions.length) {
-                // Dummy edge generation for seeds
-                finalEdges = [
-                    { id: 'se-1', reaction_id: 're-001', from_compound_id: 'eth-001', to_compound_id: 'etn-001' },
-                    { id: 'se-2', reaction_id: 're-002', from_compound_id: 'eth-001', to_compound_id: 'eta-001' },
-                    { id: 'se-3', reaction_id: 're-003', from_compound_id: 'amc-001', to_compound_id: 'ure-001' }
-                ];
+            if (!finalEdges.length && reactions.length) {
+                const derivedEdges: OrgReactionEdge[] = [];
+                reactions.forEach((r: any) => {
+                    r.reactants.forEach((reactantName: string) => {
+                        // Find compound ID by name (case-insensitive)
+                        const fromComp = compounds.find(c => 
+                            c.name_en.toLowerCase() === reactantName.toLowerCase() || 
+                            c.name_ar === reactantName
+                        );
+                        r.products.forEach((productName: string) => {
+                            const toComp = compounds.find(c => 
+                                c.name_en.toLowerCase() === productName.toLowerCase() || 
+                                c.name_ar === productName
+                            );
+                            if (fromComp && toComp) {
+                                derivedEdges.push({
+                                    id: `derived-${r.id}-${fromComp.id}-${toComp.id}`,
+                                    reaction_id: r.id,
+                                    from_compound_id: fromComp.id,
+                                    to_compound_id: toComp.id
+                                });
+                            }
+                        });
+                    });
+                });
+                finalEdges = derivedEdges;
             }
 
             set({

@@ -229,6 +229,22 @@ const COMPOUNDS: Record<string, Compound> = {
         density: 0.730,
         isomer: true,
         type: 'alkane'
+    },
+    icosane: {
+        name: 'الإيكوزان',
+        iupacName: 'إيكوزان',
+        formula: 'C₂₀H₄₂',
+        formulaText: 'C20H42',
+        carbons: 20,
+        hydrogens: 42,
+        molarMass: 282,
+        boilingPoint: 343,
+        meltingPoint: 37,
+        state: 'صلب',
+        structure: 'CH₃-(CH₂)₁₈-CH₃',
+        density: 0.788,
+        isomer: true,
+        type: 'alkane'
     }
 };
 
@@ -578,6 +594,12 @@ const AlkanesLab: React.FC = () => {
                                         <p className="text-[var(--text-muted)] text-xs leading-relaxed" dir="rtl">
                                             يتم تحضير الألكانات مختبرياً عن طريق التقطير الجاف لأملاح الصوديوم للأحماض الكربوكسيلية مع الصودا الكاوية.
                                         </p>
+                                        {selectedCompound?.carbons === 1 && (
+                                            <div className="mt-4 p-3 bg-brand-cyan/10 rounded-xl border border-brand-cyan/20">
+                                                <p className="text-[10px] text-brand-cyan font-black uppercase mb-1">Methane Prep</p>
+                                                <p className="text-[10px] text-white/70">CH₃COONa + NaOH (+CaO) → CH₄ + Na₂CO₃</p>
+                                            </div>
+                                        )}
                                     </div>
                                     <div className="glass-card p-6 border-accent-blue/30 bg-accent-blue/5 border-l-4">
                                         <h3 className="text-xs font-black text-accent-blue uppercase mb-4">Did You Know?</h3>

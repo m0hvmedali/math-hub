@@ -3,8 +3,9 @@ import { useOrganicStore } from '../store/useOrganicStore';
 import { useCosmicStore } from '../store/useCosmicStore';
 import { AppContext } from '../App';
 import OrganicGraph from '../components/OrganicGraph';
-import { BeakerIcon, SearchIcon, ActivityIcon, SettingsIcon } from '../components/Icons';
+import { BeakerIcon, SearchIcon, ActivityIcon, SettingsIcon, InfoIcon } from '../components/Icons';
 import { motion, AnimatePresence } from 'framer-motion';
+import IupacRulesPanel from '../components/IupacRulesPanel';
 
 const OrganicLabPage: React.FC = () => {
     const { fetchOrganicData, compounds, findPath, isLoading } = useOrganicStore();
@@ -13,6 +14,7 @@ const OrganicLabPage: React.FC = () => {
     const [pathStart, setPathStart] = useState<string | null>(null);
     const [pathEnd, setPathEnd] = useState<string | null>(null);
     const [foundPaths, setFoundPaths] = useState<any[]>([]);
+    const [showIupac, setShowIupac] = useState(false);
 
     useEffect(() => {
         fetchOrganicData();
@@ -69,6 +71,13 @@ const OrganicLabPage: React.FC = () => {
                                 >
                                     {language === 'ar' ? 'تتبع المسار' : 'Find Path'}
                                 </button>
+                                <button 
+                                    onClick={() => setShowIupac(true)}
+                                    className="w-full bg-white/5 border border-white/10 py-2.5 rounded-xl font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-white/10 transition-all"
+                                >
+                                    <InfoIcon className="w-4 h-4 text-accent-blue" />
+                                    {language === 'ar' ? 'قواعد الأيوباك' : 'IUPAC Rules'}
+                                </button>
                             </div>
                         </div>
 
@@ -111,16 +120,29 @@ const OrganicLabPage: React.FC = () => {
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 exit={{ opacity: 0, y: 20 }}
-                                className="bg-accent-blue/10 border border-accent-blue/20 p-6 rounded-[2rem]"
+                                className="bg-accent-blue/10 border border-accent-blue/20 p-6 rounded-[2rem] overflow-y-auto max-h-96"
                             >
                                 <h3 className="text-xs font-bold text-accent-blue uppercase mb-4">Routes Found</h3>
                                 <div className="space-y-4">
                                     {foundPaths.map((path, idx) => (
-                                        <div key={idx} className="p-3 bg-black/40 rounded-xl text-xs space-y-2 border border-white/5">
+                                        <div key={idx} className="p-4 bg-black/40 rounded-2xl text-xs space-y-4 border border-white/5">
                                             {path.map((step: any, sIdx: number) => (
-                                                <div key={sIdx} className="flex flex-col gap-1">
-                                                    <span className="text-accent-blue font-bold">{step.reaction.name}</span>
-                                                    <span className="text-gray-400">→ {compounds.find(c => c.id === step.edge.to_compound_id)?.name_en}</span>
+                                                <div key={sIdx} className="space-y-2 relative pl-4 border-l border-accent-blue/30">
+                                                    <div className="flex flex-col gap-1">
+                                                        <span className="text-accent-blue font-bold text-sm">{step.reaction.name}</span>
+                                                        <span className="text-white/80">→ {language === 'ar' ? compounds.find(c => c.id === step.edge.to_compound_id)?.name_ar : compounds.find(c => c.id === step.edge.to_compound_id)?.name_en}</span>
+                                                    </div>
+                                                    {step.reaction.reagents && (
+                                                        <div className="flex items-center gap-2 text-[10px] text-gray-500">
+                                                            <span className="bg-white/5 px-2 py-0.5 rounded-md border border-white/5">{step.reaction.reagents}</span>
+                                                            <span>{step.reaction.conditions}</span>
+                                                        </div>
+                                                    )}
+                                                    {step.reaction.mechanism_type && (
+                                                        <div className="text-[10px] text-accent-magenta/70 italic uppercase">
+                                                            {step.reaction.mechanism_type}
+                                                        </div>
+                                                    )}
                                                 </div>
                                             ))}
                                         </div>
@@ -169,6 +191,9 @@ const OrganicLabPage: React.FC = () => {
                     </AnimatePresence>
                 </div>
             </div>
+            <AnimatePresence>
+                {showIupac && <IupacRulesPanel language={language} onClose={() => setShowIupac(false)} />}
+            </AnimatePresence>
         </div>
     );
 };
