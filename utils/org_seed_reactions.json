@@ -60,8 +60,8 @@
     "id": "re-005",
     "name": "Urea Synthesis - Method 2 (from Cyanic Acid and Ammonia)",
     "reactants": [
-      "Cyanic Acid (HCNO)",
-      "Ammonia (NH3)"
+      "Cyanic Acid (Fulminic Acid)",
+      "Ammonia"
     ],
     "products": [
       "Ammonium Cyanate",
@@ -77,7 +77,7 @@
     "id": "re-006",
     "name": "Detection of Carbon in Organic Compounds - Carbon + CuO",
     "reactants": [
-      "Carbon (from organic compound)",
+      "Carbon",
       "Copper(II) Oxide"
     ],
     "products": [
@@ -94,11 +94,11 @@
     "id": "re-007",
     "name": "Detection of Hydrogen in Organic Compounds - Hydrogen + CuO",
     "reactants": [
-      "Hydrogen (from organic compound)",
+      "Hydrogen",
       "Copper(II) Oxide"
     ],
     "products": [
-      "Water vapor",
+      "Water",
       "Copper metal"
     ],
     "reagents": "Heat",
@@ -115,7 +115,7 @@
       "Calcium Hydroxide"
     ],
     "products": [
-      "Calcium Carbonate (precipitate)",
+      "Calcium Carbonate",
       "Water"
     ],
     "reagents": "Limewater",
@@ -128,7 +128,7 @@
     "id": "re-009",
     "name": "Water Detection - Anhydrous CuSO4 Test",
     "reactants": [
-      "Water (vapor)",
+      "Water",
       "Anhydrous Copper Sulfate"
     ],
     "products": [

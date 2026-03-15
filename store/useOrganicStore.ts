@@ -46,15 +46,15 @@ export const useOrganicStore = create<OrganicState>((set, get) => ({
                 const derivedEdges: OrgReactionEdge[] = [];
                 reactions.forEach((r: any) => {
                     r.reactants.forEach((reactantName: string) => {
-                        // Find compound ID by name (case-insensitive)
+                        // Find compound ID by name (case-insensitive, trimmed)
                         const fromComp = compounds.find(c => 
-                            c.name_en.toLowerCase() === reactantName.toLowerCase() || 
-                            c.name_ar === reactantName
+                            c.name_en.toLowerCase().trim() === reactantName.toLowerCase().trim() || 
+                            c.name_ar.trim() === reactantName.trim()
                         );
                         r.products.forEach((productName: string) => {
                             const toComp = compounds.find(c => 
-                                c.name_en.toLowerCase() === productName.toLowerCase() || 
-                                c.name_ar === productName
+                                c.name_en.toLowerCase().trim() === productName.toLowerCase().trim() || 
+                                c.name_ar.trim() === productName.trim()
                             );
                             if (fromComp && toComp) {
                                 derivedEdges.push({

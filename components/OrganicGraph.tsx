@@ -63,19 +63,21 @@ const OrganicGraph: React.FC<OrganicGraphProps> = ({ searchQuery, onNodeSelect }
                     selector: 'node',
                     style: {
                         'background-color': 'data(color)',
-                        'width': 'data(val)',
-                        'height': 'data(val)',
+                        'width': (node: any) => node.data('val') * 2, // Larger nodes
+                        'height': (node: any) => node.data('val') * 2,
                         'label': (node: any) => {
-                            if (zoom > 0.6) return `${node.data('name')}\n(${node.data('formula')})`;
+                            if (zoom > 0.4) return `${node.data('name')}\n(${node.data('formula')})`;
                             return node.data('formula');
                         },
                         'color': '#fff',
-                        'font-size': '10px',
+                        'font-size': '8px', // Smaller font for inside node
                         'text-valign': 'center',
                         'text-halign': 'center',
                         'text-wrap': 'wrap',
-                        'text-max-width': '80px',
+                        'text-max-width': '50px',
                         'font-family': 'Outfit, sans-serif',
+                        'text-outline-color': 'rgba(0,0,0,0.5)',
+                        'text-outline-width': 1,
                         'transition-property': 'background-color, width, height',
                         'transition-duration': 300
                     }
