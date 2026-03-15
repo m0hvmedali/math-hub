@@ -36,6 +36,22 @@ interface Compound {
 }
 
 const COMPOUNDS: Record<string, Compound> = {
+    methane: {
+        name: 'الميثان',
+        iupacName: 'ميثان',
+        formula: 'CH₄',
+        formulaText: 'CH4',
+        carbons: 1,
+        hydrogens: 4,
+        molarMass: 16,
+        boilingPoint: -161.5,
+        meltingPoint: -182,
+        state: 'غاز',
+        structure: 'CH₄',
+        density: 0.00065,
+        isomer: false,
+        type: 'alkane'
+    },
     ethane: {
         name: 'الإيثان',
         iupacName: 'إيثان',
@@ -150,6 +166,22 @@ const COMPOUNDS: Record<string, Compound> = {
         isomer: true,
         type: 'alkane'
     },
+    heptane: {
+        name: 'الهبتان',
+        iupacName: 'هبتان',
+        formula: 'C₇H₁₆',
+        formulaText: 'C7H16',
+        carbons: 7,
+        hydrogens: 16,
+        molarMass: 100,
+        boilingPoint: 98,
+        meltingPoint: -91,
+        state: 'سائل',
+        structure: 'CH₃-(CH₂)₅-CH₃',
+        density: 0.684,
+        isomer: true,
+        type: 'alkane'
+    },
     octane: {
         name: 'الأوكتان',
         iupacName: 'أوكتان',
@@ -163,6 +195,38 @@ const COMPOUNDS: Record<string, Compound> = {
         state: 'سائل',
         structure: 'CH₃-(CH₂)₆-CH₃',
         density: 0.703,
+        isomer: true,
+        type: 'alkane'
+    },
+    nonane: {
+        name: 'النونان',
+        iupacName: 'نونان',
+        formula: 'C₉H₂₀',
+        formulaText: 'C9H20',
+        carbons: 9,
+        hydrogens: 20,
+        molarMass: 128,
+        boilingPoint: 151,
+        meltingPoint: -53,
+        state: 'سائل',
+        structure: 'CH₃-(CH₂)₇-CH₃',
+        density: 0.718,
+        isomer: true,
+        type: 'alkane'
+    },
+    decane: {
+        name: 'الديكان',
+        iupacName: 'ديكان',
+        formula: 'C₁₀H₂₂',
+        formulaText: 'C10H22',
+        carbons: 10,
+        hydrogens: 22,
+        molarMass: 142,
+        boilingPoint: 174,
+        meltingPoint: -30,
+        state: 'سائل',
+        structure: 'CH₃-(CH₂)₈-CH₃',
+        density: 0.730,
         isomer: true,
         type: 'alkane'
     }
@@ -513,6 +577,12 @@ const AlkanesLab: React.FC = () => {
                                         <h3 className="text-xs font-black text-accent-green uppercase mb-4">Instructions</h3>
                                         <p className="text-[var(--text-muted)] text-xs leading-relaxed" dir="rtl">
                                             يتم تحضير الألكانات مختبرياً عن طريق التقطير الجاف لأملاح الصوديوم للأحماض الكربوكسيلية مع الصودا الكاوية.
+                                        </p>
+                                    </div>
+                                    <div className="glass-card p-6 border-accent-blue/30 bg-accent-blue/5 border-l-4">
+                                        <h3 className="text-xs font-black text-accent-blue uppercase mb-4">Did You Know?</h3>
+                                        <p className="text-[var(--text-muted)] text-xs leading-relaxed" dir="rtl">
+                                            يرجع سبب وفرة المركبات العضوية إلى قدرة ذرات الكربون على الاتحاد مع بعضها أو مع غيرها بطرق مختلفة، سواء بروابط أحادية أو ثنائية أو ثلاثية، وفي صور سلاسل أو حلقات.
                                         </p>
                                     </div>
                                     <button onClick={() => setStage(3)} className="mt-auto h-16 bg-accent-green text-black rounded-2xl font-black text-xs uppercase tracking-widest hover:scale-[1.02] transition-all flex items-center justify-center gap-2">

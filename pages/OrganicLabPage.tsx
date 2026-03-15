@@ -1,13 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import { useOrganicStore } from '../store/useOrganicStore';
 import { useCosmicStore } from '../store/useCosmicStore';
+import { AppContext } from '../App';
 import OrganicGraph from '../components/OrganicGraph';
-import { BeakerIcon, SearchIcon, RouteIcon, SettingsIcon } from '../components/Icons';
+import { BeakerIcon, SearchIcon, ActivityIcon, SettingsIcon } from '../components/Icons';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const OrganicLabPage: React.FC = () => {
     const { fetchOrganicData, compounds, findPath, isLoading } = useOrganicStore();
-    const { language } = useCosmicStore();
+    const { language } = useContext(AppContext);
     const [selectedCompId, setSelectedCompId] = useState<string | null>(null);
     const [pathStart, setPathStart] = useState<string | null>(null);
     const [pathEnd, setPathEnd] = useState<string | null>(null);
@@ -68,6 +69,37 @@ const OrganicLabPage: React.FC = () => {
                                 >
                                     {language === 'ar' ? 'تتبع المسار' : 'Find Path'}
                                 </button>
+                            </div>
+                        </div>
+
+                        {/* Formula Validator (Lecture Knowledge) */}
+                        <div className="mt-8 pt-8 border-t border-white/5 space-y-4">
+                            <h3 className="text-xs font-bold text-accent-blue uppercase tracking-tighter">Exception Validator</h3>
+                            <p className="text-[10px] text-gray-500 leading-tight">
+                                {language === 'ar' ? 'تحقق مما إذا كان المركب عضوياً أم استثناءً (أكاسيد، كربونات، سيانيد).' : 'Check if a compound is organic or an exception (oxides, carbonates, cyanides).'}
+                            </p>
+                            <div className="space-y-2">
+                                <input 
+                                    type="text" 
+                                    placeholder="CO2, Na2CO3, KCN..."
+                                    className="w-full bg-black/40 border border-white/10 rounded-xl p-2.5 text-sm outline-none focus:border-accent-blue"
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            const val = e.currentTarget.value.trim().toUpperCase();
+                                            const exceptions = ['CO', 'CO2', 'CO3', 'HCO3', 'CN', 'CNO', 'SCN'];
+                                            const isException = exceptions.some(ex => val.includes(ex));
+                                            const hasCarbon = val.includes('C') && !val.includes('CL') && !val.includes('CA');
+                                            
+                                            if (isException) {
+                                                alert(language === 'ar' ? 'هذا مركب غير عضوي (استثناء)' : 'This is an inorganic compound (Exception)');
+                                            } else if (hasCarbon) {
+                                                alert(language === 'ar' ? 'هذا مركب عضوي' : 'This is an organic compound');
+                                            } else {
+                                                alert(language === 'ar' ? 'لا يحتوي على كربون (غير عضوي)' : 'No carbon found (Inorganic)');
+                                            }
+                                        }
+                                    }}
+                                />
                             </div>
                         </div>
                     </div>

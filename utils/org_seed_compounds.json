@@ -30,5 +30,29 @@
     "formula": "CH3COOH",
     "tags": ["acid", "carboxylic"],
     "description": "حمض عضوي ضعيف."
+  },
+  {
+    "id": "ure-001",
+    "name_ar": "اليوريا",
+    "name_en": "Urea",
+    "formula": "NH2CONH2",
+    "tags": ["organic", "amide"],
+    "description": "أول مركب عضوي تم تحضيره في المعمل."
+  },
+  {
+    "id": "amc-001",
+    "name_ar": "سيانات الأمونيوم",
+    "name_en": "Ammonium Cyanate",
+    "formula": "NH4CNO",
+    "tags": ["inorganic", "cyanate"],
+    "description": "مركب غير عضوي استخدمه فوهلر لتحضير اليوريا."
+  },
+  {
+    "id": "glu-001",
+    "name_ar": "الجلوكوز",
+    "name_en": "Glucose",
+    "formula": "C6H12O6",
+    "tags": ["organic", "sugar"],
+    "description": "مثال للمركبات العضوية المعقدة."
   }
 ]

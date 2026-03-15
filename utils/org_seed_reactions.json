@@ -16,5 +16,14 @@
     "reagents": "K2Cr2O7 / H+",
     "conditions": "Distill",
     "mechanism_type": "Oxidation"
+  },
+  {
+    "id": "re-003",
+    "name": "Urea Synthesis (Wohler)",
+    "reactants": ["Ammonium Cyanate"],
+    "products": ["Urea"],
+    "reagents": "Heat",
+    "conditions": "Evaporation",
+    "mechanism_type": "Rearrangement"
   }
 ]

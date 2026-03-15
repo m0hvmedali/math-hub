@@ -46,7 +46,8 @@ export const useOrganicStore = create<OrganicState>((set, get) => ({
                 // Dummy edge generation for seeds
                 finalEdges = [
                     { id: 'se-1', reaction_id: 're-001', from_compound_id: 'eth-001', to_compound_id: 'etn-001' },
-                    { id: 'se-2', reaction_id: 're-002', from_compound_id: 'eth-001', to_compound_id: 'eta-001' }
+                    { id: 'se-2', reaction_id: 're-002', from_compound_id: 'eth-001', to_compound_id: 'eta-001' },
+                    { id: 'se-3', reaction_id: 're-003', from_compound_id: 'amc-001', to_compound_id: 'ure-001' }
                 ];
             }
 
