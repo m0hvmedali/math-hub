@@ -613,11 +613,10 @@ const App: React.FC = () => {
                 dir={language === 'ar' ? 'rtl' : 'ltr'}
                 style={{ color: 'var(--text-primary)' }}
             >
-                <NeuralNotifications />
                 {user && <Navigation />}
                 {user && (
                     <div className="px-6 py-4 max-w-7xl mx-auto w-full">
-                        <IslandOdyssey />
+                        <NeuralNotifications />
                     </div>
                 )}
                 {showOnboarding && <OnboardingStories onComplete={handleOnboardingComplete} />}
