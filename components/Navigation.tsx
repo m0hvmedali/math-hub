@@ -35,8 +35,8 @@ const Navigation: React.FC = () => {
             <div className="flex items-center gap-12 lg:gap-16">
                 {/* Brand Logo - Premium Upgrade */}
                 <NavLink to="/" className="flex items-center gap-3.5 cursor-pointer group/logo">
-                    <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-brand-cyan to-brand-purple flex items-center justify-center shadow-glow-brand transition-all duration-500 group-hover/logo:rotate-[10deg] group-hover/logo:scale-110">
-                        <span className="text-white font-black text-2xl leading-none font-outfit">H</span>
+                    <div className="w-10 h-10 rounded-2xl bg-black flex items-center justify-center shadow-glow-brand transition-all duration-500 group-hover/logo:rotate-[10deg] group-hover/logo:scale-110 overflow-hidden border border-white/10">
+                        <img src="/media/logo.png" alt="Logo" className="w-8 h-8 object-contain" />
                     </div>
                     <div className="flex flex-col">
                         <span className="text-white font-black text-xl tracking-tighter leading-none font-almarai">
