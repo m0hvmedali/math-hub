@@ -23,6 +23,7 @@ import DynamoLab from './pages/DynamoLab';
 import AlkanesLab from './pages/AlkanesLab';
 import LabsPage from './pages/LabsPage';
 import IframeLabPage from './pages/IframeLabPage';
+import NeuralNotifications from './components/NeuralNotifications';
 import ExplainLessonPage from './pages/ExplainLessonPage';
 import SettingsPage from './pages/SettingsPage';
 import HistoryPage from './pages/HistoryPage';
@@ -612,6 +613,7 @@ const App: React.FC = () => {
                 dir={language === 'ar' ? 'rtl' : 'ltr'}
                 style={{ color: 'var(--text-primary)' }}
             >
+                <NeuralNotifications />
                 {user && <Navigation />}
                 {user && (
                     <div className="px-6 py-4 max-w-7xl mx-auto w-full">

@@ -354,6 +354,19 @@ body {
   50% { transform: translateY(-8px); }
 }
 
+@keyframes notification-progress {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+.animate-notification-progress {
+  animation: notification-progress linear;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s infinite;
+}
+
 .animate-smooth-float {
   animation: smooth-float 4s ease-in-out infinite;
 }
