@@ -26,41 +26,42 @@ export default {
                 'theme-text-secondary': 'var(--text-secondary)',
                 'theme-text-muted': 'var(--text-muted)',
 
-                // Brand Colors (Madrasetna Plus)
+                // Brand Colors → NOW CSS VARIABLES (Dynamic!)
                 brand: {
-                    cyan: '#11D3EE',
-                    purple: '#8A3FFC',
-                    magenta: '#D2267D',
+                    cyan: 'var(--brand-cyan)',
+                    purple: 'var(--brand-purple)',
+                    magenta: 'var(--brand-magenta)',
+                    secondary: 'var(--brand-secondary)',
                     dark: '#121212',
                     black: '#000000'
                 },
 
-                'theme-primary': '#D2267D',
+                'theme-primary': 'var(--brand-magenta)',
                 'theme-input': 'var(--input-bg)',
                 'theme-divider': 'var(--divider)',
                 'theme-progress-track': 'var(--progress-track)',
                 'theme-overlay': 'var(--overlay-bg)',
 
-                // Functional accent colors (static)
+                // Functional accent colors → NOW CSS VARIABLES (Dynamic!)
                 accent: {
-                    blue: '#3B82F6',
-                    green: '#22C55E',
-                    red: '#EF4444',
-                    amber: '#F59E0B',
-                    cyan: '#06B6D4',
-                    violet: '#8B5CF6',
-                    pink: '#EC4899',
+                    blue: 'var(--accent-blue)',
+                    green: 'var(--accent-green)',
+                    red: 'var(--accent-red)',
+                    amber: 'var(--accent-amber)',
+                    cyan: 'var(--accent-cyan)',
+                    violet: 'var(--accent-violet)',
+                    pink: 'var(--accent-pink)',
                 },
             },
             boxShadow: {
                 'glass': 'var(--card-shadow)',
                 'glass-hover': 'var(--card-shadow-hover)',
-                'glow-brand': '0 0 20px rgba(138, 63, 252, 0.5)',
+                'glow-brand': '0 0 20px color-mix(in srgb, var(--brand-purple) 50%, transparent)',
             },
             backgroundImage: {
                 'theme-gradient': 'linear-gradient(135deg, var(--bg-base) 0%, var(--bg-base-end) 100%)',
-                'ott-gradient': 'linear-gradient(90deg, #11D3EE 0%, #8A3FFC 50%, #D2267D 100%)',
-                'btn-power': 'linear-gradient(135deg, #8A3FFC 0%, #D2267D 100%)',
+                'ott-gradient': 'linear-gradient(90deg, var(--brand-cyan) 0%, var(--brand-purple) 50%, var(--brand-magenta) 100%)',
+                'btn-power': 'linear-gradient(135deg, var(--brand-purple) 0%, var(--brand-magenta) 100%)',
             },
         },
     },

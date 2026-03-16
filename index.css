@@ -8,7 +8,7 @@
 
 :root,
 .dark {
-  /* Dynamic Theme Variables (Controlled by ThemeManager) */
+  /* ═══ Dynamic Theme Variables (Controlled by ThemeManager) ═══ */
   --bg-color: #0A0A0A;
   --surface-color: #121212;
   --primary-color: #3B82F6;
@@ -18,7 +18,22 @@
   --primary-glow: rgba(59, 130, 246, 0.2);
   --accent-glow: rgba(244, 63, 94, 0.15);
 
-  /* Legacy / Backup Variables */
+  /* ═══ Dynamic Brand Colors (rotated by ThemeManager) ═══ */
+  --brand-cyan: #11D3EE;
+  --brand-purple: #8A3FFC;
+  --brand-magenta: #D2267D;
+  --brand-secondary: #6366F1;
+
+  /* ═══ Dynamic Accent Colors ═══ */
+  --accent-blue: #3B82F6;
+  --accent-green: #22C55E;
+  --accent-red: #EF4444;
+  --accent-amber: #F59E0B;
+  --accent-cyan: #06B6D4;
+  --accent-violet: #8B5CF6;
+  --accent-pink: #EC4899;
+
+  /* ═══ Derived / Layout Variables ═══ */
   --bg-base: var(--bg-color);
   --bg-base-end: #000000;
   --glass-bg: rgba(18, 18, 18, 0.7);
@@ -43,6 +58,11 @@ body {
   min-height: 100vh;
   transition: background 1.5s cubic-bezier(0.4, 0, 0.2, 1), color 0.5s ease;
   overflow-x: hidden;
+}
+
+/* ═══ Smooth Theme Transitions on ALL elements ═══ */
+*, *::before, *::after {
+  transition: background-color 0.8s ease, border-color 0.8s ease, color 0.6s ease, box-shadow 0.8s ease, fill 0.6s ease, stroke 0.6s ease;
 }
 
 #root {
@@ -89,8 +109,8 @@ body {
    Power Button System
    ══════════════════════════════════════ */
 .btn-power {
-  background: linear-gradient(90deg, #3B82F6 0%, #2DD4BF 100%);
-  box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+  background: linear-gradient(90deg, var(--brand-cyan) 0%, var(--brand-purple) 100%);
+  box-shadow: 0 4px 15px var(--primary-glow);
   color: #FFFFFF;
   font-weight: 800;
   border: none;
@@ -101,7 +121,7 @@ body {
 
 .btn-power:hover {
   transform: scale(1.05);
-  box-shadow: 0 8px 25px rgba(59, 130, 246, 0.5);
+  box-shadow: 0 8px 25px var(--primary-glow);
 }
 
 /* ══════════════════════════════════════
@@ -135,7 +155,7 @@ body {
 }
 
 .text-gradient-ott {
-  background: linear-gradient(90deg, #3B82F6 0%, #2DD4BF 100%);
+  background: linear-gradient(90deg, var(--brand-cyan) 0%, var(--brand-purple) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -157,7 +177,7 @@ body {
   z-index: -1;
   margin: -1px;
   border-radius: inherit;
-  background: linear-gradient(90deg, #11D3EE 0%, #8A3FFC 50%, #D2267D 100%);
+  background: linear-gradient(90deg, var(--brand-cyan) 0%, var(--brand-purple) 50%, var(--brand-magenta) 100%);
 }
 
 /* ══════════════════════════════════════

@@ -67,7 +67,7 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           totalSeconds: activeSession.current_phase === 'study' ? STUDY_DURATION : BREAK_DURATION,
         });
 
-        if (activeSession.current_phase === 'study' || activeSession.current_phase === 'break') {
+        if (activeSession.current_phase === 'break') {
             ThemeManager.applyTheme(ThemeManager.generatePalette());
         }
       }

@@ -35,6 +35,7 @@ import { supabase, isSupabaseConfigured } from './supabaseClient';
 import { TimerProvider } from './store/TimerProvider';
 import { SpotifyProvider } from './store/SpotifyProvider';
 import AnalysisPage from './pages/AnalysisPage';
+import { ThemeManager } from './utils/ThemeManager';
 import { rebuildSearchIndex, searchRadar, SearchResult, fetchTavilyResults } from './utils/searchRadar';
 
 export const AppContext = createContext<{
@@ -259,6 +260,17 @@ const App: React.FC = () => {
             rebuildSearchIndex(subjects, customNodes);
         }
     }, [subjects, customNodes, isLoading]);
+
+    // ═══ Dynamic Theme Auto-Rotation Engine ═══
+    useEffect(() => {
+        if (!user) return;
+        // Start rotating full color palette every 60 seconds
+        ThemeManager.startAutoRotation(60_000);
+
+        return () => {
+            ThemeManager.stopAutoRotation();
+        };
+    }, [user]);
 
     // Neural Recharge Logic (3 consecutive mental distractions)
     useEffect(() => {
