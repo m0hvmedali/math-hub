@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 
-export type WisdomType = 'hadith' | 'poetry' | 'scholar_quote' | 'general_wisdom';
+export type WisdomType = 'quran' | 'hadith' | 'poetry' | 'scholar_quote' | 'general_wisdom';
 
 export interface WisdomItem {
   id: string;
@@ -30,7 +30,7 @@ export const useWisdom = (userId: string | null) => {
   const fetchNextWisdom = useCallback(async (options?: { 
     type?: WisdomType | WisdomType[], 
     category?: string,
-    state?: 'study' | 'break' | 'focus' | 'night'
+    state?: 'study' | 'break' | 'focus' | 'night' | 'end'
   }) => {
     if (!userId) return;
     setLoading(true);
@@ -42,11 +42,12 @@ export const useWisdom = (userId: string | null) => {
         targetTypes = Array.isArray(options.type) ? options.type : [options.type];
       } else if (options?.state) {
         switch (options.state) {
-          case 'study': targetTypes = ['hadith', 'scholar_quote']; break;
-          case 'break': targetTypes = ['poetry']; break;
+          case 'study': targetTypes = ['quran', 'hadith']; break;
           case 'focus': targetTypes = ['hadith', 'scholar_quote']; break;
-          case 'night': targetTypes = ['poetry', 'general_wisdom']; break;
-          default: targetTypes = ['hadith', 'poetry', 'scholar_quote'];
+          case 'break': targetTypes = ['poetry']; break;
+          case 'night': targetTypes = ['quran', 'general_wisdom']; break;
+          case 'end': targetTypes = ['general_wisdom', 'scholar_quote']; break;
+          default: targetTypes = ['quran', 'hadith', 'poetry', 'scholar_quote'];
         }
       }
 

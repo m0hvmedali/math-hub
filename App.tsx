@@ -43,7 +43,9 @@ import { ThemeManager } from './utils/ThemeManager';
 import { rebuildSearchIndex, searchRadar, SearchResult, fetchTavilyResults } from './utils/searchRadar';
 import { hubCore, useHubCore } from './utils/HubCore';
 import { initializeAssistantCommands } from './utils/AssistantCommands';
-import { useWisdom } from './hooks/useWisdom';
+import WisdomLibraryPage from './pages/WisdomLibraryPage';
+import FloatingWisdom from './components/FloatingWisdom';
+import { WisdomItem, useWisdom } from './hooks/useWisdom';
 
 export const AppContext = createContext<{
     subjects: Subject[];
@@ -84,6 +86,7 @@ export const AppContext = createContext<{
     wisdomProgress: any | null;
     fetchNextWisdom: (options?: any) => Promise<void>;
     updateWisdomProgress: (action: 'understand' | 'repeat' | 'favorite') => Promise<void>;
+    triggerFloatingWisdom: () => void;
 }>({
     subjects: [],
     isLoading: true,
@@ -123,6 +126,7 @@ export const AppContext = createContext<{
     wisdomProgress: null,
     fetchNextWisdom: async () => { },
     updateWisdomProgress: async () => { },
+    triggerFloatingWisdom: () => { },
 });
 
 // Initialize Global Commands once
@@ -171,6 +175,23 @@ const App: React.FC = () => {
     const [isAssistantOpen, setIsAssistantOpen] = useState(false);
 
     const { currentWisdom, progress: wisdomProgress, fetchNextWisdom, updateProgress: updateWisdomProgress } = useWisdom(user);
+
+    const [isFloatingVisible, setIsFloatingVisible] = useState(false);
+    
+    const triggerFloatingWisdom = useCallback(() => {
+        if (!user) return;
+        fetchNextWisdom({ state: 'night' }); // Mixed content
+        setIsFloatingVisible(true);
+    }, [user, fetchNextWisdom]);
+
+    // Periodic Floating Wisdom (every 30 mins)
+    useEffect(() => {
+        if (!user) return;
+        const interval = setInterval(() => {
+            triggerFloatingWisdom();
+        }, 30 * 60 * 1000);
+        return () => clearInterval(interval);
+    }, [user, triggerFloatingWisdom]);
 
     // Global Command Palette Shortcut (Ctrl+K)
     useEffect(() => {
@@ -708,7 +729,8 @@ const App: React.FC = () => {
             customNodes, addCustomNode,
             manualLinks, addManualLink,
             setIsAssistantOpen,
-            currentWisdom, wisdomProgress, fetchNextWisdom, updateWisdomProgress
+            currentWisdom, wisdomProgress, fetchNextWisdom, updateWisdomProgress,
+            triggerFloatingWisdom
         }}>
             <div
                 className={`flex flex-col min-h-screen font-sans bg-black transition-colors duration-500 ${language === 'ar' ? 'font-arabic' : ''}`}
@@ -756,6 +778,7 @@ const App: React.FC = () => {
                         <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
                         <Route path="/analysis" element={<ProtectedRoute><AnalysisPage /></ProtectedRoute>} />
                         <Route path="/notes" element={<ProtectedRoute><NotesPage /></ProtectedRoute>} />
+                        <Route path="/wisdom-library" element={<ProtectedRoute><WisdomLibraryPage /></ProtectedRoute>} />
                     </Routes>
                 </main>
             </div>

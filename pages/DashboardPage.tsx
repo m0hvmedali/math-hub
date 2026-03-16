@@ -2,7 +2,6 @@ import React, { useContext, useState, useEffect, useMemo } from 'react';
 import { AppContext } from '../App';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { BookOpenIcon, SparkleIcon, ChevronRightIcon, PlusIcon, TrashIcon, ClockIcon, TargetIcon, CalendarIcon, TrendingUpIcon, GlobeIcon, XIcon, SearchIcon } from '../components/Icons';
-import { quotes } from '../utils/quotes';
 import { translations } from '../utils/translations';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Lesson, Importance, KnowledgeError } from '../types';
@@ -261,10 +260,21 @@ const DashboardPage: React.FC = () => {
                     </h1>
                     
                     {currentWisdom && (
-                      <div className="mb-8 animate-premium-fade cursor-pointer" onClick={() => fetchNextWisdom({ state: 'study' })}>
-                        <div className="p-4 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 max-w-2xl group hover:border-brand-cyan/30 transition-all">
-                           <p className={`text-xl md:text-2xl font-black text-brand-cyan mb-2 dir-rtl ${currentWisdom.type === 'poetry' ? 'italic' : ''}`}>"{currentWisdom.text}"</p>
-                           <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">{currentWisdom.author || currentWisdom.source} {currentWisdom.is_golden ? '• GOLDEN ⭐' : ''}</p>
+                      <div className="mb-8 animate-premium-fade cursor-pointer group" onClick={() => fetchNextWisdom({ state: 'study' })}>
+                        <div className={`p-6 bg-white/5 backdrop-blur-xl rounded-[2rem] border border-white/10 max-w-2xl group-hover:border-brand-cyan/40 transition-all duration-500 relative overflow-hidden`}>
+                           {/* Cinematic Glow Background */}
+                           <div className="absolute inset-0 bg-gradient-to-tr from-brand-cyan/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                           
+                           <div className="relative z-10 text-right" dir="rtl">
+                             <p className={`text-2xl md:text-3xl font-black text-white mb-4 leading-relaxed tracking-tight ${currentWisdom.type === 'poetry' ? 'italic font-serif' : ''}`}>
+                               "{currentWisdom.text}"
+                             </p>
+                             <div className="flex items-center justify-end gap-3">
+                               <span className="w-8 h-[2px] bg-brand-cyan/40"></span>
+                               <p className="text-sm text-gray-400 font-bold uppercase tracking-[0.2em]">{currentWisdom.author || currentWisdom.source}</p>
+                               {currentWisdom.is_golden && <span className="text-[10px] bg-accent-amber/10 text-accent-amber px-2 py-0.5 rounded border border-accent-amber/20 font-black tracking-widest">GOLDEN ⭐</span>}
+                             </div>
+                           </div>
                         </div>
                       </div>
                     )}

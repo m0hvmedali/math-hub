@@ -6,6 +6,7 @@ import { useTimer } from '../store/TimerProvider';
 import { SparkleIcon, PlayIcon, PauseIcon, BookOpenIcon } from '../components/Icons';
 import { useHubCore } from '../utils/HubCore';
 import WisdomOverlay from '../components/WisdomOverlay';
+import BismillahGreeting from '../components/BismillahGreeting';
 
 const AMBIENT_SOUNDS = [
   { id: 'lofi', name: 'Lo-Fi Chill', url: 'https://cdn.pixabay.com/audio/2022/05/27/audio_1808fbf07a.mp3' },
@@ -19,6 +20,7 @@ const StudyTimerPage: React.FC = () => {
   const [isDeepFocus, setIsDeepFocus] = React.useState(false);
   const [showWisdom, setShowWisdom] = React.useState(false);
   const [activeAmbient, setActiveAmbient] = React.useState<string | null>(null);
+  const [showBismillah, setShowBismillah] = React.useState(false);
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
 
   // Register with HubCore
@@ -65,6 +67,17 @@ const StudyTimerPage: React.FC = () => {
   return (
     <div className={`p-6 md:px-16 md:py-12 max-w-[1400px] mx-auto min-h-screen transition-all duration-1000 ${isDeepFocus ? 'bg-black opacity-90' : 'animate-premium-fade'}`}>
       
+      {showBismillah && (
+        <BismillahGreeting 
+          language={language} 
+          onComplete={() => {
+            setShowBismillah(false);
+            // The actual timer start is handled by PomodoroTimer component
+            // but we can add more logic here if needed
+          }} 
+        />
+      )}
+      
       {/* Cinematic Wisdom Overlay */}
       {showWisdom && currentWisdom && (
         <WisdomOverlay 
@@ -107,7 +120,7 @@ const StudyTimerPage: React.FC = () => {
       </header>
 
       {/* Main Timer Display */}
-      <div className="glass-card p-8 md:p-16 relative overflow-hidden">
+      <div className="glass-card p-8 md:p-16 relative overflow-hidden" onClick={() => phase === 'idle' && setShowBismillah(true)}>
         <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--secondary-color)] opacity-5 blur-[100px] rounded-full" />
         <PomodoroTimer />
       </div>
