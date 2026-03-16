@@ -29,15 +29,28 @@ export interface SpotifySearchResult {
   type: 'track' | 'playlist';
 }
 
+export interface CurrentTrack {
+  name: string;
+  artist: string;
+  album: string;
+  image: string;
+  uri: string;
+  isPlaying: boolean;
+}
+
 interface SpotifyContextType {
   token: string | null;
   player: Spotify.Player | null;
   deviceId: string | null;
   isConnected: boolean;
+  currentTrack: CurrentTrack | null;
   login: () => void;
   playPlaylist: (uri: string) => Promise<void>;
+  playTrack: (uri: string) => Promise<void>;
   pause: () => Promise<void>;
   resume: () => Promise<void>;
+  skipNext: () => Promise<void>;
+  skipPrev: () => Promise<void>;
   searchSpotify: (query: string) => Promise<SpotifySearchResult[]>;
 }
 
@@ -59,6 +72,7 @@ export const SpotifyProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [player, setPlayer] = useState<Spotify.Player | null>(null);
   const [deviceId, setDeviceId ] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [currentTrack, setCurrentTrack] = useState<CurrentTrack | null>(null);
 
   // Handle OAuth Redirect and Token Exchange
   useEffect(() => {
@@ -137,6 +151,21 @@ export const SpotifyProvider: React.FC<{ children: React.ReactNode }> = ({ child
         setIsConnected(false);
       });
 
+      spPlayer.addListener('player_state_changed', (state) => {
+        if (!state) return;
+        const track = state.track_window.current_track;
+        if (track) {
+          setCurrentTrack({
+            name: track.name,
+            artist: track.artists.map(a => a.name).join(', '),
+            album: track.album.name,
+            image: track.album.images?.[0]?.url || '',
+            uri: track.uri,
+            isPlaying: !state.paused,
+          });
+        }
+      });
+
       spPlayer.connect();
     };
 
@@ -185,6 +214,26 @@ export const SpotifyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     if (player) await player.resume();
   };
 
+  const skipNext = async () => {
+    if (player) await player.nextTrack();
+  };
+
+  const skipPrev = async () => {
+    if (player) await player.previousTrack();
+  };
+
+  const playTrack = async (uri: string) => {
+    if (!token || !deviceId) return;
+    await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ uris: [uri] }),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+  };
+
   const searchSpotify = async (query: string): Promise<SpotifySearchResult[]> => {
     if (!token || !query) return [];
     try {
@@ -214,7 +263,7 @@ export const SpotifyProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   return (
-    <SpotifyContext.Provider value={{ token, player, deviceId, isConnected, login, playPlaylist, pause, resume, searchSpotify }}>
+    <SpotifyContext.Provider value={{ token, player, deviceId, isConnected, currentTrack, login, playPlaylist, playTrack, pause, resume, skipNext, skipPrev, searchSpotify }}>
       {children}
     </SpotifyContext.Provider>
   );

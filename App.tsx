@@ -25,6 +25,7 @@ import LabsPage from './pages/LabsPage';
 import IframeLabPage from './pages/IframeLabPage';
 import NeuralNotifications from './components/NeuralNotifications';
 import ExplainLessonPage from './pages/ExplainLessonPage';
+import FloatingSpotifyWidget from './components/FloatingSpotifyWidget';
 import SettingsPage from './pages/SettingsPage';
 import HistoryPage from './pages/HistoryPage';
 import CurriculumPage from './pages/CurriculumPage';
@@ -632,6 +633,7 @@ const App: React.FC = () => {
                 style={{ color: 'var(--text-primary)' }}
             >
                 {user && <Navigation />}
+                {user && <FloatingSpotifyWidget />}
                 {user && (
                     <div className="px-6 py-4 max-w-7xl mx-auto w-full">
                         <NeuralNotifications />

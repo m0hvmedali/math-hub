@@ -17,6 +17,9 @@ declare namespace Spotify {
     pause(): Promise<void>;
     resume(): Promise<void>;
     togglePlay(): Promise<void>;
+    nextTrack(): Promise<void>;
+    previousTrack(): Promise<void>;
+    seek(position_ms: number): Promise<void>;
   }
 
   interface PlaybackState {
