@@ -102,6 +102,7 @@ const Navigation: React.FC = () => {
                                 {[
                                     { to: '/profile', icon: <TrendingUpIcon className="w-5 h-5 text-brand-cyan" />, label: language === 'ar' ? 'التحليلات والرادار' : 'Analytics & Radar' },
                                     { to: '/timer', icon: <ClockIcon className="w-5 h-5 text-brand-secondary" />, label: language === 'ar' ? 'مؤقت التركيز' : 'Focus Timer' },
+                                    { to: '/notes', icon: <span className="text-lg">📝</span>, label: language === 'ar' ? 'الملاحظات السريعة' : 'Quick Notes' },
                                     { to: '/explain', icon: <SparkleIcon className="w-5 h-5 text-brand-magenta" />, label: language === 'ar' ? 'البروفيسور AI' : 'Professor AI' },
                                     { to: '/daily-analysis', icon: <span className="text-lg">❖</span>, label: language === 'ar' ? 'التحليل اليومي' : 'Daily Analysis' },
                                     { type: 'divider' },

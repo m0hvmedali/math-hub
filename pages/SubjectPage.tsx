@@ -5,6 +5,9 @@ import { AppContext } from '../App';
 import { ArrowLeftIcon, PlusIcon, BookOpenIcon, TrashIcon, ChevronRightIcon, ChevronDownIcon } from '../components/Icons';
 import Sidebar from '../components/Sidebar';
 import { detectMagicLink } from '../utils/detectMagicLink';
+import { supabase } from '../supabaseClient';
+import { QuickNote } from '../components/FloatingQuickNote';
+import { NavLink } from 'react-router-dom';
 
 const SubjectPage: React.FC = () => {
     const { subjectId } = useParams<{ subjectId: string }>();
@@ -18,12 +21,28 @@ const SubjectPage: React.FC = () => {
     const [newLessonName, setNewLessonName] = useState('');
     const [magicUrl, setMagicUrl] = useState('');
     const [expandedBranches, setExpandedBranches] = useState<Record<string, boolean>>({});
+    const [subjectNotes, setSubjectNotes] = useState<QuickNote[]>([]);
+    const [loadingNotes, setLoadingNotes] = useState(false);
 
     const subject = getSubject(subjectId!);
     
     // Safety Guard: Explicitly ensure sidebar is closed on mount or when subject changes
     React.useEffect(() => {
         setIsSidebarOpen(false);
+        
+        // Fetch notes for this subject
+        const fetchSubjectNotes = async () => {
+          if (!subjectId || !supabase) return;
+          setLoadingNotes(true);
+          const { data } = await supabase
+            .from('quick_notes')
+            .select('*')
+            .eq('subject_id', subjectId)
+            .order('created_at', { ascending: false });
+          if (data) setSubjectNotes(data);
+          setLoadingNotes(false);
+        };
+        fetchSubjectNotes();
     }, [subjectId]);
 
     if (!subject) return <div className="p-10 text-white font-black text-center min-h-screen flex items-center justify-center">COURSE NOT FOUND.</div>;
@@ -74,7 +93,8 @@ const SubjectPage: React.FC = () => {
                 <div className="max-w-[1400px] mx-auto px-6 md:px-16 flex gap-4">
                     {[
                         { id: 'content', label: language === 'ar' ? 'المحتوى والحلقات' : 'Episodes & Content' },
-                        { id: 'capsule', label: language === 'ar' ? 'كبسولات سريعة' : 'Flash Capsules' }
+                        { id: 'capsule', label: language === 'ar' ? 'كبسولات سريعة' : 'Flash Capsules' },
+                        { id: 'notes', label: language === 'ar' ? 'الملاحظات' : 'Subject Notes' }
                     ].map(tab => (
                         <button
                             key={tab.id}
@@ -197,6 +217,44 @@ const SubjectPage: React.FC = () => {
                         );
                     })}
                 </div>
+
+                {/* Subject Notes Tab Content */}
+                {activeTab === 'notes' as any && (
+                  <div className="space-y-6 animate-fade-in">
+                    {subjectNotes.length === 0 ? (
+                      <div className="text-center py-20 bg-white/5 rounded-[2.5rem] border border-white/5">
+                        <span className="text-5xl mb-4 block">📝</span>
+                        <p className="text-gray-500 font-bold">{language === 'ar' ? 'لا توجد ملاحظات لهذه المادة بعد' : 'No notes for this subject yet'}</p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {subjectNotes.map(note => (
+                          <div 
+                            key={note.id} 
+                            className="p-6 rounded-[2rem] border-2 bg-white/5 hover:bg-white/10 transition-all cursor-pointer group"
+                            style={{ 
+                              borderColor: note.color === 'Yellow' ? '#F59E0B30' : note.color === 'Pink' ? '#EC489930' : note.color === 'Green' ? '#10B98130' : note.color === 'Blue' ? '#3B82F630' : note.color === 'Purple' ? '#8B5CF630' : '#F9731630',
+                              borderLeftWidth: '8px',
+                              borderLeftColor: note.color === 'Yellow' ? '#F59E0B' : note.color === 'Pink' ? '#EC4899' : note.color === 'Green' ? '#10B981' : note.color === 'Blue' ? '#3B82F6' : note.color === 'Purple' ? '#8B5CF6' : '#F97316'
+                            }}
+                            onClick={() => navigate(note.page_path)}
+                          >
+                            <div className="text-[10px] font-black uppercase tracking-widest text-white/30 mb-3 flex justify-between">
+                              <span>{note.branch_name} {note.lesson_name && ` → ${note.lesson_name}`}</span>
+                              <span>{new Date(note.created_at).toLocaleDateString()}</span>
+                            </div>
+                            <p className="text-lg font-medium text-white mb-4 line-clamp-4" style={{ fontFamily: "'Caveat', cursive, sans-serif" }}>
+                              {note.content}
+                            </p>
+                            <div className="flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                              <span className="text-[10px] font-black text-brand-cyan uppercase tracking-widest">Go to lesson →</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
             </main>
 
             {/* Sidebar for Add/Edit */}

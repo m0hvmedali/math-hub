@@ -31,6 +31,7 @@ import HistoryPage from './pages/HistoryPage';
 import CurriculumPage from './pages/CurriculumPage';
 import MeasuringDevicesLab from './pages/MeasuringDevicesLab';
 import OrganicLabPage from './pages/OrganicLabPage';
+import NotesPage from './pages/NotesPage';
 import { useCosmicStore } from './store/useCosmicStore';
 import { supabase, isSupabaseConfigured } from './supabaseClient';
 import { TimerProvider } from './store/TimerProvider';
@@ -634,6 +635,7 @@ const App: React.FC = () => {
             >
                 {user && <Navigation />}
                 {user && <FloatingSpotifyWidget />}
+                {user && <FloatingQuickNote />}
                 {user && (
                     <div className="px-6 py-4 max-w-7xl mx-auto w-full">
                         <NeuralNotifications />
@@ -670,6 +672,7 @@ const App: React.FC = () => {
                         <Route path="/history" element={<ProtectedRoute><HistoryPage /></ProtectedRoute>} />
                         <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
                         <Route path="/analysis" element={<ProtectedRoute><AnalysisPage /></ProtectedRoute>} />
+                        <Route path="/notes" element={<ProtectedRoute><NotesPage /></ProtectedRoute>} />
                     </Routes>
                 </main>
             </div>

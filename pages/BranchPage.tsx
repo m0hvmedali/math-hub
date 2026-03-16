@@ -2,6 +2,9 @@ import React, { useContext, useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { AppContext } from '../App';
 import { ContentBlock, Lesson } from '../types';
+import { supabase } from '../supabaseClient';
+import { NavLink } from 'react-router-dom';
+import { QuickNote } from '../components/FloatingQuickNote';
 import ContentModal from '../components/ContentModal';
 import FlashcardViewer from '../components/FlashcardViewer';
 import WorkspaceEmbed from '../components/WorkspaceEmbed';
@@ -372,6 +375,8 @@ const BranchPage: React.FC = () => {
     const [isGeminiOpen, setIsGeminiOpen] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [hasChanges, setHasChanges] = useState(false);
+    const [lessonNotes, setLessonNotes] = useState<QuickNote[]>([]);
+    const [isLoadingNotes, setIsLoadingNotes] = useState(false);
 
     // Focus Mode State (Always Active in OTT)
     const [focusedBlockIndex, setFocusedBlockIndex] = useState<number>(0);
@@ -385,7 +390,7 @@ const BranchPage: React.FC = () => {
     const [currentErrorLessonId, setCurrentErrorLessonId] = useState<string | null>(null);
 
     // Progress Tracking
-    const { progress, fetchProgress, saveProgress, resetProgress } = useLessonProgress(user?.id);
+    const { progress, fetchProgress, saveProgress, resetProgress } = useLessonProgress(typeof user === 'string' ? user : (user as any)?.id);
 
     useEffect(() => {
         // Find subject and branch
@@ -401,8 +406,21 @@ const BranchPage: React.FC = () => {
     }, [subjectId, branchId, lessonId, getSubject, getCourseBranch]);
 
     useEffect(() => {
-        if (activeLesson?.id) {
+        if (activeLesson?.id && supabase) {
             fetchProgress(activeLesson.id);
+            
+            // Fetch notes for this lesson
+            const fetchLessonNotes = async () => {
+              setIsLoadingNotes(true);
+              const { data } = await supabase
+                .from('quick_notes')
+                .select('*')
+                .eq('lesson_id', activeLesson.id)
+                .order('created_at', { ascending: false });
+              if (data) setLessonNotes(data);
+              setIsLoadingNotes(false);
+            };
+            fetchLessonNotes();
         }
     }, [activeLesson?.id, fetchProgress]);
 
@@ -702,6 +720,32 @@ const BranchPage: React.FC = () => {
                                 </div>
                             );
                         })}
+
+                        {/* Lesson Specific Notes "History" */}
+                        {lessonNotes.length > 0 && (
+                          <div className="mt-8 pt-8 border-t border-white/5 space-y-4">
+                            <h3 className="text-white text-xs font-black uppercase tracking-widest px-2 flex items-center justify-between">
+                              {language === 'ar' ? 'ملاحظات هذا الدرس' : 'Lesson Notes'}
+                              <NavLink to="/notes" className="text-brand-cyan hover:underline lowercase font-medium">view all</NavLink>
+                            </h3>
+                            <div className="space-y-3">
+                              {lessonNotes.map(note => (
+                                <div 
+                                  key={note.id} 
+                                  className="p-4 rounded-2xl border border-white/5 bg-white/5 group/note relative transition-all hover:border-brand-cyan/20"
+                                  style={{ borderLeft: `4px solid ${note.color === 'Yellow' ? '#F59E0B' : note.color === 'Pink' ? '#EC4899' : note.color === 'Green' ? '#10B981' : note.color === 'Blue' ? '#3B82F6' : note.color === 'Purple' ? '#8B5CF6' : '#F97316'}` }}
+                                >
+                                  <p className="text-sm font-medium text-gray-200 line-clamp-3 mb-2" style={{ fontFamily: "'Caveat', cursive, sans-serif" }}>
+                                    {note.content}
+                                  </p>
+                                  <div className="text-[9px] font-black uppercase tracking-widest text-gray-500">
+                                    {new Date(note.created_at).toLocaleDateString()}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
 
 
                         {flashcards.length > 0 && (
