@@ -1,5 +1,6 @@
 /// <reference types="../types/spotify" />
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { supabase } from '../supabaseClient';
 
 // PKCE Helper Functions
 const generateRandomString = (length: number) => {
@@ -174,7 +175,7 @@ export const SpotifyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     };
   }, [token]);
 
-  const login = async () => {
+  const login = useCallback(async () => {
     const codeVerifier  = generateRandomString(64);
     const hashed = await sha256(codeVerifier);
     const codeChallenge = base64encode(hashed);
@@ -192,57 +193,59 @@ export const SpotifyProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
     const authUrl = `https://accounts.spotify.com/authorize?${params.toString()}`;
     window.location.href = authUrl;
-  };
+  }, []);
 
-  const playPlaylist = async (uri: string) => {
+  const playPlaylist = useCallback(async (uri: string) => {
     if (!token || !deviceId) return;
-    await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
-      method: 'PUT',
-      body: JSON.stringify({ context_uri: uri }),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      }
-    });
-  };
-
-  const pause = async () => {
-    if (player) await player.pause();
-  };
-
-  const resume = async () => {
-    if (player) await player.resume();
-  };
-
-  const skipNext = async () => {
-    if (player) await player.nextTrack();
-  };
-
-  const skipPrev = async () => {
-    if (player) await player.previousTrack();
-  };
-
-  const playTrack = async (uri: string) => {
-    if (!token || !deviceId) return;
-    await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
-      method: 'PUT',
-      body: JSON.stringify({ uris: [uri] }),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      }
-    });
-  };
-
-  const searchSpotify = async (query: string): Promise<SpotifySearchResult[]> => {
-    if (!token || !query) return [];
     try {
-      const res = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track,playlist&limit=8`, {
+      await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ context_uri: uri }),
         headers: {
+          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         }
       });
-      const data = await res.json();
+    } catch (e) { console.error("Spotify Play Error:", e); }
+  }, [token, deviceId]);
+
+  const pause = useCallback(async () => {
+    if (player) await player.pause();
+  }, [player]);
+
+  const resume = useCallback(async () => {
+    if (player) await player.resume();
+  }, [player]);
+
+  const skipNext = useCallback(async () => {
+    if (player) await player.nextTrack();
+  }, [player]);
+
+  const skipPrev = useCallback(async () => {
+    if (player) await player.previousTrack();
+  }, [player]);
+
+  const playTrack = useCallback(async (uri: string) => {
+    if (!token || !deviceId) return;
+    try {
+      await fetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
+        method: 'PUT',
+        body: JSON.stringify({ uris: [uri] }),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
+    } catch (e) { console.error("Spotify Play Track Error:", e); }
+  }, [token, deviceId]);
+
+  const searchSpotify = useCallback(async (query: string): Promise<SpotifySearchResult[]> => {
+    if (!token || !query) return [];
+    try {
+      const resp = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track,playlist&limit=8`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await resp.json();
       const results: SpotifySearchResult[] = [];
 
       if (data.playlists?.items) {
@@ -260,7 +263,7 @@ export const SpotifyProvider: React.FC<{ children: React.ReactNode }> = ({ child
       console.error("Spotify Search Error", e);
       return [];
     }
-  };
+  }, [token]);
 
   return (
     <SpotifyContext.Provider value={{ token, player, deviceId, isConnected, currentTrack, login, playPlaylist, playTrack, pause, resume, skipNext, skipPrev, searchSpotify }}>

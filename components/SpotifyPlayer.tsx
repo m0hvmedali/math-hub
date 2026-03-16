@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSpotify, SpotifySearchResult } from '../store/SpotifyProvider';
 import { PlayIcon, PauseIcon } from './Icons';
 
@@ -10,6 +10,7 @@ const SpotifyPlayer: React.FC<SpotifyPlayerProps> = ({ currentPhase }) => {
   const { isConnected, login, token, playPlaylist, pause, resume, searchSpotify } = useSpotify();
   const [studyUri, setStudyUri] = useState('spotify:playlist:37i9dQZF1DWZeKCadgRdKQ'); // Deep Focus
   const [breakUri, setBreakUri] = useState('spotify:playlist:37i9dQZF1DXcBWIGoYBM5M'); // Today's Top Hits
+  const lastPhase = useRef<string>('');
   
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SpotifySearchResult[]>([]);
@@ -25,26 +26,26 @@ const SpotifyPlayer: React.FC<SpotifyPlayerProps> = ({ currentPhase }) => {
 
   // Automatic Play/Pause based on Timer Phase
   useEffect(() => {
-    if (!isConnected) return;
+    if (!isConnected || !token) return;
+    if (lastPhase.current === currentPhase) return;
 
     const handlePhaseChange = async () => {
       try {
         if (currentPhase === 'study') {
-          // Play Study Music
           await playPlaylist(studyUri);
         } else if (currentPhase === 'break') {
-          // Play Break Music
           await playPlaylist(breakUri);
         } else if (currentPhase === 'paused' || currentPhase === 'idle') {
           await pause();
         }
+        lastPhase.current = currentPhase;
       } catch (err) {
         console.error("Spotify Playback Error", err);
       }
     };
 
     handlePhaseChange();
-  }, [currentPhase, isConnected, studyUri, breakUri, playPlaylist, pause]);
+  }, [currentPhase, isConnected, token, studyUri, breakUri, playPlaylist, pause]);
 
   if (!token) {
     return (
