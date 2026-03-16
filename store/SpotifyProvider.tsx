@@ -241,10 +241,24 @@ export const SpotifyProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
       setPlayer(spPlayer);
 
-      spPlayer.addListener('ready', ({ device_id }) => {
+      spPlayer.addListener('ready', async ({ device_id }) => {
         console.log('Ready with Device ID', device_id);
         setDeviceId(device_id);
         setIsConnected(true);
+        
+        // Auto-resume last played if exists
+        const savedUri = await loadPlaybackHistory();
+        if (savedUri && device_id) {
+          console.log("[Spotify] Auto-resuming last played:", savedUri);
+          // Small delay to ensure SDK is fully active
+          setTimeout(() => {
+            if (savedUri.includes(':playlist:')) {
+              playPlaylist(savedUri, device_id);
+            } else {
+              playTrack(savedUri, device_id);
+            }
+          }, 1000);
+        }
       });
 
       spPlayer.addListener('not_ready', ({ device_id }) => {
@@ -328,19 +342,62 @@ export const SpotifyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
     return resp;
   }, [token, refreshAccessToken]);
-
-  const playPlaylist = useCallback(async (uri: string) => {
-    if (!token || !deviceId) return;
+  const savePlaybackHistory = useCallback(async (uri: string) => {
+    const activeUser = localStorage.getItem('study_user');
+    if (!activeUser || !supabase) return;
     try {
-      await spotifyFetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
+      // Upsert into timeline_items for persistence
+      const { error } = await supabase
+        .from('timeline_items')
+        .upsert({ 
+          user_id: activeUser, 
+          type: 'spotify_history', 
+          content: uri,
+          timestamp: new Date().toISOString()
+        }, { onConflict: 'user_id,type' });
+
+      if (error) console.error("[Spotify] History Save Error:", error);
+    } catch (e) {
+      console.error("[Spotify] History Save Exception:", e);
+    }
+  }, []);
+
+  const loadPlaybackHistory = useCallback(async (): Promise<string | null> => {
+    const activeUser = localStorage.getItem('study_user');
+    if (!activeUser || !supabase) return null;
+    try {
+      const { data, error } = await supabase
+        .from('timeline_items')
+        .select('content')
+        .eq('user_id', activeUser)
+        .eq('type', 'spotify_history')
+        .maybeSingle();
+
+      if (error) {
+        console.error("[Spotify] History Load Error:", error);
+        return null;
+      }
+      return data?.content || null;
+    } catch (e) {
+      console.error("[Spotify] History Load Exception:", e);
+      return null;
+    }
+  }, []);
+
+  const playPlaylist = useCallback(async (uri: string, targetDeviceId?: string) => {
+    const activeDeviceId = targetDeviceId || deviceId;
+    if (!token || !activeDeviceId) return;
+    try {
+      await spotifyFetch(`https://api.spotify.com/v1/me/player/play?device_id=${activeDeviceId}`, {
         method: 'PUT',
         body: JSON.stringify({ context_uri: uri }),
         headers: {
           'Content-Type': 'application/json'
         }
       });
+      savePlaybackHistory(uri);
     } catch (e) { console.error("Spotify Play Error:", e); }
-  }, [token, deviceId, spotifyFetch]);
+  }, [token, deviceId, spotifyFetch, savePlaybackHistory]);
 
   const pause = useCallback(async () => {
     if (player) await player.pause();
@@ -358,18 +415,20 @@ export const SpotifyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     if (player) await player.previousTrack();
   }, [player]);
 
-  const playTrack = useCallback(async (uri: string) => {
-    if (!token || !deviceId) return;
+  const playTrack = useCallback(async (uri: string, targetDeviceId?: string) => {
+    const activeDeviceId = targetDeviceId || deviceId;
+    if (!token || !activeDeviceId) return;
     try {
-      await spotifyFetch(`https://api.spotify.com/v1/me/player/play?device_id=${deviceId}`, {
+      await spotifyFetch(`https://api.spotify.com/v1/me/player/play?device_id=${activeDeviceId}`, {
         method: 'PUT',
         body: JSON.stringify({ uris: [uri] }),
         headers: {
           'Content-Type': 'application/json'
         }
       });
+      savePlaybackHistory(uri);
     } catch (e) { console.error("Spotify Play Track Error:", e); }
-  }, [token, deviceId, spotifyFetch]);
+  }, [token, deviceId, spotifyFetch, savePlaybackHistory]);
 
   const searchSpotify = useCallback(async (query: string): Promise<SpotifySearchResult[]> => {
     if (!token || !query) return [];
