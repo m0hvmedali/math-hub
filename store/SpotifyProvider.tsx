@@ -1,6 +1,26 @@
 /// <reference types="../types/spotify" />
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
+// PKCE Helper Functions
+const generateRandomString = (length: number) => {
+  const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const values = crypto.getRandomValues(new Uint8Array(length));
+  return values.reduce((acc, x) => acc + possible[x % possible.length], "");
+}
+
+const sha256 = async (plain: string) => {
+  const encoder = new TextEncoder()
+  const data = encoder.encode(plain)
+  return window.crypto.subtle.digest('SHA-256', data)
+}
+
+const base64encode = (input: ArrayBuffer) => {
+  return btoa(String.fromCharCode(...new Uint8Array(input)))
+    .replace(/=/g, '')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_');
+}
+
 interface SpotifyContextType {
   token: string | null;
   player: Spotify.Player | null;
@@ -30,19 +50,52 @@ export const SpotifyProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [deviceId, setDeviceId ] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState(false);
 
-  // Handle OAuth Redirect
+  // Handle OAuth Redirect and Token Exchange
   useEffect(() => {
-    const hash = window.location.hash;
-    if (hash) {
-      const params = new URLSearchParams(hash.substring(1));
-      const accessToken = params.get('access_token');
-      if (accessToken) {
-        setToken(accessToken);
-        localStorage.setItem('spotify_token', accessToken);
-        window.location.hash = '';
-      }
-    }
-  }, []);
+    const handleAuth = async () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        let code = urlParams.get('code');
+
+        // Flow 1: We just returned from Spotify with a code
+        if (code && !token) {
+            let codeVerifier = localStorage.getItem('spotify_code_verifier');
+
+            if (!codeVerifier) {
+               console.error("Missing code verifier");
+               return;
+            }
+
+            const payload = {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({
+                    client_id: CLIENT_ID,
+                    grant_type: 'authorization_code',
+                    code,
+                    redirect_uri: REDIRECT_URI,
+                    code_verifier: codeVerifier,
+                }),
+            };
+
+            try {
+                const body = await fetch('https://accounts.spotify.com/api/token', payload);
+                const response = await body.json();
+
+                if (response.access_token) {
+                    setToken(response.access_token);
+                    localStorage.setItem('spotify_token', response.access_token);
+                    // Clear the URL to avoid re-triggering
+                    window.history.replaceState({}, document.title, REDIRECT_URI);
+                } else {
+                    console.error("Token Error", response);
+                }
+            } catch (error) {
+                console.error("Fetch Token Error", error);
+            }
+        }
+    };
+    handleAuth();
+  }, [token]);
 
   // Initialize Spotify SDK
   useEffect(() => {
@@ -81,8 +134,23 @@ export const SpotifyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     };
   }, [token]);
 
-  const login = () => {
-    const authUrl = `https://accounts.spotify.com/authorize?client_id=${CLIENT_ID}&response_type=token&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=${encodeURIComponent(SCOPES.join(' '))}`;
+  const login = async () => {
+    const codeVerifier  = generateRandomString(64);
+    const hashed = await sha256(codeVerifier);
+    const codeChallenge = base64encode(hashed);
+
+    window.localStorage.setItem('spotify_code_verifier', codeVerifier);
+
+    const params =  new URLSearchParams({
+      response_type: 'code',
+      client_id: CLIENT_ID,
+      scope: SCOPES.join(' '),
+      code_challenge_method: 'S256',
+      code_challenge: codeChallenge,
+      redirect_uri: REDIRECT_URI,
+    });
+
+    const authUrl = `https://accounts.spotify.com/authorize?${params.toString()}`;
     window.location.href = authUrl;
   };
 

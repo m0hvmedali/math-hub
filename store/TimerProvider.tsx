@@ -43,6 +43,10 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         .neq('current_phase', 'idle')
         .maybeSingle();
 
+      if (error) {
+        console.error("Timer Sync Error:", error);
+      }
+
       if (activeSession && !error) {
         const now = Date.now();
         const targetEnd = new Date(activeSession.target_end_time).getTime();
@@ -112,9 +116,16 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const { data: { user } } = await supabase!.auth.getUser();
     if (!user) return; // Guard clause
 
+    // Clear any existing active sessions to prevent duplicates
+    await supabase!
+        .from('study_sessions')
+        .update({ current_phase: 'idle' })
+        .eq('user_id', user.id)
+        .neq('current_phase', 'idle');
+
     const { data, error } = await supabase!
       .from('study_sessions')
-      .upsert({
+      .insert({
         user_id: user.id,
         current_phase: 'study',
         session_start_time: now.toISOString(),
@@ -124,7 +135,11 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       .select()
       .single();
 
-    if (!error) {
+    if (error) {
+        console.error("Start Study Error:", error);
+    }
+
+    if (!error && data) {
       setState({
         phase: 'study',
         sessionId: data.id,
@@ -157,7 +172,11 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       .select()
       .single();
 
-    if (!error) {
+    if (error) {
+        console.error("Start Break Error:", error);
+    }
+
+    if (!error && data) {
       setState(prev => ({
         ...prev,
         phase: 'break',
@@ -174,10 +193,12 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     
     if (state.phase === 'break' || state.phase === 'study') {
         const now = new Date();
-        await supabase!.from('study_sessions').update({
+        const { error } = await supabase!.from('study_sessions').update({
             current_phase: 'paused',
             paused_at: now.toISOString()
         }).eq('id', state.sessionId);
+
+        if (error) console.error("Pause Error:", error);
 
         setState(prev => ({ ...prev, phase: 'paused' }));
     }
@@ -196,12 +217,14 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         
         const newTargetEnd = new Date(new Date(session.target_end_time).getTime() + pauseDiff);
 
-        await supabase!.from('study_sessions').update({
+        const { error: updateError } = await supabase!.from('study_sessions').update({
             current_phase: session.target_end_time ? 'study' : 'break', // simplified
             target_end_time: newTargetEnd.toISOString(),
             paused_at: null,
             accumulated_pause_ms: (session.accumulated_pause_ms || 0) + pauseDiff
         }).eq('id', state.sessionId);
+
+        if (updateError) console.error("Resume Update Error:", updateError);
 
         setState(prev => ({
             ...prev,
@@ -213,7 +236,8 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const stopTimer = async () => {
     if (state.sessionId) {
-        await supabase!.from('study_sessions').update({ current_phase: 'idle' }).eq('id', state.sessionId);
+        const { error } = await supabase!.from('study_sessions').update({ current_phase: 'idle' }).eq('id', state.sessionId);
+        if (error) console.error("Stop Timer Error:", error);
     }
     
     setState({
