@@ -68,6 +68,13 @@ const AssistantOverlay: React.FC<AssistantOverlayProps> = ({ isOpen, onClose }) 
         </div>
 
         {/* Results */}
+        <div className="px-6 py-2 border-b border-white/5 bg-white/5 flex items-center justify-between">
+            <span className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em]">
+                {query ? 'Search Results' : 'Command Library'}
+            </span>
+            <span className="text-[10px] text-white/20">{filteredCommands.length} Commands Available</span>
+        </div>
+
         <div className="max-h-[400px] overflow-y-auto p-2 custom-scrollbar">
           {filteredCommands.length > 0 ? (
             filteredCommands.map((cmd, i) => (

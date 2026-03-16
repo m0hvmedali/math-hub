@@ -7,7 +7,7 @@ import ThemeStatusBadge from './ThemeStatusBadge';
 
 const Navigation: React.FC = () => {
     const location = useLocation();
-    const { language, user } = useContext(AppContext);
+    const { language, user, setIsAssistantOpen } = useContext(AppContext);
     const [themeEnabled, setThemeEnabled] = useState(() => localStorage.getItem('theme_engine') === 'on');
 
     const { phase: livePhase } = useThemeEngine({ enabled: themeEnabled });
@@ -74,6 +74,15 @@ const Navigation: React.FC = () => {
                 <div className="hidden md:block scale-90">
                     <ThemeStatusBadge phase={livePhase} enabled={themeEnabled} onToggle={toggleTheme} />
                 </div>
+
+                {/* Command Library Trigger */}
+                <button 
+                  onClick={() => setIsAssistantOpen(true)}
+                  className="text-gray-500 hover:text-brand-cyan transition-all transform hover:scale-110 active:scale-90"
+                  title={language === 'ar' ? 'مكتبة الأوامر (Ctrl+K)' : 'Command Library (Ctrl+K)'}
+                >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                </button>
 
                 {/* Search Trigger */}
                 <button className="text-gray-500 hover:text-white transition-all transform hover:scale-110 active:scale-90">

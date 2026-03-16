@@ -201,9 +201,14 @@ export const SpotifyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     handleAuth();
   }, [token]);
 
-  // Initialize Spotify SDK
+  // Initialize Spotify SDK - One time only
   useEffect(() => {
-    if (!token) return;
+    // Only load the script if the user has a token (indicating they are logged in)
+    // but don't re-run this entire block when the token changes.
+    const hasInitialToken = !!localStorage.getItem('spotify_token');
+    if (!hasInitialToken) return;
+
+    if (window.Spotify) return; // Already loaded or loading
 
     const script = document.createElement("script");
     script.src = "https://sdk.scdn.co/spotify-player.js";
@@ -213,17 +218,16 @@ export const SpotifyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     window.onSpotifyWebPlaybackSDKReady = () => {
       const spPlayer = new window.Spotify.Player({
         name: 'Math Hub Focus Player',
-        getOAuthToken: async cb => {
-          // If we have a token, check if it's usable. If not (or if SDK asks), try refresh.
-          // Note: SDK usually calls this when token is about to expire or has expired.
+        getOAuthToken: async cb => { 
           console.log("[Spotify SDK] getOAuthToken requested");
+          // Always try to get a fresh token or use current one
           const newToken = await refreshAccessToken();
           if (newToken) {
             cb(newToken);
-          } else if (token) {
-            cb(token);
           } else {
-            cb(""); // Forces error state in SDK
+            // If refresh fails or is on cooldown, try the existing token as fallback
+            const existingToken = localStorage.getItem('spotify_token');
+            cb(existingToken || "");
           }
         },
         volume: 0.5
@@ -267,9 +271,11 @@ export const SpotifyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     };
 
     return () => {
-      script.remove();
+      // Cleanup script only if we are the ones who added it
+      // script.remove(); // Usually safer to keep it once loaded in a SPA
     };
-  }, [token, refreshAccessToken]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
 
   const login = useCallback(async () => {
     const codeVerifier = generateRandomString(64);

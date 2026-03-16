@@ -67,6 +67,7 @@ export const AppContext = createContext<{
     setLanguage: (lang: 'ar' | 'en') => void;
     theme: 'dark' | 'light';
     toggleTheme: () => void;
+    setIsAssistantOpen: (open: boolean) => void;
     addStudySession: (duration: number, focusScore: number) => Promise<void>;
     addTask: (title: string, dueDate: string, priority: Importance) => Promise<void>;
     updateTask: (taskId: string, updates: Partial<Task>) => Promise<void>;
@@ -101,6 +102,7 @@ export const AppContext = createContext<{
     setLanguage: () => { },
     theme: 'dark',
     toggleTheme: () => { },
+    setIsAssistantOpen: () => { },
     addStudySession: async () => { },
     addTask: async () => { },
     updateTask: async () => { },
@@ -664,7 +666,8 @@ const App: React.FC = () => {
             logKnowledgeError,
             applySubjectTheme, resetTheme,
             customNodes, addCustomNode,
-            manualLinks, addManualLink
+            manualLinks, addManualLink,
+            setIsAssistantOpen
         }}>
             <div
                 className={`flex flex-col min-h-screen font-sans bg-black transition-colors duration-500 ${language === 'ar' ? 'font-arabic' : ''}`}
