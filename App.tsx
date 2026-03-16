@@ -778,7 +778,7 @@ const App: React.FC = () => {
                         <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
                         <Route path="/analysis" element={<ProtectedRoute><AnalysisPage /></ProtectedRoute>} />
                         <Route path="/notes" element={<ProtectedRoute><NotesPage /></ProtectedRoute>} />
-                        <Route path="/wisdom-library" element={<ProtectedRoute><WisdomLibraryPage /></ProtectedRoute>} />
+                        <Route path="/wisdom" element={<ProtectedRoute><WisdomLibraryPage /></ProtectedRoute>} />
                     </Routes>
                 </main>
             </div>
