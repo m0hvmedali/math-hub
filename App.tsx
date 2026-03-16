@@ -1,5 +1,5 @@
 import React, { useState, useCallback, createContext, useEffect } from 'react';
-import { Routes, Route, Navigate, NavLink } from 'react-router-dom';
+import { Routes, Route, Navigate, NavLink, useLocation } from 'react-router-dom';
 import WhiteboardPage from './pages/WhiteboardPage';
 import { Subject, CourseBranch, Lesson, StudySession, Task, Importance, Competition, CrashTask, ErrorCause, KnowledgeError, CustomNode, ManualLink } from './types';
 import { GlobeIcon } from './components/Icons';
@@ -652,8 +652,37 @@ const App: React.FC = () => {
         setShowOnboarding(false);
     };
 
+    // --- DEEP ACTIVITY TRACKING (HubCore Integration) ---
+    useEffect(() => {
+        if (!user) return;
+
+        const handleGlobalClick = () => hubCore.execute('System', 'system_click');
+        const handleGlobalKey = () => hubCore.execute('System', 'system_keypress');
+
+        window.addEventListener('click', handleGlobalClick);
+        window.addEventListener('keydown', handleGlobalKey);
+
+        return () => {
+            window.removeEventListener('click', handleGlobalClick);
+            window.removeEventListener('keydown', handleGlobalKey);
+        };
+    }, [user]);
+
+    // Tracking Page Views
+    const GlobalNavigationTracker = () => {
+        const location = useLocation();
+        useEffect(() => {
+            if (user) {
+                hubCore.execute('System', 'page_view', location.pathname);
+            }
+        }, [location, user]);
+        return null;
+    };
+
     return (
-        <SpotifyProvider>
+        <>
+            <GlobalNavigationTracker />
+            <SpotifyProvider>
         <TimerProvider>
             <AppContext.Provider value={{
             subjects, isLoading, user, login,
@@ -776,6 +805,7 @@ const App: React.FC = () => {
         </AppContext.Provider>
         </TimerProvider>
         </SpotifyProvider>
+        </>
     );
 };
 

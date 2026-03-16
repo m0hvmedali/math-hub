@@ -76,6 +76,30 @@ const AnalyticsPage: React.FC = () => {
                 </div>
             </div>
 
+            {/* Deep Activity Insights */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="glass-card p-6 rounded-2xl border border-white/5 bg-black/40">
+                    <div className="text-[10px] font-black text-brand-cyan uppercase tracking-widest mb-2">Total Clicks</div>
+                    <p className="text-3xl font-black text-white">{analyticsService.getInteractions().clicks}</p>
+                </div>
+                <div className="glass-card p-6 rounded-2xl border border-white/5 bg-black/40">
+                    <div className="text-[10px] font-black text-brand-magenta uppercase tracking-widest mb-2">Keypresses</div>
+                    <p className="text-3xl font-black text-white">{analyticsService.getInteractions().keypresses}</p>
+                </div>
+                <div className="glass-card p-6 rounded-2xl border border-white/5 bg-black/40">
+                    <div className="text-[10px] font-black text-accent-green uppercase tracking-widest mb-2">Active Minutes</div>
+                    <p className="text-3xl font-black text-white">
+                        {history.filter(h => h.action === 'session_heartbeat').length}
+                    </p>
+                </div>
+                <div className="glass-card p-6 rounded-2xl border border-white/5 bg-black/40">
+                    <div className="text-[10px] font-black text-accent-beige uppercase tracking-widest mb-2">Unique Pages</div>
+                    <p className="text-3xl font-black text-white">
+                        {new Set(history.filter(h => h.action === 'page_view').map(h => h.args[0])).size}
+                    </p>
+                </div>
+            </div>
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Live Activity Log */}
                 <div className="space-y-6">
@@ -84,39 +108,68 @@ const AnalyticsPage: React.FC = () => {
                         Live Hub Events
                     </h2>
                     <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
-                        {history.map((event, i) => (
-                            <div key={i} className="glass-card p-4 rounded-xl border border-white/5 flex justify-between items-center group hover:bg-white/5 transition-colors">
-                                <div>
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-xs font-mono text-brand-cyan uppercase bg-brand-cyan/10 px-2 py-0.5 rounded">
-                                            {event.id}
-                                        </span>
-                                        <h4 className="text-white font-bold">{event.action}</h4>
+                        {history.map((event, i) => {
+                            const isSystem = event.id === 'System';
+                            const isHeatbeat = event.action === 'session_heartbeat';
+                            if (isHeatbeat && !isAdmin) return null; // Hide heartbeats from non-admins in log
+
+                            return (
+                                <div key={i} className={`glass-card p-4 rounded-xl border flex justify-between items-center group hover:bg-white/5 transition-all ${isSystem ? 'border-white/5 opacity-60' : 'border-brand-cyan/20'}`}>
+                                    <div>
+                                        <div className="flex items-center gap-2">
+                                            <span className={`text-[10px] font-mono uppercase px-2 py-0.5 rounded ${isSystem ? 'bg-white/10 text-white/40' : 'bg-brand-cyan/10 text-brand-cyan'}`}>
+                                                {event.id}
+                                            </span>
+                                            <h4 className="text-white font-bold text-sm">{event.action}</h4>
+                                        </div>
+                                        <div className="flex items-center gap-3 mt-1">
+                                            <p className="text-[10px] text-accent-beige/40">
+                                                {new Date(event.timestamp).toLocaleTimeString()}
+                                            </p>
+                                            {event.args.length > 0 && typeof event.args[0] === 'string' && (
+                                                <p className="text-[10px] text-brand-cyan font-mono truncate max-w-[150px]">{event.args[0]}</p>
+                                            )}
+                                        </div>
                                     </div>
-                                    <p className="text-xs text-accent-beige/40 mt-1">
-                                        {new Date(event.timestamp).toLocaleTimeString()}
-                                    </p>
+                                    <span className="text-white/10 group-hover:text-white/40 font-mono text-[10px]">
+                                        #{history.length - i}
+                                    </span>
                                 </div>
-                                <span className="text-white/20 group-hover:text-white/40 font-mono text-xs">
-                                    #{history.length - i}
-                                </span>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </div>
 
-                {/* System Insights */}
+                {/* Interaction Breakdown */}
                 <div className="space-y-6">
                     <h2 className="text-2xl font-bold text-white flex items-center gap-2">
                         <TimelineIcon className="w-6 h-6 text-brand-magenta" />
-                        System Analysis
+                        User Flow Analysis
                     </h2>
-                    <div className="glass-card p-8 rounded-3xl border border-[var(--glass-border)] h-[500px] flex flex-col justify-center items-center text-center">
-                        <div className="w-16 h-16 border-4 border-dashed border-brand-magenta/30 rounded-full animate-spin mb-4"></div>
-                        <h3 className="text-white font-bold text-xl">Pattern Recognition</h3>
-                        <p className="text-accent-beige/50 max-w-xs mt-2">
-                            Gathering more HubCore events to generate deep focus behavioral insights and cycle optimizations.
-                        </p>
+                    <div className="glass-card p-8 rounded-3xl border border-[var(--glass-border)] h-[500px] overflow-y-auto custom-scrollbar">
+                        <h3 className="text-white font-bold mb-6 flex justify-between">
+                            <span>Movement Density</span>
+                            <span className="text-brand-magenta">Live Radar</span>
+                        </h3>
+                        <div className="space-y-6">
+                            {Object.entries(stats).sort((a,b) => b[1] - a[1]).slice(0, 8).map(([action, count]) => (
+                                <div key={action} className="space-y-2">
+                                    <div className="flex justify-between text-xs font-bold uppercase tracking-widest">
+                                        <span className="text-accent-beige/60">{action}</span>
+                                        <span className="text-white">{count}</span>
+                                    </div>
+                                    <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+                                        <div 
+                                            className="h-full bg-brand-cyan shadow-glow-brand transition-all duration-1000"
+                                            style={{ width: `${Math.min(100, (count / history.length) * 100)}%` }}
+                                        />
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        {history.length < 10 && (
+                            <p className="text-center text-accent-beige/20 text-xs mt-12 italic">More data required for deep pattern recognition...</p>
+                        )}
                     </div>
                 </div>
             </div>

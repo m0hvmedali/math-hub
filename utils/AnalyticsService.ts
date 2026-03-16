@@ -9,14 +9,28 @@ export interface AnalyticsEvent {
 
 class AnalyticsService {
   private history: AnalyticsEvent[] = [];
+  private interactions = { clicks: 0, keypresses: 0 };
+  private lastHeartbeat: number = Date.now();
   private readonly STORAGE_KEY = 'math_hub_analytics_v1';
+  private readonly STATS_KEY = 'math_hub_interaction_stats_v1';
 
   constructor() {
     this.loadHistory();
     // Subscribe to HubCore to track all actions
     hubCore.subscribe((id, action, args) => {
-      this.trackEvent(id, action, args);
+      if (action === 'system_click') {
+        this.interactions.clicks++;
+        this.saveStats();
+      } else if (action === 'system_keypress') {
+        this.interactions.keypresses++;
+        this.saveStats();
+      } else {
+        this.trackEvent(id, action, args);
+      }
     });
+
+    // Initialize session heartbeat
+    setInterval(() => this.recordHeartbeat(), 60000);
   }
 
   private loadHistory() {
@@ -29,6 +43,18 @@ class AnalyticsService {
         this.history = [];
       }
     }
+    const stats = localStorage.getItem(this.STATS_KEY);
+    if (stats) {
+      try {
+        this.interactions = JSON.parse(stats);
+      } catch (e) {
+        this.interactions = { clicks: 0, keypresses: 0 };
+      }
+    }
+  }
+
+  private saveStats() {
+    localStorage.setItem(this.STATS_KEY, JSON.stringify(this.interactions));
   }
 
   private saveHistory() {
@@ -51,13 +77,23 @@ class AnalyticsService {
     console.log(`[Analytics] Tracked: ${action} on ${id}`);
   }
 
+  private recordHeartbeat() {
+    this.trackEvent('System', 'session_heartbeat', ['active_minute']);
+  }
+
+  getInteractions() {
+    return { ...this.interactions };
+  }
+
   getHistory(): AnalyticsEvent[] {
     return [...this.history];
   }
 
   clearHistory() {
     this.history = [];
+    this.interactions = { clicks: 0, keypresses: 0 };
     localStorage.removeItem(this.STORAGE_KEY);
+    localStorage.removeItem(this.STATS_KEY);
   }
 
   getActivityStats() {
