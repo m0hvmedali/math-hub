@@ -3,12 +3,31 @@ import { AppContext } from '../App';
 import PomodoroTimer from '../components/PomodoroTimer';
 import SpotifyPlayer from '../components/SpotifyPlayer';
 import { useTimer } from '../store/TimerProvider';
-import { SparkleIcon } from '../components/Icons';
+import { SparkleIcon, PlayIcon, PauseIcon } from '../components/Icons';
+
+const AMBIENT_SOUNDS = [
+  { id: 'lofi', name: 'Lo-Fi Chill', url: 'https://cdn.pixabay.com/audio/2022/05/27/audio_1808fbf07a.mp3' },
+  { id: 'rain', name: 'Heavy Rain', url: 'https://cdn.pixabay.com/audio/2021/08/09/audio_017b355819.mp3' },
+  { id: 'cafe', name: 'Coffee Shop', url: 'https://cdn.pixabay.com/audio/2021/08/09/audio_6bbb5a81ca.mp3' },
+];
 
 const StudyTimerPage: React.FC = () => {
   const { language } = useContext(AppContext);
   const { phase } = useTimer();
   const [isDeepFocus, setIsDeepFocus] = React.useState(false);
+  const [activeAmbient, setActiveAmbient] = React.useState<string | null>(null);
+  const audioRef = React.useRef<HTMLAudioElement | null>(null);
+
+  // Handle ambient audio
+  React.useEffect(() => {
+    if (activeAmbient && phase === 'study') {
+      if (audioRef.current) {
+        audioRef.current.play().catch(e => console.log("Audio autoplay prevented", e));
+      }
+    } else if (audioRef.current) {
+      audioRef.current.pause();
+    }
+  }, [activeAmbient, phase]);
 
   // Auto-enable Deep Focus during study
   React.useEffect(() => {
@@ -59,8 +78,42 @@ const StudyTimerPage: React.FC = () => {
         <PomodoroTimer />
       </div>
 
-      <div className={`mt-8 flex justify-center transition-opacity duration-700 ${isDeepFocus ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
-        <SpotifyPlayer currentPhase={phase} />
+      <div className={`mt-12 flex flex-col md:flex-row gap-8 justify-center transition-opacity duration-700 ${isDeepFocus ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+        {/* Spotify Integration */}
+        <div className="flex-1 max-w-md w-full">
+            <SpotifyPlayer currentPhase={phase} />
+        </div>
+
+        {/* Built-in Ambient Sounds */}
+        <div className="flex-1 max-w-md w-full glass-card p-6 space-y-4">
+            <div className="flex items-center gap-2 border-b border-white/5 pb-4">
+                <SparkleIcon className="w-5 h-5 text-purple-500" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-purple-500">
+                    Built-in Ambience
+                </span>
+            </div>
+            <p className="text-xs text-gray-500 font-bold">Select an ambient background track for Deep Focus mode if you don't use Spotify.</p>
+            
+            <div className="space-y-2 mt-4">
+                {AMBIENT_SOUNDS.map(sound => (
+                    <button
+                        key={sound.id}
+                        onClick={() => setActiveAmbient(activeAmbient === sound.id ? null : sound.id)}
+                        className={`w-full flex items-center justify-between p-3 rounded-xl border text-xs font-black uppercase tracking-widest transition-all ${activeAmbient === sound.id ? 'bg-purple-500/10 border-purple-500/30 text-purple-500' : 'bg-black/40 border-white/5 text-gray-400 hover:text-white'}`}
+                    >
+                        <span>{sound.name}</span>
+                        {activeAmbient === sound.id ? <PauseIcon className="w-4 h-4" /> : <PlayIcon className="w-4 h-4" />}
+                    </button>
+                ))}
+            </div>
+            {activeAmbient && (
+                <audio 
+                    ref={audioRef}
+                    src={AMBIENT_SOUNDS.find(s => s.id === activeAmbient)?.url} 
+                    loop 
+                />
+            )}
+        </div>
       </div>
 
       {/* Features Grid */}

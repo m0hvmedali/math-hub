@@ -36,13 +36,14 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data: activeSession } = await supabase
+      const { data: activeSession, error } = await supabase
         .from('study_sessions')
         .select('*')
+        .eq('user_id', user.id)
         .neq('current_phase', 'idle')
-        .single();
+        .maybeSingle();
 
-      if (activeSession) {
+      if (activeSession && !error) {
         const now = Date.now();
         const targetEnd = new Date(activeSession.target_end_time).getTime();
         let remaining = Math.max(0, Math.floor((targetEnd - now) / 1000));
@@ -108,10 +109,13 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const now = new Date();
     const targetEnd = new Date(now.getTime() + STUDY_DURATION * 1000);
     
+    const { data: { user } } = await supabase!.auth.getUser();
+    if (!user) return; // Guard clause
+
     const { data, error } = await supabase!
       .from('study_sessions')
       .upsert({
-        user_id: (await supabase!.auth.getUser()).data.user?.id,
+        user_id: user.id,
         current_phase: 'study',
         session_start_time: now.toISOString(),
         target_end_time: targetEnd.toISOString(),
@@ -134,6 +138,8 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const startBreak = async () => {
+    if (!state.sessionId) return; // Must have an active session
+
     const now = new Date();
     const targetEnd = new Date(now.getTime() + BREAK_DURATION * 1000);
     
@@ -164,6 +170,8 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const pauseTimer = async () => {
+    if (!state.sessionId) return;
+    
     if (state.phase === 'break' || state.phase === 'study') {
         const now = new Date();
         await supabase!.from('study_sessions').update({
@@ -176,8 +184,12 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const resumeTimer = async () => {
+    if (!state.sessionId) return;
+
     if (state.phase === 'paused') {
-        const { data: session } = await supabase!.from('study_sessions').select('*').eq('id', state.sessionId).single();
+        const { data: session, error } = await supabase!.from('study_sessions').select('*').eq('id', state.sessionId).single();
+        if (error || !session) return;
+        
         const pausedAt = new Date(session.paused_at).getTime();
         const now = Date.now();
         const pauseDiff = now - pausedAt;
@@ -200,7 +212,10 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const stopTimer = async () => {
-    await supabase!.from('study_sessions').update({ current_phase: 'idle' }).eq('id', state.sessionId);
+    if (state.sessionId) {
+        await supabase!.from('study_sessions').update({ current_phase: 'idle' }).eq('id', state.sessionId);
+    }
+    
     setState({
         remainingSeconds: STUDY_DURATION,
         totalSeconds: STUDY_DURATION,
