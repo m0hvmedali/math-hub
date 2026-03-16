@@ -15,7 +15,7 @@ const WisdomProgress: React.FC<{ userId: string }> = ({ userId }) => {
   useEffect(() => {
     const fetchStats = async () => {
       const { data } = await supabase
-        .from('user_hadith_progress')
+        .from('user_wisdom_progress')
         .select('status')
         .eq('user_id', userId);
 
@@ -25,8 +25,8 @@ const WisdomProgress: React.FC<{ userId: string }> = ({ userId }) => {
           return acc;
         }, {});
 
-        // For total, we might want to know the total potential hadiths too
-        const { count } = await supabase.from('hadiths').select('*', { count: 'exact', head: true });
+        // For total, we might want to know the total potential items too
+        const { count } = await supabase.from('wisdom_items').select('*', { count: 'exact', head: true });
 
         setStats({
           total: count || 0,

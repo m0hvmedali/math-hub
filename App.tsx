@@ -43,7 +43,7 @@ import { ThemeManager } from './utils/ThemeManager';
 import { rebuildSearchIndex, searchRadar, SearchResult, fetchTavilyResults } from './utils/searchRadar';
 import { hubCore, useHubCore } from './utils/HubCore';
 import { initializeAssistantCommands } from './utils/AssistantCommands';
-import { useWisdom, Hadith, UserHadithProgress } from './hooks/useWisdom';
+import { useWisdom } from './hooks/useWisdom';
 
 export const AppContext = createContext<{
     subjects: Subject[];
@@ -80,10 +80,10 @@ export const AppContext = createContext<{
     addCustomNode: (data: { subject_id: string, label: string, url: string, x?: number, y?: number, tags?: string[] }) => Promise<void>;
     manualLinks: ManualLink[];
     addManualLink: (sourceId: string, targetId: string) => Promise<void>;
-    currentHadith: Hadith | null;
-    hadithProgress: UserHadithProgress | null;
-    fetchNextHadith: (category?: string) => Promise<void>;
-    updateHadithProgress: (action: 'understand' | 'repeat' | 'favorite') => Promise<void>;
+    currentWisdom: any | null;
+    wisdomProgress: any | null;
+    fetchNextWisdom: (options?: any) => Promise<void>;
+    updateWisdomProgress: (action: 'understand' | 'repeat' | 'favorite') => Promise<void>;
 }>({
     subjects: [],
     isLoading: true,
@@ -119,10 +119,10 @@ export const AppContext = createContext<{
     addCustomNode: async () => { },
     manualLinks: [],
     addManualLink: async () => { },
-    currentHadith: null,
-    hadithProgress: null,
-    fetchNextHadith: async () => { },
-    updateHadithProgress: async () => { },
+    currentWisdom: null,
+    wisdomProgress: null,
+    fetchNextWisdom: async () => { },
+    updateWisdomProgress: async () => { },
 });
 
 // Initialize Global Commands once
@@ -136,7 +136,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
       const unsubscribe = hubCore.subscribe((id, action, args) => {
         console.log(`%c[HubCore Action] %c${id} -> ${action}`, "color: #3B82F6", "color: #fff", args);
       });
-      return () => unsubscribe();
+      return () => { unsubscribe(); };
     }, []);
 
     // Register App Shell with HubCore
@@ -170,7 +170,7 @@ const App: React.FC = () => {
     const [theme, setThemeState] = useState<'dark' | 'light'>((localStorage.getItem('study_theme') as 'dark' | 'light') || 'dark');
     const [isAssistantOpen, setIsAssistantOpen] = useState(false);
 
-    const { currentHadith, progress: hadithProgress, fetchNextHadith, updateProgress: updateHadithProgress } = useWisdom(user);
+    const { currentWisdom, progress: wisdomProgress, fetchNextWisdom, updateProgress: updateWisdomProgress } = useWisdom(user);
 
     // Global Command Palette Shortcut (Ctrl+K)
     useEffect(() => {
@@ -708,7 +708,7 @@ const App: React.FC = () => {
             customNodes, addCustomNode,
             manualLinks, addManualLink,
             setIsAssistantOpen,
-            currentHadith, hadithProgress, fetchNextHadith, updateHadithProgress
+            currentWisdom, wisdomProgress, fetchNextWisdom, updateWisdomProgress
         }}>
             <div
                 className={`flex flex-col min-h-screen font-sans bg-black transition-colors duration-500 ${language === 'ar' ? 'font-arabic' : ''}`}

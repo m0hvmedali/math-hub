@@ -1,23 +1,21 @@
 import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '../supabaseClient';
 
-export interface Hadith {
+export type WisdomType = 'hadith' | 'poetry' | 'scholar_quote' | 'general_wisdom';
+
+export interface WisdomItem {
   id: string;
-  external_id: number;
-  book_id: number;
-  chapter_id: number;
-  text_ar: string;
-  text_en: string;
-  narrator_en: string;
-  book_name_ar: string;
-  book_name_en: string;
-  chapter_name_ar: string;
-  chapter_name_en: string;
+  text: string;
+  author: string;
+  source: string;
   category: string;
+  type: WisdomType;
+  is_golden: boolean;
+  metadata?: any;
 }
 
-export interface UserHadithProgress {
-  hadith_id: string;
+export interface WisdomProgress {
+  item_id: string;
   status: 'new' | 'learning' | 'remembered';
   is_favorite: boolean;
   next_review_date: string;
@@ -25,124 +23,165 @@ export interface UserHadithProgress {
 }
 
 export const useWisdom = (userId: string | null) => {
-  const [currentHadith, setCurrentHadith] = useState<Hadith | null>(null);
+  const [currentWisdom, setCurrentWisdom] = useState<WisdomItem | null>(null);
   const [loading, setLoading] = useState(false);
-  const [progress, setProgress] = useState<UserHadithProgress | null>(null);
+  const [progress, setProgress] = useState<WisdomProgress | null>(null);
 
-  const fetchNextHadith = useCallback(async (category?: string) => {
+  const fetchNextWisdom = useCallback(async (options?: { 
+    type?: WisdomType | WisdomType[], 
+    category?: string,
+    state?: 'study' | 'break' | 'focus' | 'night'
+  }) => {
     if (!userId) return;
     setLoading(true);
 
     try {
-      // 1. Try to find a hadith due for review
-      const { data: dueItems } = await supabase
-        .from('user_hadith_progress')
-        .select('hadith_id, status, is_favorite, next_review_date, show_count')
+      // 1. Determine target types based on app state if provided
+      let targetTypes: WisdomType[] = [];
+      if (options?.type) {
+        targetTypes = Array.isArray(options.type) ? options.type : [options.type];
+      } else if (options?.state) {
+        switch (options.state) {
+          case 'study': targetTypes = ['hadith', 'scholar_quote']; break;
+          case 'break': targetTypes = ['poetry']; break;
+          case 'focus': targetTypes = ['hadith', 'scholar_quote']; break;
+          case 'night': targetTypes = ['poetry', 'general_wisdom']; break;
+          default: targetTypes = ['hadith', 'poetry', 'scholar_quote'];
+        }
+      }
+
+      // 2. Try to find an item due for review (Spaced Repetition)
+      let query = supabase
+        .from('user_wisdom_progress')
+        .select('item_id, status, is_favorite, next_review_date, show_count')
         .eq('user_id', userId)
         .lte('next_review_date', new Date().toISOString())
-        .order('next_review_date', { ascending: true })
-        .limit(1);
+        .order('next_review_date', { ascending: true });
+
+      const { data: dueItems } = await query.limit(1);
 
       let targetId: string | null = null;
-      let existingProgress: UserHadithProgress | null = null;
+      let existingProgress: WisdomProgress | null = null;
 
       if (dueItems && dueItems.length > 0) {
-        targetId = dueItems[0].hadith_id;
-        existingProgress = dueItems[0] as UserHadithProgress;
+        targetId = dueItems[0].item_id;
+        existingProgress = dueItems[0] as WisdomProgress;
       } else {
-        // 2. Otherwise, fetch a new hadith not seen yet
-        // First get IDs of seen hadiths
-        const { data: seenIds } = await supabase
-          .from('user_hadith_progress')
-          .select('hadith_id')
-          .eq('user_id', userId);
+        // 3. Otherwise, fetch a new item not seen recently (History filter)
+        // First get IDs of recently seen items to avoid immediate repetition
+        const { data: history } = await supabase
+          .from('user_wisdom_history')
+          .select('item_id')
+          .eq('user_id', userId)
+          .order('shown_at', { ascending: false })
+          .limit(200); // Bucket size roughly 200
 
-        const seenList = seenIds?.map(s => s.hadith_id) || [];
+        const seenList = history?.map(h => h.item_id) || [];
 
-        let query = supabase.from('hadiths').select('*');
+        // 4. Random Selection Logic (including Golden Quote probability)
+        const isGoldenRoll = Math.random() < 0.05; // 5% chance for a golden quote
+        
+        let itemQuery = supabase.from('wisdom_items').select('id');
+        
+        if (targetTypes.length > 0) {
+            itemQuery = itemQuery.in('type', targetTypes);
+        }
+        if (options?.category) {
+            itemQuery = itemQuery.eq('category', options.category);
+        }
+        if (isGoldenRoll) {
+            itemQuery = itemQuery.eq('is_golden', true);
+        }
         if (seenList.length > 0) {
-          query = query.not('id', 'in', `(${seenList.slice(0, 100).join(',')})`); // Limit exclusion for performance
-        }
-        if (category) {
-          query = query.eq('category', category);
+            itemQuery = itemQuery.not('id', 'in', `(${seenList.slice(0, 100).join(',')})`);
         }
 
-        const { data: newHadiths } = await query.limit(20); // Get a small pool
+        const { data: potentialItems } = await itemQuery.limit(50);
 
-        if (newHadiths && newHadiths.length > 0) {
-          // Pick one randomly from the pool
-          const randomIdx = Math.floor(Math.random() * newHadiths.length);
-          const picked = newHadiths[randomIdx];
-          targetId = picked.id;
+        if (potentialItems && potentialItems.length > 0) {
+          const randomIdx = Math.floor(Math.random() * potentialItems.length);
+          targetId = potentialItems[randomIdx].id;
+        } else if (isGoldenRoll || seenList.length > 0) {
+           // Fallback if golden or unseen bucket is empty: try again without filters
+           const { data: fallbackItems } = await supabase.from('wisdom_items').select('id').limit(20);
+           if (fallbackItems && fallbackItems.length > 0) {
+               targetId = fallbackItems[Math.floor(Math.random() * fallbackItems.length)].id;
+           }
         }
       }
 
       if (targetId) {
-        const { data: hadithData } = await supabase
-          .from('hadiths')
+        const { data: itemData } = await supabase
+          .from('wisdom_items')
           .select('*')
           .eq('id', targetId)
           .single();
 
-        setCurrentHadith(hadithData);
+        setCurrentWisdom(itemData);
         setProgress(existingProgress || {
-          hadith_id: targetId,
+          item_id: targetId,
           status: 'new',
           is_favorite: false,
           next_review_date: new Date().toISOString(),
           show_count: 0
         });
+
+        // Save to History
+        await supabase.from('user_wisdom_history').insert({
+            user_id: userId,
+            item_id: targetId
+        });
       }
     } catch (error) {
-      console.error('Error fetching next hadith:', error);
+      console.error('Error fetching next wisdom:', error);
     } finally {
       setLoading(false);
     }
   }, [userId]);
 
   const updateProgress = useCallback(async (action: 'understand' | 'repeat' | 'favorite') => {
-    if (!userId || !currentHadith || !progress) return;
+    if (!userId || !currentWisdom || !progress) return;
 
     let newStatus = progress.status;
     let nextReview = new Date();
-    let showCount = progress.show_count + 1;
+    let showCount = (progress.show_count || 0) + 1;
     let isFavorite = progress.is_favorite;
 
     if (action === 'understand') {
       if (progress.status === 'new') {
         newStatus = 'learning';
-        nextReview.setDate(nextReview.getDate() + 1); // Review tomorrow
+        nextReview.setDate(nextReview.getDate() + 1);
       } else if (progress.status === 'learning') {
         newStatus = 'remembered';
-        nextReview.setDate(nextReview.getDate() + 7); // Review in a week
+        nextReview.setDate(nextReview.getDate() + 7);
       } else {
-        nextReview.setDate(nextReview.getDate() + 30); // Review in a month
+        nextReview.setDate(nextReview.getDate() + 30);
       }
     } else if (action === 'repeat') {
       newStatus = 'learning';
-      nextReview.setMinutes(nextReview.getMinutes() + 10); // Review in 10 mins
+      nextReview.setMinutes(nextReview.getMinutes() + 10);
     } else if (action === 'favorite') {
       isFavorite = !isFavorite;
     }
 
     try {
       const { data, error } = await supabase
-        .from('user_hadith_progress')
+        .from('user_wisdom_progress')
         .upsert({
           user_id: userId,
-          hadith_id: currentHadith.id,
+          item_id: currentWisdom.id,
           status: newStatus,
           is_favorite: isFavorite,
           next_review_date: nextReview.toISOString(),
-          last_shown_date: new Date().toISOString(),
+          last_shown_at: new Date().toISOString(),
           show_count: showCount
-        }, { onConflict: 'user_id,hadith_id' })
+        }, { onConflict: 'user_id,item_id' })
         .select()
         .single();
 
       if (!error) {
         setProgress({
-          hadith_id: currentHadith.id,
+          item_id: currentWisdom.id,
           status: data.status,
           is_favorite: data.is_favorite,
           next_review_date: data.next_review_date,
@@ -150,9 +189,9 @@ export const useWisdom = (userId: string | null) => {
         });
       }
     } catch (error) {
-      console.error('Error updating hadith progress:', error);
+      console.error('Error updating wisdom progress:', error);
     }
-  }, [userId, currentHadith, progress]);
+  }, [userId, currentWisdom, progress]);
 
-  return { currentHadith, progress, loading, fetchNextHadith, updateProgress };
+  return { currentWisdom, progress, loading, fetchNextWisdom, updateProgress };
 };

@@ -18,7 +18,7 @@ import NodeInjectorModal from '../components/NodeInjectorModal';
 import CourseCard from '../components/CourseCard';
 import MaterialCard from '../components/MaterialCard';
 import { useHubCore, assistant } from '../utils/HubCore';
-import HadithCard from '../components/HadithCard';
+import WisdomCard from '../components/WisdomCard';
 import WisdomProgress from '../components/WisdomProgress';
 
 const DashboardPage: React.FC = () => {
@@ -26,7 +26,7 @@ const DashboardPage: React.FC = () => {
         subjects, addSubject, updateSubject, deleteSubject, addStudySession, studySessions, 
         language, setLanguage, user, customNodes, addCustomNode, manualLinks, addManualLink, 
         tasks, knowledgeErrors, addLessonToBranch,
-        currentHadith, hadithProgress, fetchNextHadith, updateHadithProgress 
+        currentWisdom, wisdomProgress, fetchNextWisdom, updateWisdomProgress 
     } = useContext(AppContext) as any;
     const {
         activeView,
@@ -120,10 +120,10 @@ const DashboardPage: React.FC = () => {
     const [startTime, setStartTime] = useState<number | null>(null);
 
     useEffect(() => {
-        if (!currentHadith) {
-            fetchNextHadith();
+        if (!currentWisdom) {
+            fetchNextWisdom({ state: 'study' });
         }
-    }, [user, currentHadith, fetchNextHadith]);
+    }, [user, currentWisdom, fetchNextWisdom]);
 
     // Spaced Repetition: Lessons to review today
     const reviewLessons = useMemo(() => {
@@ -260,11 +260,11 @@ const DashboardPage: React.FC = () => {
                         {priorityLesson ? priorityLesson.lesson.name : (language === 'ar' ? 'ابدأ رحلتك المعرفية' : 'Start Your Journey')}
                     </h1>
                     
-                    {currentHadith && (
-                      <div className="mb-8 animate-premium-fade">
-                        <div className="p-4 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 max-w-2xl">
-                           <p className="text-xl md:text-2xl font-black text-brand-cyan mb-2 dir-rtl">"{currentHadith.text_ar}"</p>
-                           <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">{currentHadith.book_name_en} • Chapter {currentHadith.chapter_id}</p>
+                    {currentWisdom && (
+                      <div className="mb-8 animate-premium-fade cursor-pointer" onClick={() => fetchNextWisdom({ state: 'study' })}>
+                        <div className="p-4 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 max-w-2xl group hover:border-brand-cyan/30 transition-all">
+                           <p className={`text-xl md:text-2xl font-black text-brand-cyan mb-2 dir-rtl ${currentWisdom.type === 'poetry' ? 'italic' : ''}`}>"{currentWisdom.text}"</p>
+                           <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">{currentWisdom.author || currentWisdom.source} {currentWisdom.is_golden ? '• GOLDEN ⭐' : ''}</p>
                         </div>
                       </div>
                     )}
@@ -437,14 +437,14 @@ const DashboardPage: React.FC = () => {
                 ) : (
                     <div className="space-y-16">
                         {/* Spaced Repetition Carousel */}
-                        {currentHadith && (
+                        {currentWisdom && (
                           <section>
                             <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 px-2">{language === 'ar' ? 'تذكير الحكمة اليومي' : 'Daily Wisdom Reminder'}</h2>
                             <div className="max-w-2xl px-2">
-                               <HadithCard 
-                                 hadith={currentHadith} 
-                                 progress={hadithProgress} 
-                                 onUpdate={updateHadithProgress} 
+                               <WisdomCard 
+                                 item={currentWisdom} 
+                                 progress={wisdomProgress} 
+                                 onUpdate={updateWisdomProgress} 
                                  variant="hero"
                                />
                             </div>
