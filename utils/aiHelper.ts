@@ -1,27 +1,17 @@
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
 import { WeeklySchedule, AnalysisResponse, GradeLevel, MotivationalMessage, VoiceTutorResponse, AiStructuredResponse } from "../types";
 import { Mistral } from '@mistralai/mistralai';
-import { quotes } from './quotes';
+
 
 // Helper to parse raw quote string into Structured Message
+// Helper to provide a stable fallback quote if AI fails
 const getRandomLocalQuote = (): MotivationalMessage => {
-    const raw = quotes[Math.floor(Math.random() * quotes.length)];
-    let text = raw;
-    let source = "مجهول";
-    let category: MotivationalMessage['category'] = "wisdom";
-
-    if (raw.startsWith("{") && raw.endsWith("}")) {
-        text = raw.replace(/[{}]/g, "");
-        source = "القرآن الكريم";
-        category = "religious";
-    } else if (raw.includes(" - ")) {
-        const parts = raw.split(" - ");
-        text = parts[0];
-        source = parts[1];
-        category = "philosophical";
-    }
-
-    return { text, source, category };
+    const fallbacks: MotivationalMessage[] = [
+        { text: "قليل دائم خير من كثير منقطع.", source: "حكمة عربية", category: "wisdom" },
+        { text: "على قدر أهل العزم تأتي العزائم.", source: "المتنبي", category: "philosophical" },
+        { text: "وَأَن لَّيْسَ لِلْإِنسَانِ إِلَّا مَا سَعَىٰ", source: "القرآن الكريم", category: "religious" }
+    ];
+    return fallbacks[Math.floor(Math.random() * fallbacks.length)];
 };
 
 // Always use process.env.API_KEY directly as per @google/genai guidelines.
