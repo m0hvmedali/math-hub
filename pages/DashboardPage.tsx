@@ -166,15 +166,23 @@ const DashboardPage: React.FC = () => {
     const dailyTime = useMemo(() => {
         const today = new Date().toISOString().split('T')[0];
         return studySessions
-            .filter(s => s.session_date === today)
-            .reduce((acc, curr) => acc + curr.duration_minutes, 0);
+            .filter(s => {
+                const dateStr = s.session_date || s.session_start_time || '';
+                const normalizedDate = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
+                return normalizedDate === today;
+            })
+            .reduce((acc, curr) => acc + (curr.duration_minutes || 0), 0);
     }, [studySessions]);
 
     const focusData = useMemo(() => {
-        return [...studySessions].reverse().slice(-7).map(s => ({
-            date: s.session_date.split('-').slice(1).join('/'),
-            focus: s.focus_score
-        }));
+        return [...studySessions].reverse().slice(-7).map(s => {
+            const dateStr = s.session_date || s.session_start_time || '';
+            const normalizedDate = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
+            return {
+                date: normalizedDate ? normalizedDate.split('-').slice(1).join('/') : '',
+                focus: s.focus_score || 0
+            };
+        });
     }, [studySessions]);
 
     const handleStartSession = () => {
