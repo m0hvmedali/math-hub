@@ -26,6 +26,7 @@ import IframeLabPage from './pages/IframeLabPage';
 import NeuralNotifications from './components/NeuralNotifications';
 import ExplainLessonPage from './pages/ExplainLessonPage';
 import FloatingSpotifyWidget from './components/FloatingSpotifyWidget';
+import FloatingQuickNote from './components/FloatingQuickNote';
 import SettingsPage from './pages/SettingsPage';
 import HistoryPage from './pages/HistoryPage';
 import CurriculumPage from './pages/CurriculumPage';
