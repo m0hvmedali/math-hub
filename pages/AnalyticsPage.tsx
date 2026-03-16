@@ -1,6 +1,7 @@
 import React, { useContext } from 'react';
 import { AppContext } from '../App';
 import { TimelineIcon } from '../components/Icons';
+import { useHubCore } from '../utils/HubCore';
 
 const AnalyticsPage: React.FC = () => {
     // Fixed: Removed isAdmin from context destructuring as it doesn't exist
@@ -8,6 +9,15 @@ const AnalyticsPage: React.FC = () => {
 
     // Derived isAdmin logic
     const isAdmin = user === '8128' || user === 'Mohamed';
+
+    // Register with HubCore
+    useHubCore({
+      id: 'AnalyticsPage',
+      state: { user, isAdmin },
+      actions: {
+        refresh: () => { /* Logic to refresh stats */ }
+      }
+    });
 
     return (
         <div className="p-8 max-w-4xl mx-auto">

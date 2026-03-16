@@ -4,6 +4,7 @@ import PomodoroTimer from '../components/PomodoroTimer';
 import SpotifyPlayer from '../components/SpotifyPlayer';
 import { useTimer } from '../store/TimerProvider';
 import { SparkleIcon, PlayIcon, PauseIcon } from '../components/Icons';
+import { useHubCore } from '../utils/HubCore';
 
 const AMBIENT_SOUNDS = [
   { id: 'lofi', name: 'Lo-Fi Chill', url: 'https://cdn.pixabay.com/audio/2022/05/27/audio_1808fbf07a.mp3' },
@@ -17,6 +18,16 @@ const StudyTimerPage: React.FC = () => {
   const [isDeepFocus, setIsDeepFocus] = React.useState(false);
   const [activeAmbient, setActiveAmbient] = React.useState<string | null>(null);
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
+
+  // Register with HubCore
+  useHubCore({
+    id: 'StudyTimerPage',
+    state: { phase, isDeepFocus, activeAmbient },
+    actions: {
+      toggleDeepFocus: () => setIsDeepFocus(p => !p),
+      setAmbient: (id: string) => setActiveAmbient(id)
+    }
+  });
 
   // Handle ambient audio
   React.useEffect(() => {

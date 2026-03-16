@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { useHubCore } from '../utils/HubCore';
 
 interface Message {
     role: 'user' | 'assistant';
@@ -27,6 +28,17 @@ const GeminiChatWidget: React.FC<GeminiChatWidgetProps> = ({
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const bottomRef = useRef<HTMLDivElement>(null);
+
+    // Register with HubCore
+    useHubCore({
+        id: 'GeminiAssistantAtom',
+        state: { messageCount: messages.length, isLoading },
+        actions: {
+            send: (text: string) => { setInput(text); setTimeout(() => sendMessage(), 100); },
+            clear: () => setMessages([]),
+            close: () => onClose()
+        }
+    });
 
     const systemPrompt = customSystemPrompt ||
         `أنت مساعد دراسي ذكي ومتخصص في مادة "${subjectName}"، فصل "${branchName}"، درس "${lessonName}".

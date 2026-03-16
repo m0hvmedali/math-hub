@@ -2,10 +2,21 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '../supabaseClient';
 import { LessonProgress } from '../types';
+import { useHubCore } from '../utils/HubCore';
 
 export const useLessonProgress = (userId: string | undefined) => {
     const [progress, setProgress] = useState<LessonProgress | null>(null);
     const [loading, setLoading] = useState(false);
+
+    // Register Service with HubCore
+    useHubCore({
+        id: 'LessonProgressService',
+        state: { isLoading: loading, hasProgress: !!progress },
+        actions: {
+            refresh: (id: string) => fetchProgress(id),
+            reset: (id: string) => resetProgress(id)
+        }
+    });
 
     const fetchProgress = useCallback(async (lessonId: string) => {
         if (!userId) return;

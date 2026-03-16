@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useTimer } from '../store/TimerProvider';
 import { PlayIcon, PauseIcon, RefreshIcon, SparkleIcon } from '../components/Icons';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useHubCore } from '../utils/HubCore';
 
 const PomodoroTimer: React.FC = () => {
   const { 
@@ -14,6 +15,28 @@ const PomodoroTimer: React.FC = () => {
     resumeTimer, 
     stopTimer 
   } = useTimer();
+
+  // Register with HubCore
+  useHubCore({
+    id: 'PomodoroTimerAtom',
+    state: { phase, remainingSeconds },
+    actions: {
+      startStudy: () => startStudy(),
+      startBreak: () => startBreak(),
+      pause: () => pauseTimer(),
+      resume: () => resumeTimer(),
+      reset: () => stopTimer()
+    }
+  });
+
+  // Register UI Component with HubCore
+  useHubCore({
+    id: 'PomodoroTimerUI',
+    state: { phase, remainingSeconds },
+    actions: {
+      updateDisplay: () => { /* Force refresh or similar */ }
+    }
+  });
 
   const formatTime = (secs: number) => {
     const m = Math.floor(secs / 60);

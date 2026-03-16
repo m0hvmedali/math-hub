@@ -4,15 +4,26 @@ import { useNavigate } from 'react-router-dom';
 import { AppContext } from '../App';
 import { PlusIcon, ChevronRightIcon } from '../components/Icons';
 import MaterialCard from '../components/MaterialCard';
+import { useHubCore } from '../utils/HubCore';
 const CurriculumPage: React.FC = () => {
     const { subjects, addSubject, language } = useContext(AppContext);
     const [newSubjectName, setNewSubjectName] = useState('');
     const [isAdding, setIsAdding] = useState(false);
     const navigate = useNavigate();
 
-    // UI state for the new patterns
     const [activePackage, setActivePackage] = useState<'packages' | 'separate'>('packages');
     const [selectedSubjectId, setSelectedSubjectId] = useState<string | null>(null);
+
+    // Register with HubCore
+    useHubCore({
+      id: 'CurriculumPage',
+      state: { activePackage, selectedSubjectId },
+      actions: {
+        setPackageMode: (mode: 'packages' | 'separate') => setActivePackage(mode),
+        selectSubject: (id: string) => setSelectedSubjectId(id),
+        openAddSubject: () => setIsAdding(true)
+      }
+    });
 
     // Initialize selected subject once subjects load
     React.useEffect(() => {

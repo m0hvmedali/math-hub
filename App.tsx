@@ -41,6 +41,7 @@ import AnalysisPage from './pages/AnalysisPage';
 import { ThemeManager } from './utils/ThemeManager';
 import { rebuildSearchIndex, searchRadar, SearchResult, fetchTavilyResults } from './utils/searchRadar';
 import { hubCore, useHubCore } from './utils/HubCore';
+import { initializeAssistantCommands } from './utils/AssistantCommands';
 
 export const AppContext = createContext<{
     subjects: Subject[];
@@ -112,7 +113,10 @@ export const AppContext = createContext<{
     addManualLink: async () => { },
 });
 
-const ProtectedRoute: React.FC<{ children: React.ReactNode, isLoading: boolean, language: 'ar' | 'en', theme: 'dark' | 'light', setLanguage: (lang: 'ar' | 'en') => void, toggleTheme: () => void }> = ({ children, isLoading, language, theme, setLanguage, toggleTheme }) => {
+// Initialize Global Commands once
+initializeAssistantCommands();
+
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const user = localStorage.getItem('study_user');
     // --- HUB CORE MONITORING ---
     useEffect(() => {
@@ -126,15 +130,12 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode, isLoading: boolean, 
     // Register App Shell with HubCore
     useHubCore({
       id: 'AppShell',
-      state: { language, theme, user },
+      state: { user },
       actions: {
-        setLanguage: (lang: any) => setLanguage(lang),
-        toggleTheme: () => toggleTheme(),
         logout: () => { localStorage.clear(); window.location.reload(); }
       }
     });
 
-    if (isLoading) return <div className="text-white p-10 font-bold text-center">Loading...</div>; // Placeholder for LoadingScreen
     if (!user) return <Navigate to="/login" />;
     return <>{children}</>;
 };

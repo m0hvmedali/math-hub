@@ -6,6 +6,12 @@ export interface PageModule {
   actions: Record<string, (...args: any) => void>;
 }
 
+export interface HubCommand {
+  id: string;
+  description: string;
+  execute: (...args: any) => void;
+}
+
 class HubCore {
   private pages: Map<string, PageModule> = new Map();
   private subscribers: Set<(id: string, action: string, args: any[]) => void> = new Set();
@@ -84,6 +90,46 @@ class HubCore {
 }
 
 export const hubCore = new HubCore();
+
+class Assistant {
+  private commands: Map<string, HubCommand> = new Map();
+
+  /**
+   * Register a named command (macro) in the assistant's library.
+   */
+  registerCommand(cmd: HubCommand) {
+    console.log(`[Assistant] Registering command: ${cmd.id} (${cmd.description})`);
+    this.commands.set(cmd.id, cmd);
+  }
+
+  /**
+   * Run a specific command by ID.
+   */
+  runCommand(id: string, ...args: any) {
+    const cmd = this.commands.get(id);
+    if (cmd) {
+      console.log(`%c[Assistant] Running: ${id}`, "color: #10B981; font-weight: bold;");
+      cmd.execute(...args);
+    } else {
+      console.warn(`[Assistant] Command not found: ${id}`);
+    }
+  }
+
+  /**
+   * Execute a sequence of commands (Macro).
+   */
+  runSequence(ids: string[]) {
+    console.group(`[Assistant] Sequence Execution (${ids.length} steps)`);
+    ids.forEach(id => this.runCommand(id));
+    console.groupEnd();
+  }
+
+  getAvailableCommands() {
+    return Array.from(this.commands.values());
+  }
+}
+
+export const assistant = new Assistant();
 
 /**
  * React Hook for automatic module registration and lifecycle management.

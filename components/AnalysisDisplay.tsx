@@ -1,12 +1,25 @@
 import React from 'react';
 import { AnalysisResponse } from '../types';
 import { Quote, Activity, BookOpen, Clock, Zap, ShieldCheck, CheckCircle2, Globe, ExternalLink, Search, Sparkles } from 'lucide-react';
+import { useHubCore } from '../utils/HubCore';
 
 interface AnalysisDisplayProps {
     data: AnalysisResponse;
 }
 
 const AnalysisDisplay: React.FC<AnalysisDisplayProps> = ({ data }) => {
+    // Register UI with HubCore
+    useHubCore({
+        id: 'AnalysisDisplayAtom',
+        state: { summary: data.summary.stressLevel, effort: data.summary.effortType },
+        actions: {
+            scrollToQuran: () => {
+                const el = document.querySelector('[dir="rtl"] .bg-gradient-to-l');
+                el?.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+    });
+
     return (
         <div className="animate-fade-in pb-12">
             {/* Header */}

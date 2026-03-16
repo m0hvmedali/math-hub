@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useLocation } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { AppContext } from '../App';
+import { useHubCore } from '../utils/HubCore';
 
 export interface QuickNote {
   id: string;
@@ -35,6 +36,21 @@ const FloatingQuickNote: React.FC = () => {
   const [selectedColor, setSelectedColor] = useState(NOTE_COLORS[0]);
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+
+  // Register with HubCore
+  useHubCore({
+    id: 'QuickNoteAtom',
+    state: { isOpen, noteLength: noteContent.length },
+    actions: {
+      open: () => setIsOpen(true),
+      close: () => setIsOpen(false),
+      toggle: () => setIsOpen(p => !p),
+      setColor: (name: string) => {
+        const c = NOTE_COLORS.find(col => col.name === name);
+        if (c) setSelectedColor(c);
+      }
+    }
+  });
 
   if (!user) return null;
 

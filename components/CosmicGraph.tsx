@@ -4,6 +4,7 @@ import { useCosmicStore } from '../store/useCosmicStore';
 import { Subject, CustomNode, ManualLink } from '../types';
 import { useNavigate } from 'react-router-dom';
 import { PlusIcon, LinkIcon } from './Icons';
+import { useHubCore } from '../utils/HubCore';
 
 interface CosmicGraphProps {
     subjects: Subject[];
@@ -19,11 +20,28 @@ const CosmicGraph: React.FC<CosmicGraphProps> = ({ subjects, searchQuery, search
     const navigate = useNavigate();
     const containerRef = useRef<HTMLDivElement>(null);
     const cyRef = useRef<cytoscape.Core | null>(null);
-    const { reflexNodeId, setSelectedNodeId, tempNodes, setPanelOpen, selectedNodeId, language } = useCosmicStore();
+    const { reflexNodeId, setSelectedNodeId, tempNodes, setPanelOpen, selectedNodeId } = useCosmicStore();
+    const { language } = useContext(AppContext);
     const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
     const [zoom, setZoom] = useState(1);
     const [linkingMode, setLinkingMode] = useState(false);
     const [linkSource, setLinkSource] = useState<string | null>(null);
+
+    // Register with HubCore
+    useHubCore({
+        id: 'CosmicGraphAtom',
+        state: { linkingMode, selectedNodeId, zoom },
+        actions: {
+            resetZoom: () => cyRef.current?.fit(),
+            toggleLinkMode: () => setLinkingMode(p => !p),
+            focusNode: (id: string) => {
+                const node = cyRef.current?.$id(id);
+                if (node) {
+                    cyRef.current?.animate({ center: { eles: node }, zoom: 2 });
+                }
+            }
+        }
+    });
 
     // Prepare data for Cytoscape
     const elements = useMemo(() => {
@@ -205,13 +223,13 @@ const CosmicGraph: React.FC<CosmicGraphProps> = ({ subjects, searchQuery, search
                         'color': '#fff',
                         'font-size': '10px',
                         'text-valign': 'bottom',
-                        'text-margin-y': '5px',
+                        'text-margin-y': 5,
                         'text-wrap': 'wrap',
                         'text-max-width': '80px',
                         'font-family': 'Outfit, sans-serif',
                         'overlay-opacity': 0,
                         'transition-property': 'background-color, width, height, opacity',
-                        'transition-duration': '0.3s'
+                        'transition-duration': 300
                     }
                 },
                 {

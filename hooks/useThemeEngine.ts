@@ -9,6 +9,7 @@
 // Only the Hue changes. Saturation and Lightness stay constant.
 
 import { useEffect, useRef } from 'react';
+import { useHubCore } from '../utils/HubCore';
 
 export type ThemePhase = 'focus' | 'warn' | 'break' | 'idle';
 
@@ -60,6 +61,19 @@ let currentHue = PALETTES.idle.hue;
 let currentSat = PALETTES.idle.saturation;
 
 export function useThemeEngine({ enabled, pomodoroMinutes = 25, breakMinutes = 5 }: ThemeEngineOptions) {
+  // Register with HubCore (Service level)
+  useHubCore({
+    id: 'ThemeEngineService',
+    state: { enabled },
+    actions: {
+      setEnabled: (val: boolean) => {
+        const next = !!val;
+        localStorage.setItem('theme_engine', next ? 'on' : 'off');
+        window.location.reload(); 
+      }
+    }
+  });
+
   const phaseLabelRef = useRef<ThemePhase>('idle');
 
   useEffect(() => {

@@ -17,7 +17,7 @@ import SocraticBot from '../components/SocraticBot';
 import NodeInjectorModal from '../components/NodeInjectorModal';
 import CourseCard from '../components/CourseCard';
 import MaterialCard from '../components/MaterialCard';
-import { useHubCore } from '../utils/HubCore';
+import { useHubCore, assistant } from '../utils/HubCore';
 
 const DashboardPage: React.FC = () => {
     const { subjects, addSubject, updateSubject, deleteSubject, addStudySession, studySessions, language, setLanguage, user, customNodes, addCustomNode, manualLinks, addManualLink, tasks, knowledgeErrors, addLessonToBranch } = useContext(AppContext) as any;
@@ -293,6 +293,17 @@ const DashboardPage: React.FC = () => {
                         >
                             <ClockIcon className="w-6 h-6" />
                             {isStudying ? (language === 'ar' ? `إيقاف المؤقت (${Math.floor((Date.now() - (startTime || 0)) / 60000)}m)` : `Stop Timer (${Math.floor((Date.now() - (startTime || 0)) / 60000)}m)`) : (language === 'ar' ? 'بدء مؤقت التركيز' : 'Start Focus Timer')}
+                        </button>
+                        
+                        {/* ASSISTANT MACROS */}
+                        <div className="h-10 w-[1px] bg-white/20 mx-2 hidden md:block" />
+                        
+                        <button 
+                            onClick={() => assistant.runSequence(['macro_deep_study'])}
+                            className="px-6 py-3 rounded-xl bg-violet-600/80 hover:bg-violet-500 text-white font-black text-sm shadow-xl transition-all hover:scale-105 active:scale-95 flex items-center gap-2 backdrop-blur-md border border-violet-400/30"
+                        >
+                            <span className="text-lg">🧠</span>
+                            {language === 'ar' ? 'خطة المذاكرة الذكية' : 'Deep Study Macro'}
                         </button>
                     </div>
                 </div>
