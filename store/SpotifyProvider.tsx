@@ -1,5 +1,5 @@
 /// <reference types="../types/spotify" />
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '../supabaseClient';
 import { useHubCore } from '../utils/HubCore';
 
@@ -76,40 +76,67 @@ export const SpotifyProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [deviceId, setDeviceId ] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [currentTrack, setCurrentTrack] = useState<CurrentTrack | null>(null);
+  const refreshPromise = useRef<Promise<string | null> | null>(null);
 
   const refreshAccessToken = useCallback(async () => {
-    const rfToken = localStorage.getItem('spotify_refresh_token');
-    if (!rfToken) return null;
+    // If a refresh is already in progress, return the existing promise
+    if (refreshPromise.current) {
+      console.log("[Spotify] Waiting for existing refresh...");
+      return refreshPromise.current;
+    }
 
-    console.log("[Spotify] Refreshing access token...");
-    try {
-      const response = await fetch('https://accounts.spotify.com/api/token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          client_id: CLIENT_ID,
-          grant_type: 'refresh_token',
-          refresh_token: rfToken,
-        }),
-      });
-
-      const data = await response.json();
-      if (data.access_token) {
-        setToken(data.access_token);
-        localStorage.setItem('spotify_token', data.access_token);
-        if (data.refresh_token) {
-          setRefreshToken(data.refresh_token);
-          localStorage.setItem('spotify_refresh_token', data.refresh_token);
-        }
-        return data.access_token;
-      } else {
-        console.error("[Spotify] Refresh Error:", data);
+    const performRefresh = async () => {
+      const rfToken = localStorage.getItem('spotify_refresh_token');
+      if (!rfToken) {
+        console.warn("[Spotify] No refresh token available.");
         return null;
       }
-    } catch (e) {
-      console.error("[Spotify] Refresh Fetch Error:", e);
-      return null;
-    }
+
+      console.log("[Spotify] Refreshing access token...");
+      try {
+        const response = await fetch('https://accounts.spotify.com/api/token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            client_id: CLIENT_ID,
+            grant_type: 'refresh_token',
+            refresh_token: rfToken,
+          }),
+        });
+
+        const data = await response.json();
+        if (data.access_token) {
+          setToken(data.access_token);
+          localStorage.setItem('spotify_token', data.access_token);
+          if (data.refresh_token) {
+            setRefreshToken(data.refresh_token);
+            localStorage.setItem('spotify_refresh_token', data.refresh_token);
+          }
+          console.log("[Spotify] Token refreshed successfully.");
+          return data.access_token;
+        } else {
+          console.error("[Spotify] Refresh Error:", data);
+          
+          // Handle specific revocation errors
+          if (data.error === 'invalid_grant' || data.error === 'invalid_client' || data.error_description?.includes('revoked')) {
+            console.warn("[Spotify] Refresh token revoked. Logging out...");
+            setToken(null);
+            setRefreshToken(null);
+            localStorage.removeItem('spotify_token');
+            localStorage.removeItem('spotify_refresh_token');
+          }
+          return null;
+        }
+      } catch (e) {
+        console.error("[Spotify] Refresh Fetch Error:", e);
+        return null;
+      } finally {
+        refreshPromise.current = null;
+      }
+    };
+
+    refreshPromise.current = performRefresh();
+    return refreshPromise.current;
   }, []);
 
   // Handle OAuth Redirect and Token Exchange
@@ -177,10 +204,17 @@ export const SpotifyProvider: React.FC<{ children: React.ReactNode }> = ({ child
       const spPlayer = new window.Spotify.Player({
         name: 'Math Hub Focus Player',
         getOAuthToken: async cb => { 
-          // Check if we need to refresh (SDK handles the callback)
-          // We'll try to refresh every time the SDK asks, if we have a refresh token
+          // If we have a token, check if it's usable. If not (or if SDK asks), try refresh.
+          // Note: SDK usually calls this when token is about to expire or has expired.
+          console.log("[Spotify SDK] getOAuthToken requested");
           const newToken = await refreshAccessToken();
-          cb(newToken || token || ""); 
+          if (newToken) {
+            cb(newToken);
+          } else if (token) {
+            cb(token);
+          } else {
+            cb(""); // Forces error state in SDK
+          }
         },
         volume: 0.5
       });
@@ -259,8 +293,11 @@ export const SpotifyProvider: React.FC<{ children: React.ReactNode }> = ({ child
       console.log("[Spotify] 401 detected in API call, attempting refresh...");
       const newToken = await refreshAccessToken();
       if (newToken) {
-        headers['Authorization'] = `Bearer ${newToken}`;
-        resp = await fetch(url, { ...options, headers });
+        console.log("[Spotify] Retrying API call with fresh token...");
+        const newHeaders = { ...headers, 'Authorization': `Bearer ${newToken}` };
+        resp = await fetch(url, { ...options, headers: newHeaders });
+      } else {
+        console.error("[Spotify] Refresh failed, cannot retry API call.");
       }
     }
     return resp;
