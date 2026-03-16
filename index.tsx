@@ -5,6 +5,7 @@ import App from './App';
 import './index.css';
 import { HashRouter } from 'react-router-dom';
 import { Analytics } from "@vercel/analytics/react";
+import './utils/AnalyticsService'; // Initialize the analytics singleton
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {

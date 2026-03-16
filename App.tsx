@@ -27,6 +27,7 @@ import NeuralNotifications from './components/NeuralNotifications';
 import ExplainLessonPage from './pages/ExplainLessonPage';
 import FloatingSpotifyWidget from './components/FloatingSpotifyWidget';
 import FloatingQuickNote from './components/FloatingQuickNote';
+import AssistantOverlay from './components/AssistantOverlay';
 import SettingsPage from './pages/SettingsPage';
 import HistoryPage from './pages/HistoryPage';
 import CurriculumPage from './pages/CurriculumPage';
@@ -156,6 +157,19 @@ const App: React.FC = () => {
     const [user, setUser] = useState<string | null>(localStorage.getItem('study_user'));
     const [language, setLanguageState] = useState<'ar' | 'en'>((localStorage.getItem('study_lang') as 'ar' | 'en') || 'ar');
     const [theme, setThemeState] = useState<'dark' | 'light'>((localStorage.getItem('study_theme') as 'dark' | 'light') || 'dark');
+    const [isAssistantOpen, setIsAssistantOpen] = useState(false);
+
+    // Global Command Palette Shortcut (Ctrl+K)
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                setIsAssistantOpen(prev => !prev);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, []);
 
     const toggleTheme = useCallback(() => {
         setThemeState(prev => {
@@ -660,6 +674,7 @@ const App: React.FC = () => {
                 {user && <Navigation />}
                 {user && <FloatingSpotifyWidget />}
                 {user && <FloatingQuickNote />}
+                {user && <AssistantOverlay isOpen={isAssistantOpen} onClose={() => setIsAssistantOpen(false)} />}
                 {user && (
                     <div className="px-6 py-4 max-w-7xl mx-auto w-full">
                         <NeuralNotifications />

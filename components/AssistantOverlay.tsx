@@ -1,0 +1,123 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { assistant } from '../utils/HubCore';
+import { CommandIcon, SearchIcon, ActivityIcon } from './Icons';
+
+interface AssistantOverlayProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+const AssistantOverlay: React.FC<AssistantOverlayProps> = ({ isOpen, onClose }) => {
+  const [query, setQuery] = useState('');
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const inputRef = useRef<HTMLInputElement>(null);
+  
+  const allCommands = assistant.getAvailableCommands();
+  const filteredCommands = allCommands.filter(cmd => 
+    cmd.id.toLowerCase().includes(query.toLowerCase()) || 
+    cmd.description.toLowerCase().includes(query.toLowerCase())
+  );
+
+  useEffect(() => {
+    if (isOpen) {
+      setQuery('');
+      setSelectedIndex(0);
+      setTimeout(() => inputRef.current?.focus(), 100);
+    }
+  }, [isOpen]);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowDown') {
+      setSelectedIndex(prev => (prev + 1) % filteredCommands.length);
+    } else if (e.key === 'ArrowUp') {
+      setSelectedIndex(prev => (prev - 1 + filteredCommands.length) % filteredCommands.length);
+    } else if (e.key === 'Enter') {
+      const selected = filteredCommands[selectedIndex];
+      if (selected) {
+        assistant.runCommand(selected.id);
+        onClose();
+      }
+    } else if (e.key === 'Escape') {
+      onClose();
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-start justify-center pt-24 px-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+      <div 
+        className="w-full max-w-2xl glass-card rounded-3xl border border-white/10 shadow-2xl overflow-hidden animate-in slide-in-from-top-4 duration-300"
+        onKeyDown={handleKeyDown}
+      >
+        {/* Header/Input */}
+        <div className="p-6 border-b border-white/5 flex items-center gap-4">
+          <SearchIcon className="w-6 h-6 text-brand-cyan" />
+          <input
+            ref={inputRef}
+            type="text"
+            placeholder="Type a command or macro (e.g., 'study', 'stop')..."
+            className="flex-1 bg-transparent border-none outline-none text-xl text-white placeholder-white/20"
+            value={query}
+            onChange={(e) => {
+                setQuery(e.target.value);
+                setSelectedIndex(0);
+            }}
+          />
+          <div className="bg-white/5 px-2 py-1 rounded border border-white/10 text-[10px] font-mono text-white/40">ESC TO CLOSE</div>
+        </div>
+
+        {/* Results */}
+        <div className="max-h-[400px] overflow-y-auto p-2 custom-scrollbar">
+          {filteredCommands.length > 0 ? (
+            filteredCommands.map((cmd, i) => (
+              <div
+                key={cmd.id}
+                className={`flex items-center gap-4 p-4 rounded-2xl cursor-pointer transition-all duration-200 ${
+                  i === selectedIndex ? 'bg-brand-cyan/20 border-brand-cyan/30 scale-[1.02]' : 'hover:bg-white/5 border-transparent'
+                } border`}
+                onClick={() => {
+                  assistant.runCommand(cmd.id);
+                  onClose();
+                }}
+                onMouseEnter={() => setSelectedIndex(i)}
+              >
+                <div className={`p-3 rounded-xl ${i === selectedIndex ? 'bg-brand-cyan text-black' : 'bg-white/5 text-white/40'}`}>
+                  {cmd.id.startsWith('macro') ? <ActivityIcon className="w-5 h-5" /> : <CommandIcon className="w-5 h-5" />}
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-white font-bold">{cmd.id}</h4>
+                  <p className="text-sm text-accent-beige/40">{cmd.description}</p>
+                </div>
+                {i === selectedIndex && (
+                  <div className="text-[10px] font-mono text-brand-cyan bg-brand-cyan/10 px-2 py-1 rounded">ENTER TO RUN</div>
+                )}
+              </div>
+            ))
+          ) : (
+            <div className="p-12 text-center text-accent-beige/40">
+              <p>No commands matched your query</p>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="p-4 bg-white/5 flex justify-between items-center px-6">
+          <div className="flex items-center gap-4">
+             <div className="flex items-center gap-1">
+                <span className="text-[10px] bg-white/10 px-1.5 py-0.5 rounded text-white/60">↑↓</span>
+                <span className="text-[10px] text-white/40">Navigate</span>
+             </div>
+             <div className="flex items-center gap-1">
+                <span className="text-[10px] bg-white/10 px-1.5 py-0.5 rounded text-white/60">↵</span>
+                <span className="text-[10px] text-white/40">Execute</span>
+             </div>
+          </div>
+          <p className="text-[10px] font-bold text-brand-cyan uppercase tracking-widest">Math Hub Assistant v1.0</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default AssistantOverlay;
