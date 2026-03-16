@@ -35,7 +35,8 @@ interface SpotifyContextType {
 const SpotifyContext = createContext<SpotifyContextType | undefined>(undefined);
 
 const CLIENT_ID = 'b6a162958bd84dd6a7eb11e23b22e28f'; // User's specific client ID
-const REDIRECT_URI = window.location.origin + '/timer';
+// Using the root origin because HashRouter won't work with Spotify's strict Redirect URI rules.
+const REDIRECT_URI = window.location.origin + '/'; 
 const SCOPES = [
   'streaming',
   'user-read-email',
@@ -84,8 +85,9 @@ export const SpotifyProvider: React.FC<{ children: React.ReactNode }> = ({ child
                 if (response.access_token) {
                     setToken(response.access_token);
                     localStorage.setItem('spotify_token', response.access_token);
-                    // Clear the URL to avoid re-triggering
-                    window.history.replaceState({}, document.title, REDIRECT_URI);
+                    // Clear the URL and force HashRouter back to timer
+                    window.history.replaceState({}, document.title, '/');
+                    window.location.href = window.location.origin + '/#/timer';
                 } else {
                     console.error("Token Error", response);
                 }

@@ -33,13 +33,14 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const syncWithDB = async () => {
       if (!supabase) return;
       
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      // Math Hub uses custom localStorage strings for users, not Supabase Auth
+      const userId = localStorage.getItem('study_user');
+      if (!userId) return;
 
       const { data: activeSession, error } = await supabase
         .from('study_sessions')
         .select('*')
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .neq('current_phase', 'idle')
         .maybeSingle();
 
@@ -113,20 +114,21 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const now = new Date();
     const targetEnd = new Date(now.getTime() + STUDY_DURATION * 1000);
     
-    const { data: { user } } = await supabase!.auth.getUser();
-    if (!user) return; // Guard clause
+    // Auth for Math Hub
+    const userId = localStorage.getItem('study_user');
+    if (!userId) return; // Guard clause
 
     // Clear any existing active sessions to prevent duplicates
     await supabase!
         .from('study_sessions')
         .update({ current_phase: 'idle' })
-        .eq('user_id', user.id)
+        .eq('user_id', userId)
         .neq('current_phase', 'idle');
 
     const { data, error } = await supabase!
       .from('study_sessions')
       .insert({
-        user_id: user.id,
+        user_id: userId,
         current_phase: 'study',
         session_start_time: now.toISOString(),
         target_end_time: targetEnd.toISOString(),
