@@ -122,6 +122,13 @@ const DashboardPage: React.FC = () => {
         if (!currentWisdom) {
             fetchNextWisdom({ state: 'study' });
         }
+
+        // Automatic rotation every 60 seconds
+        const rotationInterval = setInterval(() => {
+            fetchNextWisdom({ state: 'study' });
+        }, 60000);
+
+        return () => clearInterval(rotationInterval);
     }, [user, currentWisdom, fetchNextWisdom]);
 
     // Spaced Repetition: Lessons to review today

@@ -2,7 +2,7 @@ import React, { useState, useCallback, createContext, useEffect } from 'react';
 import { Routes, Route, Navigate, NavLink, useLocation } from 'react-router-dom';
 import WhiteboardPage from './pages/WhiteboardPage';
 import { Subject, CourseBranch, Lesson, StudySession, Task, Importance, Competition, CrashTask, ErrorCause, KnowledgeError, CustomNode, ManualLink } from './types';
-import { GlobeIcon } from './components/Icons';
+import { GlobeIcon, SparkleIcon } from './components/Icons';
 import Navigation from './components/Navigation';
 import DashboardPage from './pages/DashboardPage';
 import SubjectPage from './pages/SubjectPage';
@@ -818,6 +818,10 @@ const App: React.FC = () => {
                     <a href="#/curriculum" className="flex flex-col items-center gap-1 text-[var(--text-muted)] hover:text-brand-cyan transition-colors z-[100]">
                         <GlobeIcon className="w-6 h-6" />
                         <span className="text-[10px] font-black uppercase tracking-widest">{language === 'ar' ? 'المواد' : 'Materials'}</span>
+                    </a>
+                    <a href="#/wisdom" className="flex flex-col items-center gap-1 text-[var(--text-muted)] hover:text-brand-cyan transition-colors z-[100]">
+                        <SparkleIcon className="w-6 h-6" />
+                        <span className="text-[10px] font-black uppercase tracking-widest">{language === 'ar' ? 'المكتبة' : 'Wisdom'}</span>
                     </a>
                     <a href="#/daily-analysis" className="flex flex-col items-center gap-1 text-[var(--text-muted)] hover:text-brand-cyan transition-colors z-[100]">
                         <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
