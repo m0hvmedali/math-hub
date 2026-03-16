@@ -3,8 +3,9 @@ import { AppContext } from '../App';
 import PomodoroTimer from '../components/PomodoroTimer';
 import SpotifyPlayer from '../components/SpotifyPlayer';
 import { useTimer } from '../store/TimerProvider';
-import { SparkleIcon, PlayIcon, PauseIcon } from '../components/Icons';
+import { SparkleIcon, PlayIcon, PauseIcon, BookOpenIcon } from '../components/Icons';
 import { useHubCore } from '../utils/HubCore';
+import HadithCard from '../components/HadithCard';
 
 const AMBIENT_SOUNDS = [
   { id: 'lofi', name: 'Lo-Fi Chill', url: 'https://cdn.pixabay.com/audio/2022/05/27/audio_1808fbf07a.mp3' },
@@ -13,7 +14,7 @@ const AMBIENT_SOUNDS = [
 ];
 
 const StudyTimerPage: React.FC = () => {
-  const { language } = useContext(AppContext);
+  const { language, currentHadith, hadithProgress, fetchNextHadith, updateHadithProgress } = useContext(AppContext) as any;
   const { phase } = useTimer();
   const [isDeepFocus, setIsDeepFocus] = React.useState(false);
   const [activeAmbient, setActiveAmbient] = React.useState<string | null>(null);
@@ -50,6 +51,13 @@ const StudyTimerPage: React.FC = () => {
     }
   }, [phase]);
 
+  // Fetch new hadith when entering break
+  React.useEffect(() => {
+    if (phase !== 'study' && !currentHadith) {
+      fetchNextHadith();
+    }
+  }, [phase, currentHadith, fetchNextHadith]);
+
   return (
     <div className={`p-6 md:px-16 md:py-12 max-w-[1400px] mx-auto min-h-screen transition-all duration-1000 ${isDeepFocus ? 'bg-black opacity-90' : 'animate-premium-fade'}`}>
       
@@ -60,6 +68,44 @@ const StudyTimerPage: React.FC = () => {
             onClick={() => setIsDeepFocus(false)}
             onMouseMove={() => setIsDeepFocus(false)} // Wake up on mouse move
           />
+      )}
+
+      {/* Break Phase Wisdom Overlay */}
+      {phase !== 'study' && currentHadith && (
+        <div className="fixed inset-0 z-[150] bg-black/60 backdrop-blur-2xl animate-fade-in flex flex-col items-center justify-center p-6 sm:p-12 overflow-y-auto">
+          <div className="absolute inset-0 bg-ott-gradient opacity-10 pointer-events-none" />
+          
+          <div className="relative w-full max-w-5xl">
+            <div className="flex items-center justify-between mb-12 border-b border-white/5 pb-6">
+               <div className="flex items-center gap-3">
+                 <div className="w-12 h-12 rounded-2xl bg-brand-cyan/20 border border-brand-cyan/30 flex items-center justify-center text-brand-cyan animate-pulse-glow">
+                   <BookOpenIcon className="w-6 h-6" />
+                 </div>
+                 <div>
+                   <h2 className="text-xl font-black text-white uppercase tracking-wider">{language === 'ar' ? 'وقت التأمل' : 'Meditation Time'}</h2>
+                   <p className="text-xs text-gray-500 font-bold uppercase tracking-widest">
+                     {phase === 'break' ? (language === 'ar' ? 'استراحة' : 'Break Time') : (language === 'ar' ? 'استعداد' : 'Get Ready')}
+                   </p>
+                 </div>
+               </div>
+               
+               <button 
+                 onClick={() => fetchNextHadith()}
+                 className="p-3 bg-white/5 rounded-xl border border-white/10 text-gray-400 hover:text-brand-cyan hover:border-brand-cyan/30 transition-all flex items-center gap-2 group"
+               >
+                 <span className="text-[10px] font-black uppercase tracking-widest group-hover:block hidden">{language === 'ar' ? 'حكمة أخرى' : 'Next Wisdom'}</span>
+                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
+               </button>
+            </div>
+
+            <HadithCard 
+              hadith={currentHadith}
+              progress={hadithProgress}
+              onUpdate={updateHadithProgress}
+              variant="overlay"
+            />
+          </div>
+        </div>
       )}
 
       {/* Header */}

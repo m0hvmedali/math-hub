@@ -18,9 +18,16 @@ import NodeInjectorModal from '../components/NodeInjectorModal';
 import CourseCard from '../components/CourseCard';
 import MaterialCard from '../components/MaterialCard';
 import { useHubCore, assistant } from '../utils/HubCore';
+import HadithCard from '../components/HadithCard';
+import WisdomProgress from '../components/WisdomProgress';
 
 const DashboardPage: React.FC = () => {
-    const { subjects, addSubject, updateSubject, deleteSubject, addStudySession, studySessions, language, setLanguage, user, customNodes, addCustomNode, manualLinks, addManualLink, tasks, knowledgeErrors, addLessonToBranch } = useContext(AppContext) as any;
+    const { 
+        subjects, addSubject, updateSubject, deleteSubject, addStudySession, studySessions, 
+        language, setLanguage, user, customNodes, addCustomNode, manualLinks, addManualLink, 
+        tasks, knowledgeErrors, addLessonToBranch,
+        currentHadith, hadithProgress, fetchNextHadith, updateHadithProgress 
+    } = useContext(AppContext) as any;
     const {
         activeView,
         setActiveView,
@@ -112,16 +119,11 @@ const DashboardPage: React.FC = () => {
     const [isStudying, setIsStudying] = useState(false);
     const [startTime, setStartTime] = useState<number | null>(null);
 
-    // Space for effects if needed later
     useEffect(() => {
-        const hour = new Date().getHours();
-        if (hour < 12) setGreeting('Good Morning');
-        else if (hour < 18) setGreeting('Good Afternoon');
-        else setGreeting('Good Evening');
-
-        const index = Math.floor(Math.random() * quotes.length);
-        setQuote(quotes[index]);
-    }, []);
+        if (!currentHadith) {
+            fetchNextHadith();
+        }
+    }, [user, currentHadith, fetchNextHadith]);
 
     // Spaced Repetition: Lessons to review today
     const reviewLessons = useMemo(() => {
@@ -257,6 +259,16 @@ const DashboardPage: React.FC = () => {
                     <h1 className="text-4xl md:text-5xl lg:text-6xl font-black mb-4 leading-tight truncate">
                         {priorityLesson ? priorityLesson.lesson.name : (language === 'ar' ? 'ابدأ رحلتك المعرفية' : 'Start Your Journey')}
                     </h1>
+                    
+                    {currentHadith && (
+                      <div className="mb-8 animate-premium-fade">
+                        <div className="p-4 bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 max-w-2xl">
+                           <p className="text-xl md:text-2xl font-black text-brand-cyan mb-2 dir-rtl">"{currentHadith.text_ar}"</p>
+                           <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">{currentHadith.book_name_en} • Chapter {currentHadith.chapter_id}</p>
+                        </div>
+                      </div>
+                    )}
+
                     <p className="text-lg md:text-xl text-gray-300 max-w-2xl mb-8 font-medium">
                         {priorityLesson
                             ? (language === 'ar'
@@ -398,6 +410,8 @@ const DashboardPage: React.FC = () => {
                     </div>
                     <BookOpenIcon className="absolute -bottom-4 -right-4 w-32 h-32 opacity-10 group-hover:scale-110 transition-transform" />
                 </div>
+
+                <WisdomProgress userId={user} />
             </div>
 
             {/* Main Content Area */}
@@ -423,24 +437,18 @@ const DashboardPage: React.FC = () => {
                 ) : (
                     <div className="space-y-16">
                         {/* Spaced Repetition Carousel */}
-                        {reviewLessons.length > 0 && (
-                            <section>
-                                <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 px-2">{language === 'ar' ? 'مراجعات مستعجلة' : 'Urgent Reviews'}</h2>
-                                <div className="flex gap-4 overflow-x-auto pb-8 pt-4 px-2 snap-x scrollbar-hide">
-                                    {reviewLessons.map(({ subjectId, branchId, lesson }) => (
-                                        <div className="snap-start" key={lesson.id}>
-                                            <CourseCard
-                                                id={lesson.id}
-                                                title={lesson.name}
-                                                subtitle={language === 'ar' ? 'المراجعة المطلوبة' : 'Review Required'}
-                                                link={`/subject/${subjectId}/branch/${branchId}/lesson/${lesson.id}`}
-                                                badgeText={language === 'ar' ? 'مراجعة' : 'Review'}
-                                                progress={0}
-                                            />
-                                        </div>
-                                    ))}
-                                </div>
-                            </section>
+                        {currentHadith && (
+                          <section>
+                            <h2 className="text-2xl md:text-3xl font-bold text-white mb-6 px-2">{language === 'ar' ? 'تذكير الحكمة اليومي' : 'Daily Wisdom Reminder'}</h2>
+                            <div className="max-w-2xl px-2">
+                               <HadithCard 
+                                 hadith={currentHadith} 
+                                 progress={hadithProgress} 
+                                 onUpdate={updateHadithProgress} 
+                                 variant="hero"
+                               />
+                            </div>
+                          </section>
                         )}
 
                         {/* Subjects Carousel */}
