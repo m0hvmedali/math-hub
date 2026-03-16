@@ -54,6 +54,8 @@ interface SpotifyContextType {
   skipNext: () => Promise<void>;
   skipPrev: () => Promise<void>;
   searchSpotify: (query: string) => Promise<SpotifySearchResult[]>;
+  volume: number;
+  setVolume: (v: number) => Promise<void>;
 }
 
 const SpotifyContext = createContext<SpotifyContextType | undefined>(undefined);
@@ -76,6 +78,10 @@ export const SpotifyProvider: React.FC<{ children: React.ReactNode }> = ({ child
   const [deviceId, setDeviceId] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [currentTrack, setCurrentTrack] = useState<CurrentTrack | null>(null);
+  const [volume, setVolumeState] = useState(() => {
+    const saved = localStorage.getItem('spotify_volume');
+    return saved ? parseFloat(saved) : 0.5;
+  });
   const refreshPromise = useRef<Promise<string | null> | null>(null);
   const lastRefreshAttempt = useRef<number>(0);
   const REFRESH_COOLDOWN = 30000; // 30 seconds minimum between hard failures
@@ -230,7 +236,7 @@ export const SpotifyProvider: React.FC<{ children: React.ReactNode }> = ({ child
             cb(existingToken || "");
           }
         },
-        volume: 0.5
+        volume: volume
       });
 
       setPlayer(spPlayer);
@@ -403,8 +409,20 @@ export const SpotifyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     }
   });
 
+  const setVolume = useCallback(async (v: number) => {
+    if (player) {
+      await player.setVolume(v);
+      setVolumeState(v);
+      localStorage.setItem('spotify_volume', v.toString());
+    }
+  }, [player]);
+
   return (
-    <SpotifyContext.Provider value={{ token, player, deviceId, isConnected, currentTrack, login, playPlaylist, playTrack, pause, resume, skipNext, skipPrev, searchSpotify }}>
+    <SpotifyContext.Provider value={{ 
+      token, player, deviceId, isConnected, currentTrack, 
+      login, playPlaylist, playTrack, pause, resume, 
+      skipNext, skipPrev, searchSpotify, volume, setVolume 
+    }}>
       {children}
     </SpotifyContext.Provider>
   );
