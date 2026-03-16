@@ -26,6 +26,7 @@ const Navigation: React.FC = () => {
         { id: 'labs', label: language === 'ar' ? 'المعامل' : 'Labs', path: '/labs', icon: BeakerIcon },
         { id: 'schedule', label: language === 'ar' ? 'الجدول' : 'Schedule', path: '/schedule', icon: ClockIcon },
         { id: 'timer', label: language === 'ar' ? 'المؤقت' : 'Timer', path: '/timer', icon: ClockIcon },
+        { id: 'analysis', label: language === 'ar' ? 'التحليلات' : 'Analysis', path: '/daily-analysis', icon: TrendingUpIcon },
     ];
 
     const [isMenuOpen, setIsMenuOpen] = React.useState(false);

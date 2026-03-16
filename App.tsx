@@ -696,6 +696,10 @@ const App: React.FC = () => {
                         <GlobeIcon className="w-6 h-6" />
                         <span className="text-[10px] font-black uppercase tracking-widest">{language === 'ar' ? 'المواد' : 'Materials'}</span>
                     </a>
+                    <a href="#/daily-analysis" className="flex flex-col items-center gap-1 text-[var(--text-muted)] hover:text-brand-cyan transition-colors z-[100]">
+                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+                        <span className="text-[10px] font-black uppercase tracking-widest">{language === 'ar' ? 'التحليلات' : 'Analysis'}</span>
+                    </a>
                     <a href="#/schedule" className="flex flex-col items-center gap-1 text-[var(--text-muted)] hover:text-brand-cyan transition-colors z-[100]">
                         <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                         <span className="text-[10px] font-black uppercase tracking-widest">{language === 'ar' ? 'الجدول' : 'Schedule'}</span>
