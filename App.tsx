@@ -32,6 +32,9 @@ import MeasuringDevicesLab from './pages/MeasuringDevicesLab';
 import OrganicLabPage from './pages/OrganicLabPage';
 import { useCosmicStore } from './store/useCosmicStore';
 import { supabase, isSupabaseConfigured } from './supabaseClient';
+import { TimerProvider } from './store/TimerProvider';
+import { SpotifyProvider } from './store/SpotifyProvider';
+import AnalysisPage from './pages/AnalysisPage';
 import { rebuildSearchIndex, searchRadar, SearchResult, fetchTavilyResults } from './utils/searchRadar';
 
 export const AppContext = createContext<{
@@ -596,7 +599,9 @@ const App: React.FC = () => {
     };
 
     return (
-        <AppContext.Provider value={{
+        <SpotifyProvider>
+        <TimerProvider>
+            <AppContext.Provider value={{
             subjects, isLoading, user, login,
             language, setLanguage,
             theme, toggleTheme,
@@ -650,7 +655,7 @@ const App: React.FC = () => {
                         <Route path="/explain/:subjectId/:branchId/:lessonId" element={<ExplainLessonPage />} />
                         <Route path="/history" element={<ProtectedRoute><HistoryPage /></ProtectedRoute>} />
                         <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
-                        <Route path="*" element={<Navigate to={user ? "/" : "/login"} />} />
+                        <Route path="/analysis" element={<ProtectedRoute><AnalysisPage /></ProtectedRoute>} />
                     </Routes>
                 </main>
             </div>
@@ -706,6 +711,8 @@ const App: React.FC = () => {
                 </div>
             )}
         </AppContext.Provider>
+        </TimerProvider>
+        </SpotifyProvider>
     );
 };
 
