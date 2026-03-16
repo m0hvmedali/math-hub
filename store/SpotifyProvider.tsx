@@ -21,6 +21,14 @@ const base64encode = (input: ArrayBuffer) => {
     .replace(/\//g, '_');
 }
 
+export interface SpotifySearchResult {
+  uri: string;
+  name: string;
+  artist: string;
+  image: string;
+  type: 'track' | 'playlist';
+}
+
 interface SpotifyContextType {
   token: string | null;
   player: Spotify.Player | null;
@@ -30,6 +38,7 @@ interface SpotifyContextType {
   playPlaylist: (uri: string) => Promise<void>;
   pause: () => Promise<void>;
   resume: () => Promise<void>;
+  searchSpotify: (query: string) => Promise<SpotifySearchResult[]>;
 }
 
 const SpotifyContext = createContext<SpotifyContextType | undefined>(undefined);
@@ -176,8 +185,36 @@ export const SpotifyProvider: React.FC<{ children: React.ReactNode }> = ({ child
     if (player) await player.resume();
   };
 
+  const searchSpotify = async (query: string): Promise<SpotifySearchResult[]> => {
+    if (!token || !query) return [];
+    try {
+      const res = await fetch(`https://api.spotify.com/v1/search?q=${encodeURIComponent(query)}&type=track,playlist&limit=8`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await res.json();
+      const results: SpotifySearchResult[] = [];
+
+      if (data.playlists?.items) {
+          data.playlists.items.forEach((p: any) => {
+              if (p) results.push({ type: 'playlist', uri: p.uri, name: p.name, artist: 'Playlist', image: p.images?.[0]?.url });
+          });
+      }
+      if (data.tracks?.items) {
+          data.tracks.items.forEach((t: any) => {
+              if (t) results.push({ type: 'track', uri: t.uri, name: t.name, artist: t.artists?.[0]?.name, image: t.album?.images?.[0]?.url });
+          });
+      }
+      return results;
+    } catch (e) {
+      console.error("Spotify Search Error", e);
+      return [];
+    }
+  };
+
   return (
-    <SpotifyContext.Provider value={{ token, player, deviceId, isConnected, login, playPlaylist, pause, resume }}>
+    <SpotifyContext.Provider value={{ token, player, deviceId, isConnected, login, playPlaylist, pause, resume, searchSpotify }}>
       {children}
     </SpotifyContext.Provider>
   );
