@@ -1,10 +1,11 @@
-import React, { useMemo, useCallback, useRef, useEffect, useState } from 'react';
+import React, { useMemo, useCallback, useRef, useEffect, useState, useContext } from 'react';
 import cytoscape from 'cytoscape';
 import { useCosmicStore } from '../store/useCosmicStore';
 import { Subject, CustomNode, ManualLink } from '../types';
 import { useNavigate } from 'react-router-dom';
 import { PlusIcon, LinkIcon } from './Icons';
 import { useHubCore } from '../utils/HubCore';
+import { AppContext } from '../App';
 
 interface CosmicGraphProps {
     subjects: Subject[];
