@@ -8,6 +8,7 @@ import { detectMagicLink } from '../utils/detectMagicLink';
 import { supabase } from '../supabaseClient';
 import { QuickNote } from '../components/FloatingQuickNote';
 import { NavLink } from 'react-router-dom';
+import { useHubCore } from '../utils/HubCore';
 
 const SubjectPage: React.FC = () => {
     const { subjectId } = useParams<{ subjectId: string }>();
@@ -26,6 +27,17 @@ const SubjectPage: React.FC = () => {
 
     const subject = getSubject(subjectId!);
     
+    // Register with HubCore
+    useHubCore({
+      id: `SubjectPage_${subjectId}`,
+      state: { subjectName: subject?.name, activeTab },
+      actions: {
+        setTab: (tab: string) => setActiveTab(tab as any),
+        openBranch: (branchId: string) => navigate(`/subject/${subjectId}/branch/${branchId}`)
+      }
+    });
+
+    const [isSaving, setIsSaving] = useState(false);
     // Safety Guard: Explicitly ensure sidebar is closed on mount or when subject changes
     React.useEffect(() => {
         setIsSidebarOpen(false);

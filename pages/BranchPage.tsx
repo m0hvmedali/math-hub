@@ -18,6 +18,7 @@ import Sidebar from '../components/Sidebar';
 import LessonSidebar from '../components/LessonSidebar';
 import ContentTile from '../components/ContentTile';
 import ReactMarkdown from 'react-markdown';
+import { useHubCore } from '../utils/HubCore';
 import { useLessonProgress } from '../hooks/useLessonProgress';
 import remarkGfm from 'remark-gfm';
 import { translations } from '../utils/translations';
@@ -380,6 +381,17 @@ const BranchPage: React.FC = () => {
 
     // Focus Mode State (Always Active in OTT)
     const [focusedBlockIndex, setFocusedBlockIndex] = useState<number>(0);
+
+    // Register with HubCore
+    useHubCore({
+      id: `BranchPage_${lessonId}`,
+      state: { lessonName: activeLesson?.name, focusedBlockIndex },
+      actions: {
+        nextBlock: () => setFocusedBlockIndex(p => Math.min(p + 1, (activeLesson?.content?.length || 1) - 1)),
+        prevBlock: () => setFocusedBlockIndex(p => Math.max(0, p - 1)),
+        jumpToBlock: (idx: number) => setFocusedBlockIndex(idx)
+      }
+    });
 
     // Flashcard Gallery State
     const [isFlashcardViewerOpen, setIsFlashcardViewerOpen] = useState(false);

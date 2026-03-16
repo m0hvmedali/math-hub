@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { supabase } from '../supabaseClient';
 import { PomodoroPhase, StudySession, TimerState } from '../types/pomodoro';
 import { ThemeManager } from '../utils/ThemeManager';
+import { useHubCore } from '../utils/HubCore';
 
 interface TimerContextType extends TimerState {
   startStudy: () => Promise<void>;
@@ -24,6 +25,20 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     sessionId: null,
     startTime: null,
     targetEndTime: null,
+  });
+
+  // Register with HubCore
+  useHubCore({
+    id: 'TimerService',
+    state: state,
+    actions: {
+      startStudy: () => startStudy(),
+      startBreak: () => startBreak(),
+      pause: () => pauseTimer(),
+      resume: () => resumeTimer(),
+      stop: () => stopTimer(),
+      reset: () => { stopTimer(); setState(prev => ({ ...prev, remainingSeconds: STUDY_DURATION })); }
+    }
   });
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);

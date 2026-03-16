@@ -1,6 +1,7 @@
 /// <reference types="../types/spotify" />
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { supabase } from '../supabaseClient';
+import { useHubCore } from '../utils/HubCore';
 
 // PKCE Helper Functions
 const generateRandomString = (length: number) => {
@@ -264,6 +265,20 @@ export const SpotifyProvider: React.FC<{ children: React.ReactNode }> = ({ child
       return [];
     }
   }, [token]);
+
+  // Register with HubCore
+  useHubCore({
+    id: 'SpotifyService',
+    state: { isConnected, token: !!token },
+    actions: {
+      login: () => login(),
+      play: (uri?: string) => uri ? playPlaylist(uri) : resume(),
+      pause: () => pause(),
+      next: () => skipNext(),
+      prev: () => skipPrev(),
+      search: (q: string) => searchSpotify(q)
+    }
+  });
 
   return (
     <SpotifyContext.Provider value={{ token, player, deviceId, isConnected, currentTrack, login, playPlaylist, playTrack, pause, resume, skipNext, skipPrev, searchSpotify }}>

@@ -17,6 +17,7 @@ import SocraticBot from '../components/SocraticBot';
 import NodeInjectorModal from '../components/NodeInjectorModal';
 import CourseCard from '../components/CourseCard';
 import MaterialCard from '../components/MaterialCard';
+import { useHubCore } from '../utils/HubCore';
 
 const DashboardPage: React.FC = () => {
     const { subjects, addSubject, updateSubject, deleteSubject, addStudySession, studySessions, language, setLanguage, user, customNodes, addCustomNode, manualLinks, addManualLink, tasks, knowledgeErrors, addLessonToBranch } = useContext(AppContext) as any;
@@ -38,6 +39,17 @@ const DashboardPage: React.FC = () => {
     const isOwner = true;
 
     const t = translations[language];
+    
+    // Register Dashboard with HubCore
+    useHubCore({
+      id: 'DashboardPage',
+      state: { activeView, subjectsCount: subjects.length },
+      actions: {
+        navigate: (path: string) => navigate(path),
+        refresh: () => window.location.reload()
+      }
+    });
+
     const [greeting, setGreeting] = useState('');
     const [quote, setQuote] = useState('');
     const [isInjectorOpen, setIsInjectorOpen] = useState(false);
