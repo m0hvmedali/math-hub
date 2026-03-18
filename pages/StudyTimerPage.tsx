@@ -7,6 +7,8 @@ import { SparkleIcon, PlayIcon, PauseIcon, BookOpenIcon } from '../components/Ic
 import { useHubCore } from '../utils/HubCore';
 import WisdomOverlay from '../components/WisdomOverlay';
 import BismillahGreeting from '../components/BismillahGreeting';
+import { calculateLevel } from '../utils/statsManager';
+import { supabase } from '../supabaseClient';
 
 const AMBIENT_SOUNDS = [
   { id: 'lofi', name: 'Lo-Fi Chill', url: 'https://cdn.pixabay.com/audio/2022/05/27/audio_1808fbf07a.mp3' },
@@ -15,13 +17,33 @@ const AMBIENT_SOUNDS = [
 ];
 
 const StudyTimerPage: React.FC = () => {
-  const { language, currentWisdom, wisdomProgress, fetchNextWisdom, updateWisdomProgress } = useContext(AppContext) as any;
+  const { language, currentWisdom, wisdomProgress, fetchNextWisdom, updateWisdomProgress, user } = useContext(AppContext) as any;
   const { phase } = useTimer();
   const [isDeepFocus, setIsDeepFocus] = React.useState(false);
   const [showWisdom, setShowWisdom] = React.useState(false);
   const [activeAmbient, setActiveAmbient] = React.useState<string | null>(null);
   const [showBismillah, setShowBismillah] = React.useState(false);
   const audioRef = React.useRef<HTMLAudioElement | null>(null);
+  const [totalMinutes, setTotalMinutes] = React.useState(0);
+
+  // Fetch total study time for leveling
+  React.useEffect(() => {
+    const fetchTotalTime = async () => {
+        if (!user || !supabase) return;
+        const { data } = await supabase
+            .from('study_stats')
+            .select('total_study_minutes')
+            .eq('user_id', user);
+        
+        if (data) {
+            const total = data.reduce((acc, curr) => acc + curr.total_study_minutes, 0);
+            setTotalMinutes(total);
+        }
+    };
+    fetchTotalTime();
+  }, [user, phase]); // Re-fetch when phase changes (to update level after session)
+
+  const studyLevel = calculateLevel(totalMinutes);
 
   // Register with HubCore
   useHubCore({
@@ -120,9 +142,27 @@ const StudyTimerPage: React.FC = () => {
       </header>
 
       {/* Main Timer Display */}
-      <div className="glass-card p-8 md:p-16 relative overflow-hidden" onClick={() => phase === 'idle' && setShowBismillah(true)}>
-        <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--secondary-color)] opacity-5 blur-[100px] rounded-full" />
-        <PomodoroTimer />
+      <div className="relative">
+        <div className="glass-card p-8 md:p-16 relative overflow-hidden" onClick={() => phase === 'idle' && setShowBismillah(true)}>
+            <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--secondary-color)] opacity-5 blur-[100px] rounded-full" />
+            <PomodoroTimer />
+        </div>
+
+        {/* Level Badge Overlay */}
+        <div className="absolute -top-4 -right-4 md:top-8 md:right-8 group">
+            <div className="relative">
+                <div className="absolute inset-0 bg-[var(--primary-color)] blur-xl opacity-20 group-hover:opacity-40 transition-opacity" />
+                <div className="relative glass-card px-6 py-3 border border-[var(--primary-color)]/30 backdrop-blur-md flex items-center gap-3 animate-premium-fade">
+                    <div className="w-8 h-8 rounded-lg bg-[var(--primary-color)]/20 flex items-center justify-center">
+                        <SparkleIcon className="w-4 h-4 text-[var(--primary-color)]" />
+                    </div>
+                    <div>
+                        <div className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 leading-none mb-1">Neural Rank</div>
+                        <div className="text-xl font-black text-white leading-none">Level {studyLevel.level}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
       </div>
 
       <div className={`mt-12 flex flex-col md:flex-row gap-8 justify-center transition-opacity duration-700 ${isDeepFocus ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>

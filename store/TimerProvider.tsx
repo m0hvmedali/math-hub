@@ -3,6 +3,7 @@ import { supabase } from '../supabaseClient';
 import { PomodoroPhase, StudySession, TimerState } from '../types/pomodoro';
 import { ThemeManager } from '../utils/ThemeManager';
 import { useHubCore } from '../utils/HubCore';
+import { updateStudyStats } from '../utils/statsManager';
 
 interface TimerContextType extends TimerState {
   startStudy: () => Promise<void>;
@@ -65,25 +66,84 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
       if (activeSession && !error) {
         const now = Date.now();
+        const startTime = new Date(activeSession.session_start_time).getTime();
         const targetEnd = new Date(activeSession.target_end_time).getTime();
-        let remaining = Math.max(0, Math.floor((targetEnd - now) / 1000));
+        const phase = activeSession.current_phase as PomodoroPhase;
+        
+        if (phase === 'study' || phase === 'break') {
+          if (now > targetEnd) {
+              // Timer finished while user was away!
+              // Calculate how many cycles passed
+              const totalElapsedMs = now - startTime;
+              const studyCycleMs = STUDY_DURATION * 1000;
+              const breakCycleMs = BREAK_DURATION * 1000;
+              const fullCycleMs = studyCycleMs + breakCycleMs;
+              
+              const completedFullCycles = Math.floor(totalElapsedMs / fullCycleMs);
+              const remainingMs = totalElapsedMs % fullCycleMs;
+              
+              // 1. Record completed study sessions
+              if (completedFullCycles > 0) {
+                  const totalMinutes = completedFullCycles * (STUDY_DURATION / 60);
+                  await updateStudyStats(userId, totalMinutes, true);
+              }
+              
+              // 2. Determine current phase based on remaining time in the current cycle
+              let currentPhase: PomodoroPhase = 'study';
+              let currentRemaining = 0;
+              let currentTargetEnd = now;
+              
+              if (remainingMs < studyCycleMs) {
+                  currentPhase = 'study';
+                  currentRemaining = Math.max(0, Math.floor((studyCycleMs - remainingMs) / 1000));
+                  currentTargetEnd = now + currentRemaining * 1000;
+              } else {
+                  currentPhase = 'break';
+                  currentRemaining = Math.max(0, Math.floor((fullCycleMs - remainingMs) / 1000));
+                  currentTargetEnd = now + currentRemaining * 1000;
+                  ThemeManager.applyTheme(ThemeManager.generatePalette());
+              }
 
-        if (activeSession.current_phase === 'paused') {
+              // Update database with new corrected state
+              await supabase
+                .from('study_sessions')
+                .update({ 
+                    current_phase: currentPhase,
+                    target_end_time: new Date(currentTargetEnd).toISOString() 
+                })
+                .eq('id', activeSession.id);
+
+              setState({
+                phase: currentPhase,
+                sessionId: activeSession.id,
+                startTime: startTime,
+                targetEndTime: currentTargetEnd,
+                remainingSeconds: currentRemaining,
+                totalSeconds: currentPhase === 'study' ? STUDY_DURATION : BREAK_DURATION,
+              });
+          } else {
+              // Still within the current phase
+              setState({
+                phase,
+                sessionId: activeSession.id,
+                startTime,
+                targetEndTime: targetEnd,
+                remainingSeconds: Math.max(0, Math.floor((targetEnd - now) / 1000)),
+                totalSeconds: phase === 'study' ? STUDY_DURATION : BREAK_DURATION,
+              });
+              if (phase === 'break') ThemeManager.applyTheme(ThemeManager.generatePalette());
+          }
+        } else if (phase === 'paused') {
             const pausedAt = new Date(activeSession.paused_at).getTime();
-            remaining = Math.max(0, Math.floor((targetEnd - pausedAt) / 1000));
-        }
-
-        setState({
-          phase: activeSession.current_phase as PomodoroPhase,
-          sessionId: activeSession.id,
-          startTime: new Date(activeSession.session_start_time).getTime(),
-          targetEndTime: targetEnd,
-          remainingSeconds: remaining,
-          totalSeconds: activeSession.current_phase === 'study' ? STUDY_DURATION : BREAK_DURATION,
-        });
-
-        if (activeSession.current_phase === 'break') {
-            ThemeManager.applyTheme(ThemeManager.generatePalette());
+            const remaining = Math.max(0, Math.floor((targetEnd - pausedAt) / 1000));
+            setState({
+              phase: 'paused',
+              sessionId: activeSession.id,
+              startTime,
+              targetEndTime: targetEnd,
+              remainingSeconds: remaining,
+              totalSeconds: STUDY_DURATION, // Assume study if paused
+            });
         }
       }
     };
@@ -114,12 +174,17 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [state.phase]);
 
   const handlePhaseEnd = async (currentPhase: PomodoroPhase) => {
+    const userId = localStorage.getItem('study_user');
     if (currentPhase === 'study') {
-      alert("Study session complete! Time for a break.");
+      if (userId) {
+        // Record completed session
+        await updateStudyStats(userId, STUDY_DURATION / 60, true);
+      }
+      alert(localStorage.getItem('study_lang') === 'ar' ? "انتهت فترة المذاكرة! وقت الاستراحة." : "Study session complete! Time for a break.");
       new Notification("Break Time!", { body: "50 minutes done! Enjoy your 10-minute break." });
       await startBreak();
     } else if (currentPhase === 'break') {
-      alert("Break complete! Back to study.");
+      alert(localStorage.getItem('study_lang') === 'ar' ? "انتهت الاستراحة! عودة للمذاكرة." : "Break complete! Back to study.");
       new Notification("Back to Work!", { body: "Break's over. Let's get focused." });
       await startStudy();
     }

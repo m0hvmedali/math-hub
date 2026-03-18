@@ -1,8 +1,9 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { AppContext } from '../App';
 import { supabase } from '../supabaseClient';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { TrophyIcon, ClockIcon, SparkleIcon, TrendingUpIcon } from '../components/Icons';
+import { calculateLevel } from '../utils/statsManager';
 
 const AnalysisPage: React.FC = () => {
   const { language, user } = useContext(AppContext);
@@ -31,6 +32,8 @@ const AnalysisPage: React.FC = () => {
     };
     fetchStats();
   }, [user]);
+
+  const studyLevel = calculateLevel(summary.totalProposed);
 
   return (
     <div className="p-6 md:p-16 max-w-[1400px] mx-auto min-h-screen animate-cinematic">
@@ -66,12 +69,22 @@ const AnalysisPage: React.FC = () => {
           <div className="text-3xl font-black text-white">{summary.completedSessions}</div>
           <div className="text-[10px] font-black uppercase tracking-widest text-gray-500">Cycles Completed</div>
         </div>
-        <div className="glass-card p-8 space-y-2">
+        <div className="glass-card p-8 space-y-2 border-2 border-[var(--primary-color)]/20 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-24 h-24 bg-[var(--primary-color)] opacity-5 blur-3xl rounded-full" />
           <div className="w-10 h-10 rounded-xl bg-yellow-500/10 flex items-center justify-center mb-4">
             <SparkleIcon className="w-5 h-5 text-yellow-500" />
           </div>
-          <div className="text-3xl font-black text-white">92%</div>
-          <div className="text-[10px] font-black uppercase tracking-widest text-gray-500">Focus Efficiency</div>
+          <div className="flex items-end gap-2">
+            <div className="text-4xl font-black text-white">LVL {studyLevel.level}</div>
+            <div className="text-xs font-bold text-gray-500 mb-1">({studyLevel.currentXP}/{studyLevel.nextLevelXP} XP)</div>
+          </div>
+          <div className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-2">Cognitive Rank</div>
+          <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-gradient-to-r from-[var(--primary-color)] to-[var(--secondary-color)] rounded-full transition-all duration-1000 shadow-[0_0_10px_var(--primary-color)]" 
+              style={{ width: `${studyLevel.progress}%` }} 
+            />
+          </div>
         </div>
       </div>
 
