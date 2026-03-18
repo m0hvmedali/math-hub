@@ -27,13 +27,7 @@ const DriveBrowserModal: React.FC<DriveBrowserModalProps> = ({ isOpen, onClose }
   const loadFolder = async (folderId: string | null) => {
     setIsLoading(true);
     try {
-      let q = '';
-      if (folderId) {
-        q = `'${folderId}' in parents and trashed=false`;
-      } else {
-        q = "'root' in parents and trashed=false";
-      }
-      const res = await drive.search(q || '');
+      const res = await drive.listFolder(folderId || 'root');
       setFiles(res.files || []);
       setCurrentFolderId(folderId);
     } catch {

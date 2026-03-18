@@ -5,12 +5,34 @@ const UPLOAD_URL = 'https://www.googleapis.com/upload/drive/v3';
 
 class DriveService {
   /**
-   * Search files in Google Drive
+   * Search files in Google Drive by name
+   * Uses proper Drive API query syntax: name contains 'term'
    */
-  public async search(query: string) {
-    // Add default fields to get useful info like webViewLink and iconLink
-    const res = await auth.fetchWithAuth(`${BASE_URL}/files?q=${encodeURIComponent(query)}&fields=nextPageToken,files(id,name,mimeType,webViewLink,iconLink)`);
+  public async search(rawQuery: string) {
+    let q: string;
+
+    // If the caller passed a pre-built Drive query (e.g. "'root' in parents"), use it as-is
+    // Otherwise build a proper name-based search query
+    const isRawDriveQuery = rawQuery.includes(' in ') || rawQuery.includes('name ') || rawQuery.includes('mimeType');
+    if (isRawDriveQuery) {
+      q = rawQuery;
+    } else {
+      // Escape single quotes in the search term
+      const safe = rawQuery.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+      q = `name contains '${safe}' and trashed=false`;
+    }
+
+    const res = await auth.fetchWithAuth(
+      `${BASE_URL}/files?q=${encodeURIComponent(q)}&fields=nextPageToken,files(id,name,mimeType,webViewLink,iconLink,size)&orderBy=modifiedTime desc`
+    );
     return res.json();
+  }
+
+  /**
+   * List files directly inside a folder (using 'X in parents' Drive query)
+   */
+  public async listFolder(folderId: string = 'root') {
+    return this.search(`'${folderId}' in parents and trashed=false`);
   }
 
   /**
