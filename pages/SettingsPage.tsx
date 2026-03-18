@@ -16,7 +16,7 @@ const SettingsPage: React.FC = () => {
     setTestStatus(prev => ({ ...prev, google: 'loading' }));
     try {
       // Test by fetching task lists (lightweight)
-      await googleTasks.getTaskLists();
+      await googleTasks.getLists();
       setTestStatus(prev => ({ ...prev, google: 'success' }));
       setTimeout(() => setTestStatus(prev => ({ ...prev, google: 'idle' })), 3000);
     } catch (err) {

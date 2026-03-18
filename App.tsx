@@ -50,6 +50,11 @@ import { initializeAssistantCommands } from './utils/AssistantCommands';
 import WisdomLibraryPage from './pages/WisdomLibraryPage';
 import FloatingWisdom from './components/FloatingWisdom';
 import { WisdomItem, useWisdom } from './hooks/useWisdom';
+import GmailPage from './pages/GmailPage';
+import GoogleServicesFAB from './components/GoogleServicesFAB';
+import DriveBrowserModal from './components/DriveBrowserModal';
+import YouTubeBrowserModal from './components/YouTubeBrowserModal';
+
 
 export const AppContext = createContext<{
     subjects: Subject[];
@@ -180,6 +185,8 @@ const App: React.FC = () => {
     const [theme, setThemeState] = useState<'dark' | 'light'>((localStorage.getItem('study_theme') as 'dark' | 'light') || 'dark');
     const [isAssistantOpen, setIsAssistantOpen] = useState(false);
     const [isSearchOpen, setIsSearchOpen] = useState(false);
+    const [isDriveOpen, setIsDriveOpen] = useState(false);
+    const [isYouTubeOpen, setIsYouTubeOpen] = useState(false);
 
     const { currentWisdom, progress: wisdomProgress, fetchNextWisdom, updateProgress: updateWisdomProgress } = useWisdom(user);
 
@@ -751,6 +758,17 @@ const App: React.FC = () => {
                 {user && <FloatingQuickNote />}
                 {user && <AssistantOverlay isOpen={isAssistantOpen} onClose={() => setIsAssistantOpen(false)} />}
                 {user && <SearchOverlay isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />}
+                {user && <DriveBrowserModal isOpen={isDriveOpen} onClose={() => setIsDriveOpen(false)} />}
+                {user && <YouTubeBrowserModal isOpen={isYouTubeOpen} onClose={() => setIsYouTubeOpen(false)} />}
+                {user && (
+                    <GoogleServicesFAB
+                        onOpenGmail={() => { window.location.href = '/gmail'; }}
+                        onOpenCalendar={() => window.open('https://calendar.google.com', '_blank')}
+                        onOpenTasks={() => window.open('https://tasks.google.com', '_blank')}
+                        onOpenDrive={() => setIsDriveOpen(true)}
+                        onOpenYouTube={() => setIsYouTubeOpen(true)}
+                    />
+                )}
                 {user && (
                     <div className="px-6 py-4 max-w-7xl mx-auto w-full">
                         <NeuralNotifications />
@@ -790,6 +808,7 @@ const App: React.FC = () => {
                         <Route path="/analysis" element={<ProtectedRoute><AnalysisPage /></ProtectedRoute>} />
                         <Route path="/notes" element={<ProtectedRoute><NotesPage /></ProtectedRoute>} />
                         <Route path="/wisdom" element={<ProtectedRoute><WisdomLibraryPage /></ProtectedRoute>} />
+                        <Route path="/gmail" element={<ProtectedRoute><GmailPage /></ProtectedRoute>} />
                     </Routes>
                 </main>
             </div>
