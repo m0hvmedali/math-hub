@@ -24,7 +24,7 @@ class GoogleAuthManager {
   private static instance: GoogleAuthManager;
   private tokenClient: any = null;
   private currentToken: string | null = localStorage.getItem('omni_access_token');
-  private clientId: string = import.meta.env.VITE_GOOGLE_CLIENT_ID || (window as any).GOOGLE_CLIENT_ID || '';
+  private clientId: string = import.meta.env.VITE_GOOGLE_CLIENT_ID || '437211221154-mmtmoo9m4l4o3m5kilejpiaj05nobkhk.apps.googleusercontent.com';
 
   private constructor() {}
 

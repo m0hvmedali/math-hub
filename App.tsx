@@ -721,7 +721,7 @@ const App: React.FC = () => {
     return (
         <>
             <GlobalNavigationTracker />
-            <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || (window as any).GOOGLE_CLIENT_ID || 'dummy-client-id'}>
+            <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || '437211221154-mmtmoo9m4l4o3m5kilejpiaj05nobkhk.apps.googleusercontent.com'}>
             <TasksProvider>
             <SpotifyProvider>
         <TimerProvider>
