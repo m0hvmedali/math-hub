@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
 import { WeeklySchedule, AnalysisResponse, GradeLevel, MotivationalMessage, VoiceTutorResponse, AiStructuredResponse } from "../types";
-import { Mistral } from '@mistralai/mistralai';
+import { routeAI } from '../services/ai-router';
 
 
 // Helper to parse raw quote string into Structured Message
@@ -125,161 +125,37 @@ const SYSTEM_INSTRUCTION = `
 
 
 
-// --- CONSTANTS & CONFIG ---
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY;
-const MISTRAL_API_KEY = import.meta.env.VITE_MISTRAL_API_KEY;
-
-// --- PROVIDER IMPLEMENTATIONS ---
-
-// 1. GROQ PROVIDER (Priority: 1 - Fastest & Free)
-async function callGroq(prompt: string, systemInstruction: string): Promise<string> {
-    if (!GROQ_API_KEY) throw new Error("Groq API Key missing");
-
-    const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: {
-            "Authorization": `Bearer ${GROQ_API_KEY}`,
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            model: "llama-3.1-8b-instant",
-            messages: [
-                { role: "system", content: systemInstruction + "\n\nIMPORTANT: Return ONLY valid JSON." },
-                { role: "user", content: prompt }
-            ],
-            temperature: 0.7,
-            response_format: { type: "json_object" }
-        })
+// --- MAIN DISPATCHER (delegating to centralized AI Router) ---
+async function generateAIContent(prompt: string, systemInstruction: string, json = false): Promise<string> {
+    const res = await routeAI({
+        prompt,
+        systemInstruction,
+        task: json ? 'json' : 'chat',
+        responseFormat: json ? 'json' : 'text',
     });
-
-    if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(`Groq Error: ${response.status} - ${errText}`);
-    }
-    const data = await response.json();
-    return data.choices[0].message.content;
+    return res.text;
 }
 
-// 2. MISTRAL PROVIDER (Priority: 2 - Reliable Fallback)
-async function callMistral(prompt: string, systemInstruction: string): Promise<string> {
-    if (!MISTRAL_API_KEY) throw new Error("Mistral API Key missing");
-
-    const client = new Mistral({ apiKey: MISTRAL_API_KEY });
-
-    // Using 'ministral-3b-latest' as requested
-    const result = await client.chat.complete({
-        model: 'ministral-3b-latest',
-        messages: [
-            { role: 'system', content: systemInstruction + "\n\nOutput strictly valid JSON." },
-            { role: 'user', content: prompt }
-        ],
-        responseFormat: { type: 'json_object' },
-        temperature: 0.7,
-    });
-
-    if (!result.choices || result.choices.length === 0) throw new Error("Mistral Empty Response");
-
-    const content = result.choices[0].message.content;
-    if (typeof content === 'string') return content;
-    return JSON.stringify(content);
-}
-
-// 3. GEMINI PROVIDER (Priority: 3 - Standard Fallback)
-async function callGemini(prompt: string, systemInstruction: string): Promise<string> {
-    if (!GEMINI_API_KEY) throw new Error("Gemini API Key missing");
-    const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-
-    // FIX: Gemini 400 error occurs when 'tools' (Google Search) is combined with 'responseMimeType: application/json'.
-    // We disable tools here to ensure JSON validity for the app's core functions.
-
-    const model = genAI.getGenerativeModel({
-        model: "gemini-2.5-flash",
-        systemInstruction: systemInstruction
-    });
-
-    const result = await model.generateContent({
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        generationConfig: {
-            responseMimeType: "application/json"
-        }
-    });
-
-    return result.response.text();
-}
-
-// Helper to safely parse JSON with aggressive cleanup and Deep Merge with Fallback
+// Helper to safely parse JSON with aggressive cleanup and fallback merge
 function safeJsonParse<T>(text: string, fallback: T): T {
     try {
-        // 1. Remove Markdown code blocks
         let cleanText = text.replace(/```json\s*/g, "").replace(/```\s*/g, "");
-
-        // 2. Extract JSON object (find first '{' and last '}')
         const firstOpen = cleanText.indexOf('{');
         const lastClose = cleanText.lastIndexOf('}');
-
         if (firstOpen !== -1 && lastClose !== -1 && lastClose > firstOpen) {
             cleanText = cleanText.substring(firstOpen, lastClose + 1);
         }
-
-        // 3. Attempt Parse
         const parsed = JSON.parse(cleanText);
-
-        // 4. Merge with fallback to ensure all fields exist (Deep Mergeish)
         return { ...fallback, ...parsed };
-
     } catch (e) {
-        console.warn("⚠️ JSON Parse Failed. Attempting simple fixes...", e);
         try {
-            // 5. Try basic fixes (e.g., trailing commas)
             const fixedText = text.replace(/,\s*([\]}])/g, '$1');
-            const parsed = JSON.parse(fixedText);
-            return { ...fallback, ...parsed };
-        } catch (e2) {
-            console.error("❌ Critical JSON Parse Error:", text);
+            return { ...fallback, ...JSON.parse(fixedText) };
+        } catch {
             return fallback;
         }
     }
 }
-
-// --- MAIN DISPATCHER (WATERFALL STRATEGY) ---
-async function generateAIContent(prompt: string, systemInstruction: string): Promise<string> {
-    const errors: string[] = [];
-
-    // 1. Attempt Groq
-    if (GROQ_API_KEY) {
-        try {
-            console.log("🚀 AI: Attempting Groq...");
-            return await callGroq(prompt, systemInstruction);
-        } catch (e: any) {
-            console.warn("⚠️ Groq Failed:", e.message);
-            errors.push(`Groq: ${e.message}`);
-        }
-    }
-
-    // 2. Attempt Mistral
-    if (MISTRAL_API_KEY) {
-        try {
-            console.log("🛡️ AI: Attempting Mistral...");
-            return await callMistral(prompt, systemInstruction);
-        } catch (e: any) {
-            console.warn("⚠️ Mistral Failed:", e.message);
-            errors.push(`Mistral: ${e.message}`);
-        }
-    }
-
-    // 3. Attempt Gemini
-    try {
-        console.log("💎 AI: Attempting Gemini...");
-        return await callGemini(prompt, systemInstruction);
-    } catch (e: any) {
-        console.error("❌ Gemini Failed:", e.message);
-        errors.push(`Gemini: ${e.message}`);
-    }
-
-    throw new Error("All AI Providers Failed: " + errors.join(" | "));
-}
-
 
 export const analyzeDayAndPlan = async (
     dailyReflection: string,

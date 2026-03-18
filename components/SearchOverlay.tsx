@@ -21,6 +21,25 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose }) => {
     const [isSearchingCloud, setIsSearchingCloud] = useState(false);
     const { drive, youtube } = useGoogleOmni();
 
+    // Search scope controls
+    type Scope = 'local' | 'drive' | 'youtube' | 'web';
+    const ALL_SCOPES: Scope[] = ['local', 'drive', 'youtube', 'web'];
+    const SCOPE_LABELS: Record<Scope, string> = {
+        local: '📂 التطبيق',
+        drive: '☁️ Drive',
+        youtube: '▶️ YouTube',
+        web: '🌐 الويب'
+    };
+    const [activeScopes, setActiveScopes] = useState<Scope[]>(['local', 'web']);
+
+    const toggleScope = (s: Scope) => {
+        setActiveScopes(prev =>
+            prev.includes(s)
+                ? prev.filter(x => x !== s)
+                : [...prev, s]
+        );
+    };
+
     const [showSavePrompt, setShowSavePrompt] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -35,28 +54,38 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose }) => {
         const delayBounceFn = setTimeout(async () => {
             if (query.trim().length > 2) {
                 // Local Search
-                const locals = searchRadar(query);
-                setLocalResults(locals);
+                if (activeScopes.includes('local')) {
+                    setLocalResults(searchRadar(query));
+                } else {
+                    setLocalResults([]);
+                }
 
                 // Global Search & Cloud Search
                 if (user) {
-                    setIsSearchingGlobal(true);
-                    setIsSearchingCloud(true);
+                    if (activeScopes.includes('web')) {
+                        setIsSearchingGlobal(true);
+                        fetchTavilyResults(query, user)
+                            .then(res => setGlobalResults(res?.results || []))
+                            .catch(err => console.error('Global search error:', err))
+                            .finally(() => setIsSearchingGlobal(false));
+                    } else {
+                        setGlobalResults([]);
+                    }
 
-                    fetchTavilyResults(query, user)
-                        .then(res => setGlobalResults(res?.results || []))
-                        .catch(err => console.error('Global search error:', err))
-                        .finally(() => setIsSearchingGlobal(false));
-
-                    Promise.all([
-                        drive.search(query).catch(() => ({ files: [] })),
-                        youtube.searchMyVideos(query).catch(() => ({ items: [] }))
-                    ]).then(([driveRes, ytRes]) => {
-                        setDriveResults(driveRes.files || []);
-                        setYoutubeResults(ytRes.items || []);
-                    }).finally(() => {
-                        setIsSearchingCloud(false);
-                    });
+                    const needCloud = activeScopes.includes('drive') || activeScopes.includes('youtube');
+                    if (needCloud) {
+                        setIsSearchingCloud(true);
+                        Promise.all([
+                            activeScopes.includes('drive') ? drive.search(query).catch(() => ({ files: [] })) : Promise.resolve({ files: [] }),
+                            activeScopes.includes('youtube') ? youtube.searchMyVideos(query).catch(() => ({ items: [] })) : Promise.resolve({ items: [] })
+                        ]).then(([driveRes, ytRes]) => {
+                            setDriveResults((driveRes as any).files || []);
+                            setYoutubeResults((ytRes as any).items || []);
+                        }).finally(() => setIsSearchingCloud(false));
+                    } else {
+                        setDriveResults([]);
+                        setYoutubeResults([]);
+                    }
                 }
             } else {
                 setLocalResults([]);
@@ -67,7 +96,7 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose }) => {
         }, 800); // 800ms debounce
 
         return () => clearTimeout(delayBounceFn);
-    }, [query, user]);
+    }, [query, user, activeScopes]);
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -137,22 +166,41 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose }) => {
             <div className="w-full max-w-4xl bg-[#0A0A0A] border border-white/10 rounded-3xl shadow-[0_0_80px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden max-h-[85vh] relative" onClick={e => e.stopPropagation()}>
                 
                 {/* Header / Input */}
-                <div className="p-4 border-b border-white/10 flex items-center gap-4 relative bg-white/[0.02]">
-                    <svg className="w-6 h-6 text-brand-cyan shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                    <input 
-                        ref={inputRef}
-                        type="text" 
-                        value={query}
-                        onChange={(e) => setQuery(e.target.value)}
-                        placeholder={language === 'ar' ? 'ابحث في التطبيق أو الإنترنت معاً...' : 'Search app and internet globally...'}
-                        className="flex-1 bg-transparent border-none outline-none text-xl sm:text-2xl text-white placeholder-gray-500 font-black tracking-tight"
-                    />
-                    <button onClick={handleCloseAttempt} className="text-gray-500 hover:text-white p-2 rounded-xl hover:bg-white/10 transition-all outline-none border border-transparent hover:border-white/10 shrink-0">
-                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
-                    </button>
-                    
-                    {/* Progress bar visual indicator */}
-                    {(isSearchingGlobal) && (
+                <div className="p-4 border-b border-white/10 flex flex-col gap-3 relative bg-white/[0.02]">
+                    <div className="flex items-center gap-4">
+                        <svg className="w-6 h-6 text-brand-cyan shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                        <input 
+                            ref={inputRef}
+                            type="text" 
+                            value={query}
+                            onChange={(e) => setQuery(e.target.value)}
+                            placeholder={language === 'ar' ? 'ابحث...' : 'Search...'}
+                            className="flex-1 bg-transparent border-none outline-none text-xl sm:text-2xl text-white placeholder-gray-500 font-black tracking-tight"
+                        />
+                        <button onClick={handleCloseAttempt} className="text-gray-500 hover:text-white p-2 rounded-xl hover:bg-white/10 transition-all outline-none shrink-0">
+                            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                    </div>
+
+                    {/* Scope Filter Chips */}
+                    <div className="flex gap-2 flex-wrap" dir="ltr">
+                        {ALL_SCOPES.map(scope => (
+                            <button
+                                key={scope}
+                                onClick={() => toggleScope(scope)}
+                                className={`text-[11px] font-bold px-3 py-1 rounded-full border transition-all ${
+                                    activeScopes.includes(scope)
+                                        ? 'bg-brand-cyan/20 border-brand-cyan/50 text-brand-cyan shadow-[0_0_8px_rgba(0,210,200,0.2)]'
+                                        : 'bg-white/5 border-white/10 text-gray-500 hover:text-gray-300'
+                                }`}
+                            >
+                                {SCOPE_LABELS[scope]}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Loading bar */}
+                    {(isSearchingGlobal || isSearchingCloud) && (
                         <div className="absolute bottom-0 left-0 h-[2px] bg-brand-cyan animate-pulse" style={{ width: '100%' }}></div>
                     )}
                 </div>
