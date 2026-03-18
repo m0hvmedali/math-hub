@@ -153,15 +153,22 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   // Tick Logic
   useEffect(() => {
-    if ((state.phase === 'study' || state.phase === 'break') && state.remainingSeconds > 0) {
+    if (state.phase === 'study' || state.phase === 'break') {
       timerRef.current = setInterval(() => {
         setState(prev => {
-          if (prev.remainingSeconds <= 1) {
+          if (!prev.targetEndTime) return prev;
+          
+          const now = Date.now();
+          const remaining = Math.max(0, Math.floor((prev.targetEndTime - now) / 1000));
+          
+          if (remaining <= 0 && prev.remainingSeconds > 0) {
             clearInterval(timerRef.current!);
-            handlePhaseEnd(prev.phase);
+            // Trigger phase end asynchronously to avoid calling inside setState
+            setTimeout(() => handlePhaseEnd(prev.phase), 0);
             return { ...prev, remainingSeconds: 0 };
           }
-          return { ...prev, remainingSeconds: prev.remainingSeconds - 1 };
+          
+          return { ...prev, remainingSeconds: remaining };
         });
       }, 1000);
     } else {
