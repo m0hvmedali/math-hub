@@ -13,6 +13,7 @@
     "@excalidraw/excalidraw": "^0.18.0",
     "@google/generative-ai": "^0.3.0",
     "@mistralai/mistralai": "^1.5.0",
+    "@react-oauth/google": "^0.13.4",
     "@supabase/supabase-js": "^2.45.0",
     "@tavily/core": "^0.7.2",
     "@tiptap/extension-highlight": "^3.20.0",

@@ -38,6 +38,8 @@ import { useCosmicStore } from './store/useCosmicStore';
 import { supabase, isSupabaseConfigured } from './supabaseClient';
 import { TimerProvider } from './store/TimerProvider';
 import { SpotifyProvider } from './store/SpotifyProvider';
+import { GoogleOAuthProvider } from '@react-oauth/google';
+import { TasksProvider } from './store/TasksProvider';
 import AnalysisPage from './pages/AnalysisPage';
 import { ThemeManager } from './utils/ThemeManager';
 import { rebuildSearchIndex, searchRadar, SearchResult, fetchTavilyResults } from './utils/searchRadar';
@@ -714,6 +716,8 @@ const App: React.FC = () => {
     return (
         <>
             <GlobalNavigationTracker />
+            <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID || (window as any).GOOGLE_CLIENT_ID || 'dummy-client-id'}>
+            <TasksProvider>
             <SpotifyProvider>
         <TimerProvider>
             <AppContext.Provider value={{
@@ -837,6 +841,8 @@ const App: React.FC = () => {
         </AppContext.Provider>
         </TimerProvider>
         </SpotifyProvider>
+        </TasksProvider>
+        </GoogleOAuthProvider>
         </>
     );
 };

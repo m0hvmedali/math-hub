@@ -5,6 +5,7 @@ import SpotifyPlayer from '../components/SpotifyPlayer';
 import { useTimer } from '../store/TimerProvider';
 import { SparkleIcon, PlayIcon, PauseIcon, BookOpenIcon } from '../components/Icons';
 import { useHubCore } from '../utils/HubCore';
+import { useTasks } from '../store/TasksProvider';
 import WisdomOverlay from '../components/WisdomOverlay';
 import BismillahGreeting from '../components/BismillahGreeting';
 import { calculateLevel } from '../utils/statsManager';
@@ -19,6 +20,7 @@ const AMBIENT_SOUNDS = [
 const StudyTimerPage: React.FC = () => {
   const { language, currentWisdom, wisdomProgress, fetchNextWisdom, updateWisdomProgress, user } = useContext(AppContext) as any;
   const { phase } = useTimer();
+  const { accessToken, tasks, login, logout, activeTaskId, setActiveTask, completeTask, isLoading } = useTasks();
   const [isDeepFocus, setIsDeepFocus] = React.useState(false);
   const [showWisdom, setShowWisdom] = React.useState(false);
   const [activeAmbient, setActiveAmbient] = React.useState<string | null>(null);
@@ -146,6 +148,14 @@ const StudyTimerPage: React.FC = () => {
         <div className="glass-card p-8 md:p-16 relative overflow-hidden" onClick={() => phase === 'idle' && setShowBismillah(true)}>
             <div className="absolute top-0 right-0 w-64 h-64 bg-[var(--secondary-color)] opacity-5 blur-[100px] rounded-full" />
             <PomodoroTimer />
+            {activeTaskId && tasks.find(t => t.id === activeTaskId) && (
+               <div className="absolute top-6 left-1/2 -translate-x-1/2 bg-blue-500/10 border border-blue-500/30 px-5 py-2.5 rounded-full backdrop-blur-md flex items-center gap-2 animate-premium-fade z-[50]">
+                   <BookOpenIcon className="w-4 h-4 text-blue-400" />
+                   <span className="text-[11px] font-black tracking-[0.2em] text-blue-400 uppercase">
+                     Focusing on: {tasks.find(t => t.id === activeTaskId)?.title}
+                   </span>
+               </div>
+            )}
         </div>
 
         {/* Level Badge Overlay */}
@@ -162,6 +172,64 @@ const StudyTimerPage: React.FC = () => {
                     </div>
                 </div>
             </div>
+        </div>
+      </div>
+
+      {/* Google Tasks Section */}
+      <div className={`mt-8 max-w-[1400px] mx-auto w-full transition-opacity duration-700 ${isDeepFocus ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+        <div className="glass-card p-6">
+          <div className="flex items-center justify-between border-b border-white/5 pb-4 mb-4">
+            <div className="flex items-center gap-2">
+              <BookOpenIcon className="w-5 h-5 text-blue-500" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-blue-500">
+                Google Tasks Sync
+              </span>
+            </div>
+            {!accessToken ? (
+              <button onClick={() => login()} className="btn-power bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 px-4 py-2 rounded-xl text-xs font-black transition-all">
+                Connect Google Tasks
+              </button>
+            ) : (
+              <button onClick={() => logout()} className="text-[10px] uppercase font-black tracking-widest text-red-500 hover:text-red-400">
+                Disconnect
+              </button>
+            )}
+          </div>
+
+          {accessToken && (
+            <div>
+              {isLoading ? (
+                <div className="flex items-center justify-center p-4">
+                  <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                </div>
+              ) : tasks.length === 0 ? (
+                <p className="text-gray-500 text-xs font-bold text-center py-4">No pending tasks found in your default list.</p>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[300px] overflow-y-auto custom-scrollbar p-2">
+                  {tasks.map(task => (
+                    <div key={task.id} className={`flex flex-col justify-between p-4 rounded-xl border transition-all ${activeTaskId === task.id ? 'bg-blue-500/10 border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.2)]' : 'bg-black/40 border-white/5 hover:border-white/20'}`}>
+                      <div className="flex items-start gap-3 cursor-pointer mb-4" onClick={() => setActiveTask(activeTaskId === task.id ? null : task.id)}>
+                        <div className={`mt-1 w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${activeTaskId === task.id ? 'border-blue-500 bg-blue-500/20' : 'border-gray-600'}`}>
+                          {activeTaskId === task.id && <div className="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse" />}
+                        </div>
+                        <span className={`text-sm font-bold leading-tight ${activeTaskId === task.id ? 'text-blue-100' : 'text-gray-300'}`}>{task.title}</span>
+                      </div>
+                      
+                      {activeTaskId === task.id && (
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); completeTask(task.id); }} 
+                          className="w-full text-xs font-black uppercase tracking-widest bg-green-500/20 text-green-400 border border-green-500/30 py-2 rounded-lg hover:bg-green-500/30 transition-all flex items-center justify-center gap-2"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                          Mark Complete
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

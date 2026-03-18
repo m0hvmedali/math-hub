@@ -4,6 +4,7 @@ import { PomodoroPhase, StudySession, TimerState } from '../types/pomodoro';
 import { ThemeManager } from '../utils/ThemeManager';
 import { useHubCore } from '../utils/HubCore';
 import { updateStudyStats } from '../utils/statsManager';
+import { useTasks } from './TasksProvider';
 
 interface TimerContextType extends TimerState {
   startStudy: () => Promise<void>;
@@ -19,6 +20,7 @@ const STUDY_DURATION = 50 * 60; // 50 minutes
 const BREAK_DURATION = 10 * 60; // 10 minutes
 
 export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { activeTaskId, addNoteToTask } = useTasks();
   const [state, setState] = useState<TimerState>({
     remainingSeconds: STUDY_DURATION,
     totalSeconds: STUDY_DURATION,
@@ -187,6 +189,15 @@ export const TimerProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         // Record completed session
         await updateStudyStats(userId, STUDY_DURATION / 60, true);
       }
+
+      if (activeTaskId) {
+        try {
+          await addNoteToTask(activeTaskId, `🍅 Focused for ${STUDY_DURATION / 60}m`);
+        } catch (err) {
+          console.error("Failed to sync Pomodoro with task", err);
+        }
+      }
+
       alert(localStorage.getItem('study_lang') === 'ar' ? "انتهت فترة المذاكرة! وقت الاستراحة." : "Study session complete! Time for a break.");
       new Notification("Break Time!", { body: "50 minutes done! Enjoy your 10-minute break." });
       await startBreak();
