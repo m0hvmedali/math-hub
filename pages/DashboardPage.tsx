@@ -273,7 +273,7 @@ const DashboardPage: React.FC = () => {
                            <div className="absolute inset-0 bg-gradient-to-tr from-brand-cyan/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                            
                            <div className="relative z-10 text-right" dir="rtl">
-                             <p className={`text-2xl md:text-3xl font-black text-white mb-4 leading-relaxed tracking-tight ${currentWisdom.type === 'poetry' ? 'italic font-serif' : ''}`}>
+                             <p className={`text-lg md:text-2xl lg:text-3xl font-black text-white mb-4 leading-normal tracking-tight ${currentWisdom.type === 'poetry' ? 'italic font-serif' : ''}`}>
                                "{currentWisdom.text}"
                              </p>
                              <div className="flex items-center justify-end gap-3">
@@ -297,11 +297,11 @@ const DashboardPage: React.FC = () => {
                         }
                     </p>
 
-                    <div className="flex flex-wrap items-center gap-4">
+                    <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4 w-full md:w-auto mt-6">
                         {priorityLesson ? (
                             <button
                                 onClick={() => navigate(`/subject/${priorityLesson?.subjectId}/branch/${priorityLesson?.branchId}/lesson/${priorityLesson?.lesson.id}`)}
-                                className="bg-white text-black font-black px-6 md:px-8 py-3 md:py-4 flex items-center gap-3 rounded hover:bg-white/90 transition-transform hover:scale-105"
+                                className="bg-white text-black font-black px-6 md:px-8 py-4 flex items-center justify-center gap-3 rounded hover:bg-white/90 transition-transform hover:scale-105 shadow-xl"
                             >
                                 <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
                                 {language === 'ar' ? 'تشغيل المورد' : 'Play Resource'}
@@ -309,7 +309,7 @@ const DashboardPage: React.FC = () => {
                         ) : (
                             <button
                                 onClick={() => setIsAdding(true)}
-                                className="bg-white text-black font-black px-6 md:px-8 py-3 md:py-4 flex items-center gap-3 rounded hover:bg-white/90 transition-transform hover:scale-105"
+                                className="bg-white text-black font-black px-6 md:px-8 py-4 flex items-center justify-center gap-3 rounded hover:bg-white/90 transition-transform hover:scale-105 shadow-xl"
                             >
                                 <PlusIcon className="w-6 h-6" />
                                 {language === 'ar' ? 'إضافة مادة' : 'Add Subject'}
@@ -318,7 +318,7 @@ const DashboardPage: React.FC = () => {
 
                         <button
                             onClick={isStudying ? handleStopSession : handleStartSession}
-                            className={`px-6 md:px-8 py-3 md:py-4 flex items-center gap-3 rounded font-bold border-2 transition-transform hover:scale-105 ${isStudying ? 'bg-red-600/20 border-red-500 text-red-500 animate-pulse' : 'bg-white/10 border-white text-white backdrop-blur-sm hover:bg-white/20'}`}
+                            className={`px-6 md:px-8 py-4 w-full md:w-auto flex items-center justify-center gap-3 rounded font-bold border-2 transition-transform hover:scale-105 shadow-lg ${isStudying ? 'bg-red-600/20 border-red-500 text-red-500 animate-pulse' : 'bg-white/10 border-white/40 text-white backdrop-blur-sm hover:bg-white/20 hover:border-white/60'}`}
                         >
                             <ClockIcon className="w-6 h-6" />
                             {isStudying ? (language === 'ar' ? `إيقاف المؤقت (${Math.floor((Date.now() - (startTime || 0)) / 60000)}m)` : `Stop Timer (${Math.floor((Date.now() - (startTime || 0)) / 60000)}m)`) : (language === 'ar' ? 'بدء مؤقت التركيز' : 'Start Focus Timer')}
@@ -329,7 +329,7 @@ const DashboardPage: React.FC = () => {
                         
                         <button 
                             onClick={() => assistant.runSequence(['macro_deep_study'])}
-                            className="px-6 py-3 rounded-xl bg-violet-600/80 hover:bg-violet-500 text-white font-black text-sm shadow-xl transition-all hover:scale-105 active:scale-95 flex items-center gap-2 backdrop-blur-md border border-violet-400/30"
+                            className="px-6 py-4 w-full md:w-auto justify-center rounded-xl bg-violet-600/80 hover:bg-violet-500 text-white font-black text-sm shadow-xl transition-all hover:scale-105 active:scale-95 flex items-center gap-2 backdrop-blur-md border border-violet-400/30"
                         >
                             <span className="text-lg">🧠</span>
                             {language === 'ar' ? 'خطة المذاكرة الذكية' : 'Deep Study Macro'}

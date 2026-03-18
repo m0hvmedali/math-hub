@@ -29,14 +29,11 @@ const WishesPage: React.FC = () => {
         e.preventDefault();
         if (!newWish.trim() || !supabase) return;
 
-        const wish: Omit<TimelineItem, 'id' | 'timestamp'> = {
-            type: 'wish',
-            content: newWish,
-            status: 'pending' // Note: This field might need to be stored in 'content' JSON if schema is strict, but assuming 'file_name' field reuse or loose schema for now. Let's strictly use 'content' string for simplicity or update schema if possible. We will store status in JSON string inside content for compatibility.
-        };
-
         // Compatibility Hack: Store status in content as JSON string
         const contentPayload = JSON.stringify({ text: newWish, status: 'pending' });
+        
+        // Also fetch user_id if needed from somewhere, or let Supabase handle it via auth.uid() defaults if set up.
+        // Assuming user_id is handled, we just insert the type and content.
 
         await supabase.from('timeline_items').insert([{ type: 'wish', content: contentPayload }]);
         setNewWish('');

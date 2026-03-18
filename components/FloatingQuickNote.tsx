@@ -137,7 +137,7 @@ const FloatingQuickNote: React.FC = () => {
       {/* Floating Quick Note Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-20 md:bottom-6 left-4 md:left-6 z-[95] group flex items-center gap-2 px-4 py-3 rounded-2xl border border-white/10 shadow-xl hover:border-amber-400/50 transition-all hover:scale-105 active:scale-95"
+        className="fixed bottom-24 md:bottom-6 left-4 md:left-6 z-[95] group flex items-center gap-2 px-4 py-3 rounded-2xl border border-white/10 shadow-xl hover:border-amber-400/50 transition-all hover:scale-105 active:scale-95"
         style={{ background: 'rgba(10, 10, 10, 0.9)', backdropFilter: 'blur(16px)' }}
       >
         <span className="text-lg">📝</span>

@@ -22,8 +22,8 @@ const FloatingWisdom: React.FC<FloatingWisdomProps> = ({ item, onClose, duration
   }, [duration, onClose]);
 
   return (
-    <div className={`fixed bottom-24 right-8 z-[100] transition-all duration-700 transform ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0 pointer-events-none'}`}>
-      <div className="relative group">
+    <div className={`fixed bottom-24 md:bottom-8 left-4 right-4 md:left-auto md:right-8 z-[100] transition-all duration-700 transform ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0 pointer-events-none'}`}>
+      <div className="relative group w-full md:w-auto">
         {/* Glow Effect */}
         <div className="absolute inset-0 bg-brand-cyan/20 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity rounded-full"></div>
         
