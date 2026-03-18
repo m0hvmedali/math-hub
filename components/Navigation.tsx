@@ -21,7 +21,7 @@ const Navigation: React.FC = () => {
     if (!user) return null;
 
     const tabs = [
-        { id: 'dashboard', label: language === 'ar' ? 'الرئيسية' : 'Home', path: '/', icon: HomeIcon },
+        { id: 'dashboard', label: language === 'ar' ? 'الرئيسية' : 'Home', path: '/dashboard', icon: HomeIcon },
         { id: 'curriculum', label: language === 'ar' ? 'المواد' : 'Materials', path: '/curriculum', icon: GlobeIcon },
         { id: 'labs', label: language === 'ar' ? 'المعامل' : 'Labs', path: '/labs', icon: BeakerIcon },
         { id: 'schedule', label: language === 'ar' ? 'الجدول' : 'Schedule', path: '/schedule', icon: ClockIcon },
@@ -36,7 +36,7 @@ const Navigation: React.FC = () => {
         <nav className="sticky top-0 z-50 w-full bg-black/80 backdrop-blur-2xl border-b border-white/5 px-6 md:px-12 py-3.5 flex items-center justify-between shadow-2xl animate-fade-in group/nav">
             <div className="flex items-center gap-12 lg:gap-16">
                 {/* Brand Logo - Premium Upgrade */}
-                <NavLink to="/" className="flex items-center gap-3.5 cursor-pointer group/logo">
+                <NavLink to="/dashboard" className="flex items-center gap-3.5 cursor-pointer group/logo">
                     <div className="w-10 h-10 rounded-2xl bg-black flex items-center justify-center shadow-glow-brand transition-all duration-500 group-hover/logo:rotate-[10deg] group-hover/logo:scale-110 overflow-hidden border border-white/10">
                         <img src="/media/logo.png" alt="Logo" className="w-8 h-8 object-contain" />
                     </div>

@@ -54,6 +54,8 @@ import GmailPage from './pages/GmailPage';
 import GoogleServicesFAB from './components/GoogleServicesFAB';
 import DriveBrowserModal from './components/DriveBrowserModal';
 import YouTubeBrowserModal from './components/YouTubeBrowserModal';
+import LandingPage from './pages/LandingPage';
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 
 
 export const AppContext = createContext<{
@@ -778,9 +780,11 @@ const App: React.FC = () => {
                 {showOnboarding && <OnboardingStories onComplete={handleOnboardingComplete} />}
                 <main className="flex-1 w-full flex flex-col">
                     <Routes>
-                        <Route path="/login" element={user ? <Navigate to="/" /> : <LoginPage onLogin={login} />} />
+                        <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <LandingPage />} />
+                        <Route path="/privacy" element={<PrivacyPolicyPage />} />
+                        <Route path="/login" element={user ? <Navigate to="/dashboard" /> : <LoginPage onLogin={login} />} />
                         <Route path="/guide" element={<GuidePage />} />
-                        <Route path="/" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+                        <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
                         <Route path="/curriculum" element={<ProtectedRoute><CurriculumPage /></ProtectedRoute>} />
                         <Route path="/subject/:subjectId" element={<ProtectedRoute><SubjectPage /></ProtectedRoute>} />
                         <Route path="/subject/:subjectId/branch/:branchId/lesson/:lessonId" element={<ProtectedRoute><BranchPage /></ProtectedRoute>} />
