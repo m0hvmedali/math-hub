@@ -10,6 +10,16 @@ class YouTubeService {
     const res = await auth.fetchWithAuth(`${BASE_URL}/playlists?part=snippet,contentDetails&mine=true`);
     return res.json();
   }
+
+  /**
+   * Search current user's YouTube videos
+   */
+  public async searchMyVideos(query: string = '') {
+    const qParam = query ? `&q=${encodeURIComponent(query)}` : '';
+    // YouTube Data API v3 'search' endpoint with 'forMine=true' requires 'type=video'
+    const res = await auth.fetchWithAuth(`${BASE_URL}/search?part=snippet&forMine=true&type=video&maxResults=25${qParam}`);
+    return res.json();
+  }
 }
 
 export const youtube = new YouTubeService();

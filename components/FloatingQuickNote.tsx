@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { AppContext } from '../App';
@@ -36,6 +36,37 @@ const FloatingQuickNote: React.FC = () => {
   const [selectedColor, setSelectedColor] = useState(NOTE_COLORS[0]);
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+
+  // Drag state
+  const [position, setPosition] = useState({ x: 24, y: window.innerHeight - 96 });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragRef = useRef<{ startX: number; startY: number; initialX: number; initialY: number } | null>(null);
+
+  useEffect(() => {
+    setPosition({ x: 24, y: window.innerHeight - 96 });
+  }, []);
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
+    e.currentTarget.setPointerCapture(e.pointerId);
+    dragRef.current = { startX: e.clientX, startY: e.clientY, initialX: position.x, initialY: position.y };
+    setIsDragging(true);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
+    if (!isDragging || !dragRef.current) return;
+    const dx = e.clientX - dragRef.current.startX;
+    const dy = e.clientY - dragRef.current.startY;
+    setPosition({
+      x: Math.max(0, Math.min(window.innerWidth - 60, dragRef.current.initialX + dx)),
+      y: Math.max(0, Math.min(window.innerHeight - 60, dragRef.current.initialY + dy))
+    });
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLButtonElement>) => {
+    e.currentTarget.releasePointerCapture(e.pointerId);
+    setIsDragging(false);
+  };
+
 
   // Register with HubCore
   useHubCore({
@@ -136,12 +167,24 @@ const FloatingQuickNote: React.FC = () => {
     <>
       {/* Floating Quick Note Button */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-24 md:bottom-6 left-4 md:left-6 z-[95] group flex items-center gap-2 px-4 py-3 rounded-2xl border border-white/10 shadow-xl hover:border-amber-400/50 transition-all hover:scale-105 active:scale-95"
-        style={{ background: 'rgba(10, 10, 10, 0.9)', backdropFilter: 'blur(16px)' }}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onClick={(e) => {
+          if (dragRef.current && (Math.abs(e.clientX - dragRef.current.startX) > 5 || Math.abs(e.clientY - dragRef.current.startY) > 5)) return;
+          setIsOpen(!isOpen);
+        }}
+        className="fixed z-[95] group flex items-center justify-center w-14 h-14 rounded-full border border-white/10 shadow-xl hover:border-amber-400/50 transition-colors cursor-move"
+        style={{ 
+          background: 'rgba(10, 10, 10, 0.9)', 
+          backdropFilter: 'blur(16px)',
+          left: position.x,
+          top: position.y,
+          touchAction: 'none'
+        }}
+        title="Quick Note (Drag to move)"
       >
-        <span className="text-lg">📝</span>
-        <span className="text-[11px] font-bold text-gray-400 hidden md:inline">Quick Note</span>
+        <span className="text-xl pointer-events-none">📝</span>
       </button>
 
       {/* Sticky Note Modal */}

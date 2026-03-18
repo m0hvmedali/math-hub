@@ -8,7 +8,8 @@ class DriveService {
    * Search files in Google Drive
    */
   public async search(query: string) {
-    const res = await auth.fetchWithAuth(`${BASE_URL}/files?q=${encodeURIComponent(query)}`);
+    // Add default fields to get useful info like webViewLink and iconLink
+    const res = await auth.fetchWithAuth(`${BASE_URL}/files?q=${encodeURIComponent(query)}&fields=nextPageToken,files(id,name,mimeType,webViewLink,iconLink)`);
     return res.json();
   }
 

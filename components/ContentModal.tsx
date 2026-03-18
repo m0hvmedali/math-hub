@@ -11,6 +11,7 @@ import { getAiResponse } from '../utils/aiHelper';
 import { detectMagicLink, MagicLinkResult } from '../utils/detectMagicLink';
 import RichTextEditor from './RichTextEditor';
 import WhiteboardBlock from './WhiteboardBlock';
+import { useGoogleOmni } from '../services/platform-sdk';
 
 
 interface ContentModalProps {
@@ -93,6 +94,35 @@ const ContentModal: React.FC<ContentModalProps> = ({ isOpen, onClose, onSave }) 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const quizImageInputRef = useRef<HTMLInputElement>(null);
     const multiImageInputRef = useRef<HTMLInputElement>(null);
+
+    // Admin Pickers specific states
+    const { drive, youtube } = useGoogleOmni();
+    const [searchQuery, setSearchQuery] = useState('');
+    const [isSearchingOmni, setIsSearchingOmni] = useState(false);
+    const [omniResults, setOmniResults] = useState<any[]>([]);
+
+    useEffect(() => {
+        setSearchQuery('');
+        setOmniResults([]);
+    }, [contentType]);
+
+    const handleAdminSearch = async () => {
+        if (!searchQuery.trim()) return;
+        setIsSearchingOmni(true);
+        try {
+            if (contentType === 'google-drive') {
+                const results = await drive.search(searchQuery);
+                setOmniResults(results.files || []);
+            } else if (contentType === 'video') {
+                const results = await youtube.searchMyVideos(searchQuery);
+                setOmniResults(results.items || []);
+            }
+        } catch (error) {
+            console.error("Omni Search failed:", error);
+        } finally {
+            setIsSearchingOmni(false);
+        }
+    };
 
     const bgColors = [
         { name: 'Default', class: 'bg-cinematic-card' },
@@ -724,7 +754,7 @@ const ContentModal: React.FC<ContentModalProps> = ({ isOpen, onClose, onSave }) 
                 );
             case 'google-drive':
                 return (
-                    <div className="h-[60vh] flex flex-col items-center justify-center border-2 border-dashed border-gray-600 rounded-lg p-8 text-center">
+                    <div className="h-[60vh] flex flex-col items-center justify-center border-2 border-dashed border-gray-600 rounded-lg p-8 text-center overflow-auto">
                         <LinkIcon className="w-12 h-12 text-gray-500 mb-4" />
                         <label className="text-lg font-medium text-gray-300 mb-4">Embed from Google Drive</label>
                         <input
@@ -732,9 +762,38 @@ const ContentModal: React.FC<ContentModalProps> = ({ isOpen, onClose, onSave }) 
                             value={linkUrl}
                             onChange={(e) => setLinkUrl(e.target.value)}
                             placeholder="Paste Google Drive Share Link..."
-                            className="w-full max-w-lg p-3 bg-gray-800 border border-gray-700 rounded-md text-white"
+                            className="w-full max-w-lg p-3 bg-gray-800 border border-gray-700 rounded-md text-white mb-4"
                         />
-                        <p className="text-xs text-gray-500 mt-2">Works with Docs, Slides, Sheets, and Files.</p>
+                        
+                        <div className="w-full max-w-lg border-t border-gray-700 my-4 pt-4 relative">
+                           <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gray-900 px-2 text-xs text-gray-500 font-bold tracking-widest">OR SEARCH DRIVE</span>
+                           <div className="flex gap-2">
+                               <input
+                                   type="text"
+                                   value={searchQuery}
+                                   onChange={(e) => setSearchQuery(e.target.value)}
+                                   onKeyDown={(e) => e.key === 'Enter' && handleAdminSearch()}
+                                   placeholder="Search your Drive..."
+                                   className="flex-1 p-2 bg-gray-800 border border-gray-700 rounded-md text-white text-sm"
+                               />
+                               <button onClick={handleAdminSearch} className="px-4 py-2 bg-brand-cyan/20 text-brand-cyan rounded-md hover:bg-brand-cyan/30 text-sm font-bold transition-colors">Search</button>
+                           </div>
+                           
+                           {/* Results */}
+                           {isSearchingOmni && <p className="text-sm text-brand-cyan mt-4 animate-pulse font-bold">Searching your Drive...</p>}
+                           {omniResults.length > 0 && contentType === 'google-drive' && (
+                               <div className="mt-4 flex flex-col gap-2 max-h-40 overflow-y-auto w-full text-left bg-gray-900/50 p-2 rounded-xl border border-white/5">
+                                   {omniResults.map((f: any) => (
+                                       <button key={f.id} onClick={() => { setLinkUrl(f.webViewLink); setOmniResults([]); }} className="p-2.5 bg-gray-800 hover:bg-gray-700 rounded-lg border border-gray-700 flex items-center gap-3 transition-colors group">
+                                           {f.iconLink ? <img src={f.iconLink} alt="icon" className="w-5 h-5 group-hover:scale-110 transition-transform" /> : <LinkIcon className="w-5 h-5 text-gray-500" />}
+                                           <span className="text-sm text-gray-200 truncate group-hover:text-white font-medium">{f.name}</span>
+                                       </button>
+                                   ))}
+                               </div>
+                           )}
+                        </div>
+
+                        <p className="text-xs text-gray-500 mt-2">Works with Docs, Slides, Sheets, and any stored Document or Video.</p>
                     </div>
                 );
             case 'google-docs':
@@ -770,21 +829,57 @@ const ContentModal: React.FC<ContentModalProps> = ({ isOpen, onClose, onSave }) 
             }
             case 'video':
                 return (
-                    <div className="h-[60vh] flex flex-col gap-6 p-4">
+                    <div className="h-[60vh] flex flex-col gap-6 p-4 overflow-auto">
                         <div className="border-b border-gray-700 pb-6">
-                            <label className="block text-lg font-medium text-gray-300 mb-2">YouTube Link</label>
-                            <div className="flex gap-2">
+                            <label className="block text-lg font-medium text-gray-300 mb-2">YouTube Link or Search</label>
+                            <div className="flex flex-col gap-3">
                                 <input
                                     type="url"
                                     value={linkUrl}
                                     onChange={(e) => setLinkUrl(e.target.value)}
                                     placeholder="Paste YouTube URL..."
-                                    className="flex-1 p-3 bg-gray-800 border border-gray-700 rounded-md text-white"
+                                    className="w-full p-3 bg-gray-800 border border-gray-700 rounded-md text-white"
                                 />
+                                
+                                <div className="relative border-t border-gray-700 mt-4 pt-5">
+                                   <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gray-900 px-2 text-xs text-gray-500 font-bold tracking-widest">OR SEARCH YOUTUBE</span>
+                                   <div className="flex gap-2">
+                                       <input
+                                           type="text"
+                                           value={searchQuery}
+                                           onChange={(e) => setSearchQuery(e.target.value)}
+                                           onKeyDown={(e) => e.key === 'Enter' && handleAdminSearch()}
+                                           placeholder="Search your YouTube channel..."
+                                           className="flex-1 p-2 bg-gray-800 border border-gray-700 rounded-md text-white text-sm"
+                                       />
+                                       <button onClick={handleAdminSearch} className="px-4 py-2 bg-red-500/20 text-red-500 rounded-md hover:bg-red-500/30 text-sm font-bold transition-colors">Search YT</button>
+                                   </div>
+                                   
+                                   {isSearchingOmni && <p className="text-sm text-red-500 mt-4 animate-pulse font-bold">Searching YouTube...</p>}
+                                   {omniResults.length > 0 && contentType === 'video' && (
+                                       <div className="mt-4 grid grid-cols-2 lg:grid-cols-3 gap-3 max-h-56 overflow-y-auto pr-2 custom-scrollbar">
+                                           {omniResults.map((v: any) => {
+                                               // Sometimes items don't have snippets perfectly depending on search result
+                                               if(!v.snippet || !v.id?.videoId) return null;
+                                               return (
+                                               <button key={v.id.videoId} onClick={() => { setLinkUrl(`https://www.youtube.com/watch?v=${v.id.videoId}`); setOmniResults([]); }} className="bg-gray-800 hover:bg-gray-700 rounded-xl border border-gray-700 hover:border-red-500/50 text-left flex flex-col overflow-hidden transition-all hover:scale-105 active:scale-95 group">
+                                                   <div className="relative w-full aspect-video overflow-hidden">
+                                                      <img src={v.snippet.thumbnails?.medium?.url || v.snippet.thumbnails?.default?.url} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" alt="thumb" />
+                                                      <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors"></div>
+                                                   </div>
+                                                   <div className="p-2.5">
+                                                      <span className="text-xs text-gray-200 line-clamp-2 font-medium leading-relaxed group-hover:text-white">{v.snippet.title}</span>
+                                                   </div>
+                                               </button>
+                                               )
+                                           })}
+                                       </div>
+                                   )}
+                                </div>
                             </div>
                         </div>
-                        <div className="text-center text-gray-500 font-bold">- OR -</div>
-                        <div className="flex-1 border-2 border-dashed border-gray-600 rounded-lg flex flex-col items-center justify-center p-4">
+                        <div className="text-center text-gray-500 font-black text-sm uppercase tracking-widest opacity-50">- OR UPLOAD LOCAL VIDEO -</div>
+                        <div className="flex-1 border-2 border-dashed border-gray-700 bg-gray-900/50 rounded-2xl flex flex-col items-center justify-center p-6 gap-4 hover:border-gray-500 transition-colors group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
                             <input
                                 type="file"
                                 ref={fileInputRef}
@@ -792,10 +887,15 @@ const ContentModal: React.FC<ContentModalProps> = ({ isOpen, onClose, onSave }) 
                                 onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)}
                                 className="hidden"
                             />
-                            <button onClick={() => fileInputRef.current?.click()} className="bg-gray-700 text-white px-4 py-2 rounded-md hover:bg-gray-600 mb-2">
-                                Upload Video File
-                            </button>
-                            {file && <p className="text-accent-green">{file.name}</p>}
+                            <div className="w-16 h-16 rounded-full bg-gray-800 flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
+                                <VideoIcon className="w-8 h-8 text-gray-400 group-hover:text-white" />
+                            </div>
+                            <div className="text-center">
+                                <button className="font-bold text-gray-300 group-hover:text-white transition-colors">
+                                    Click to Upload Video File
+                                </button>
+                                {file && <p className="text-brand-cyan text-sm mt-2 font-medium bg-brand-cyan/10 py-1 px-3 rounded-full inline-block">{file.name}</p>}
+                            </div>
                         </div>
                     </div>
                 );

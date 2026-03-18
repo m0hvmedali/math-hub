@@ -1,7 +1,7 @@
 import React, { useContext, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { AppContext } from '../App';
-import { HomeIcon, GlobeIcon, BeakerIcon, ClockIcon, SparkleIcon, TrendingUpIcon } from './Icons';
+import { HomeIcon, GlobeIcon, BeakerIcon, ClockIcon, SparkleIcon, TrendingUpIcon, SearchHistoryIcon, SettingsIcon } from './Icons';
 import { useThemeEngine } from '../hooks/useThemeEngine';
 import ThemeStatusBadge from './ThemeStatusBadge';
 
@@ -71,7 +71,7 @@ const Navigation: React.FC = () => {
             </div>
 
             {/* Actions & Profile */}
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-8">
                 <div className="hidden md:block scale-90">
                     <ThemeStatusBadge phase={livePhase} enabled={themeEnabled} onToggle={toggleTheme} />
                 </div>
@@ -119,19 +119,19 @@ const Navigation: React.FC = () => {
                                     { to: '/notes', icon: <span className="text-lg">📝</span>, label: language === 'ar' ? 'الملاحظات السريعة' : 'Quick Notes' },
                                     { to: '/explain', icon: <SparkleIcon className="w-5 h-5 text-brand-magenta" />, label: language === 'ar' ? 'البروفيسور AI' : 'Professor AI' },
                                     { to: '/daily-analysis', icon: <span className="text-lg">❖</span>, label: language === 'ar' ? 'التحليل اليومي' : 'Daily Analysis' },
-                                    { to: '/search-history', icon: <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>, label: language === 'ar' ? 'سجل البحث' : 'Search History' },
+                                    { to: '/search-history', icon: <SearchHistoryIcon className="w-5 h-5 text-gray-400" />, label: language === 'ar' ? 'سجل البحث' : 'Search History' },
                                     { type: 'divider' },
-                                    { to: '/settings', icon: <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>, label: language === 'ar' ? 'الإعدادات' : 'Settings' },
+                                    { to: '/settings', icon: <SettingsIcon className="w-5 h-5 text-gray-400" />, label: language === 'ar' ? 'الإعدادات' : 'Settings' },
                                     { isButton: true, icon: <svg className="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>, label: language === 'ar' ? 'خروج' : 'Logout' }
                                 ].map((item, index) => {
                                     if (item.type === 'divider') {
-                                        return <div key={index} className="w-12 h-px bg-white/5 my-1" />;
+                                        return <div key={index} className="w-12 h-px bg-white/5 my-2" />;
                                     }
 
                                     const innerContent = (
-                                        <div className="relative group/item flex items-center justify-center w-14 h-14 rounded-2xl hover:bg-white/5 transition-all cursor-pointer hover:border border-white/5">
+                                        <div className="relative group/item flex items-center justify-center w-14 h-14 rounded-2xl hover:bg-white/10 transition-all cursor-pointer hover:border border-white/10">
                                             {item.icon}
-                                            <div className={`absolute top-1/2 -translate-y-1/2 px-4 py-2 bg-black border border-white/10 text-white text-[10px] font-black uppercase tracking-widest rounded-xl opacity-0 group-hover/item:opacity-100 transition-all pointer-events-none whitespace-nowrap z-[10000] ${language === 'ar' ? 'right-full mr-6' : 'right-full mr-6'}`}>
+                                            <div className={`absolute top-1/2 -translate-y-1/2 px-4 py-2 bg-black border border-white/20 text-white text-[10px] font-black uppercase tracking-widest rounded-xl opacity-0 group-hover/item:opacity-100 transition-all pointer-events-none whitespace-nowrap z-[10000] ${language === 'ar' ? 'right-full mr-6' : 'right-full mr-6'}`}>
                                                 {item.label}
                                             </div>
                                         </div>

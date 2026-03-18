@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import { AppContext } from '../App';
 import { searchRadar, SearchResult, fetchTavilyResults, TavilyResult, saveSearchToHistory } from '../utils/searchRadar';
-import { SparkleIcon, GlobeIcon } from './Icons';
+import { SparkleIcon, GlobeIcon, LinkIcon, VideoIcon } from './Icons';
+import { useGoogleOmni } from '../services/platform-sdk';
 
 interface SearchOverlayProps {
     isOpen: boolean;
@@ -14,6 +15,12 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose }) => {
     const [localResults, setLocalResults] = useState<SearchResult[]>([]);
     const [globalResults, setGlobalResults] = useState<TavilyResult[]>([]);
     const [isSearchingGlobal, setIsSearchingGlobal] = useState(false);
+    
+    const [driveResults, setDriveResults] = useState<any[]>([]);
+    const [youtubeResults, setYoutubeResults] = useState<any[]>([]);
+    const [isSearchingCloud, setIsSearchingCloud] = useState(false);
+    const { drive, youtube } = useGoogleOmni();
+
     const [showSavePrompt, setShowSavePrompt] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -31,21 +38,31 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose }) => {
                 const locals = searchRadar(query);
                 setLocalResults(locals);
 
-                // Global Search
+                // Global Search & Cloud Search
                 if (user) {
                     setIsSearchingGlobal(true);
-                    try {
-                        const globalRes = await fetchTavilyResults(query, user);
-                        setGlobalResults(globalRes?.results || []);
-                    } catch (error) {
-                        console.error('Global search error:', error);
-                    } finally {
-                        setIsSearchingGlobal(false);
-                    }
+                    setIsSearchingCloud(true);
+
+                    fetchTavilyResults(query, user)
+                        .then(res => setGlobalResults(res?.results || []))
+                        .catch(err => console.error('Global search error:', err))
+                        .finally(() => setIsSearchingGlobal(false));
+
+                    Promise.all([
+                        drive.search(query).catch(() => ({ files: [] })),
+                        youtube.searchMyVideos(query).catch(() => ({ items: [] }))
+                    ]).then(([driveRes, ytRes]) => {
+                        setDriveResults(driveRes.files || []);
+                        setYoutubeResults(ytRes.items || []);
+                    }).finally(() => {
+                        setIsSearchingCloud(false);
+                    });
                 }
             } else {
                 setLocalResults([]);
                 setGlobalResults([]);
+                setDriveResults([]);
+                setYoutubeResults([]);
             }
         }, 800); // 800ms debounce
 
@@ -77,6 +94,8 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose }) => {
         setQuery('');
         setLocalResults([]);
         setGlobalResults([]);
+        setDriveResults([]);
+        setYoutubeResults([]);
         setShowSavePrompt(false);
         onClose();
     };
@@ -139,7 +158,7 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose }) => {
                 </div>
 
                 {/* Results Area */}
-                <div className="flex-1 overflow-y-auto p-4 flex flex-col md:flex-row gap-6 relative">
+                <div className="flex-1 overflow-y-auto p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 relative">
                     
                     {/* Local Results */}
                     <div className="flex-1 md:border-r border-white/5 md:pr-4 flex flex-col">
@@ -165,6 +184,50 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose }) => {
                                     </div>
                                 </a>
                             ))}
+                        </div>
+                    </div>
+
+                    {/* Personal Cloud Results (Drive & YouTube) */}
+                    <div className="flex-1 lg:border-r border-white/5 lg:pr-4 flex flex-col">
+                        <h4 className="text-[10px] font-black tracking-[0.2em] text-gray-500 uppercase flex items-center gap-2 mb-4 shrink-0">
+                            <svg className="w-4 h-4 text-brand-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path></svg>
+                            {language === 'ar' ? 'السحابة الشخصية' : 'Personal Cloud'}
+                        </h4>
+
+                        {isSearchingCloud && (
+                            <div className="flex-1 flex flex-col items-center justify-center text-brand-secondary p-6 opacity-70">
+                                <svg className="w-8 h-8 mb-3 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                                <span className="text-sm font-bold animate-pulse tracking-wide">{language === 'ar' ? 'جاري البحث في سحابتك...' : 'Searching your cloud...'}</span>
+                            </div>
+                        )}
+
+                        {!isSearchingCloud && driveResults.length === 0 && youtubeResults.length === 0 && query.trim().length > 2 && (
+                            <div className="flex-1 flex flex-col items-center justify-center text-center p-6 opacity-50">
+                                <svg className="w-12 h-12 mb-3 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
+                                <p className="text-sm font-medium text-gray-400">{language === 'ar' ? 'لا توجد ملفات أو فديوهات' : 'No cloud matches'}</p>
+                            </div>
+                        )}
+
+                        <div className="space-y-3">
+                            {/* Drive Results */}
+                            {driveResults.map((f, i) => (
+                                <a key={`drive-${i}`} href={f.webViewLink} target="_blank" rel="noopener noreferrer" onClick={resetAndClose} className="block p-3 rounded-2xl bg-white/[0.02] hover:bg-white/[0.05] transition-all border border-white/5 hover:border-brand-secondary/30 group">
+                                    <div className="flex items-center gap-3">
+                                        {f.iconLink ? <img src={f.iconLink} alt="icon" className="w-5 h-5 shrink-0" /> : <LinkIcon className="w-5 h-5 text-brand-secondary shrink-0" />}
+                                        <h5 className="text-white text-sm font-bold group-hover:text-brand-secondary transition-colors line-clamp-1">{f.name}</h5>
+                                    </div>
+                                </a>
+                            ))}
+                            {/* YouTube Results */}
+                            {youtubeResults.map((v, i) => {
+                                if(!v.snippet || !v.id?.videoId) return null;
+                                return (
+                                <a key={`yt-${i}`} href={`https://www.youtube.com/watch?v=${v.id.videoId}`} target="_blank" rel="noopener noreferrer" onClick={resetAndClose} className="block p-3 rounded-2xl bg-white/[0.02] hover:bg-white/[0.05] transition-all border border-white/5 hover:border-red-500/30 group flex gap-3 items-center">
+                                    <img src={v.snippet.thumbnails?.default?.url} alt="thumb" className="w-12 h-8 object-cover rounded shrink-0 brightness-75 group-hover:brightness-100 transition-all" />
+                                    <h5 className="text-white text-sm font-bold group-hover:text-red-400 transition-colors line-clamp-2 leading-snug">{v.snippet.title}</h5>
+                                </a>
+                                )
+                            })}
                         </div>
                     </div>
 
