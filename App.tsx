@@ -28,8 +28,10 @@ import ExplainLessonPage from './pages/ExplainLessonPage';
 import FloatingSpotifyWidget from './components/FloatingSpotifyWidget';
 import FloatingQuickNote from './components/FloatingQuickNote';
 import AssistantOverlay from './components/AssistantOverlay';
+import SearchOverlay from './components/SearchOverlay';
 import SettingsPage from './pages/SettingsPage';
 import HistoryPage from './pages/HistoryPage';
+import SearchHistoryPage from './pages/SearchHistoryPage';
 import CurriculumPage from './pages/CurriculumPage';
 import MeasuringDevicesLab from './pages/MeasuringDevicesLab';
 import OrganicLabPage from './pages/OrganicLabPage';
@@ -73,6 +75,7 @@ export const AppContext = createContext<{
     theme: 'dark' | 'light';
     toggleTheme: () => void;
     setIsAssistantOpen: (open: boolean) => void;
+    setIsSearchOpen: (open: boolean) => void;
     addStudySession: (duration: number, focusScore: number) => Promise<void>;
     addTask: (title: string, dueDate: string, priority: Importance) => Promise<void>;
     updateTask: (taskId: string, updates: Partial<Task>) => Promise<void>;
@@ -113,6 +116,7 @@ export const AppContext = createContext<{
     theme: 'dark',
     toggleTheme: () => { },
     setIsAssistantOpen: () => { },
+    setIsSearchOpen: () => { },
     addStudySession: async () => { },
     addTask: async () => { },
     updateTask: async () => { },
@@ -175,6 +179,7 @@ const App: React.FC = () => {
     const [language, setLanguageState] = useState<'ar' | 'en'>((localStorage.getItem('study_lang') as 'ar' | 'en') || 'ar');
     const [theme, setThemeState] = useState<'dark' | 'light'>((localStorage.getItem('study_theme') as 'dark' | 'light') || 'dark');
     const [isAssistantOpen, setIsAssistantOpen] = useState(false);
+    const [isSearchOpen, setIsSearchOpen] = useState(false);
 
     const { currentWisdom, progress: wisdomProgress, fetchNextWisdom, updateProgress: updateWisdomProgress } = useWisdom(user);
 
@@ -732,7 +737,7 @@ const App: React.FC = () => {
             applySubjectTheme, resetTheme,
             customNodes, addCustomNode,
             manualLinks, addManualLink,
-            setIsAssistantOpen,
+            setIsAssistantOpen, setIsSearchOpen,
             currentWisdom, wisdomProgress, fetchNextWisdom, updateWisdomProgress,
             triggerFloatingWisdom
         }}>
@@ -745,6 +750,7 @@ const App: React.FC = () => {
                 {user && <FloatingSpotifyWidget />}
                 {user && <FloatingQuickNote />}
                 {user && <AssistantOverlay isOpen={isAssistantOpen} onClose={() => setIsAssistantOpen(false)} />}
+                {user && <SearchOverlay isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />}
                 {user && (
                     <div className="px-6 py-4 max-w-7xl mx-auto w-full">
                         <NeuralNotifications />
@@ -779,6 +785,7 @@ const App: React.FC = () => {
                         <Route path="/labs/organic" element={<OrganicLabPage />} />
                         <Route path="/explain/:subjectId/:branchId/:lessonId" element={<ExplainLessonPage />} />
                         <Route path="/history" element={<ProtectedRoute><HistoryPage /></ProtectedRoute>} />
+                        <Route path="/search-history" element={<ProtectedRoute><SearchHistoryPage /></ProtectedRoute>} />
                         <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
                         <Route path="/analysis" element={<ProtectedRoute><AnalysisPage /></ProtectedRoute>} />
                         <Route path="/notes" element={<ProtectedRoute><NotesPage /></ProtectedRoute>} />

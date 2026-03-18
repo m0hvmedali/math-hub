@@ -195,7 +195,6 @@ export const fetchTavilyResults = async (query: string, user: string): Promise<T
         }));
 
         incrementSearchUsage(user);
-        saveSearchToHistory(user, query, results);
 
         return {
             results
@@ -210,10 +209,12 @@ export interface HistoryItem {
     id: string;
     query: string;
     timestamp: number;
-    results: TavilyResult[];
+    localResults: SearchResult[];
+    globalResults: TavilyResult[];
 }
 
-export const saveSearchToHistory = (user: string, query: string, results: TavilyResult[]) => {
+export const saveSearchToHistory = (user: string, query: string, localResults: SearchResult[], globalResults: TavilyResult[]) => {
+    if (!query.trim() || (localResults.length === 0 && globalResults.length === 0)) return;
     const historyKey = `search_history_${user}`;
     const history: HistoryItem[] = JSON.parse(localStorage.getItem(historyKey) || '[]');
     
@@ -221,7 +222,8 @@ export const saveSearchToHistory = (user: string, query: string, results: Tavily
         id: crypto.randomUUID(),
         query,
         timestamp: Date.now(),
-        results
+        localResults,
+        globalResults
     };
 
     const updatedHistory = [newItem, ...history].slice(0, 50); // Keep last 50

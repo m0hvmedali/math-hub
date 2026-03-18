@@ -74,11 +74,11 @@ const HistoryPage: React.FC = () => {
                                     </div>
                                 </div>
                                 <div className="text-[10px] font-black text-white/20 uppercase tracking-tighter">
-                                    {item.results.length} SECTORS DISCOVERED
+                                    {(item.globalResults || []).length} SECTORS DISCOVERED
                                 </div>
                             </div>
                             <div className="p-8 grid grid-cols-1 md:grid-cols-2 gap-4 bg-black/20">
-                                {item.results.map((res, idx) => (
+                                {(item.globalResults || []).map((res, idx) => (
                                     <a 
                                         key={idx}
                                         href={res.url}
