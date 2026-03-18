@@ -45,7 +45,7 @@ const YouTubeBrowserModal: React.FC<YouTubeBrowserModalProps> = ({ isOpen, onClo
     if (!searchQuery.trim()) return;
     setIsLoading(true);
     try {
-      const res = await youtube.searchMyVideos(searchQuery);
+      const res = await youtube.searchGlobal(searchQuery);
       setVideos(res.items || []);
       setActiveTab('search');
     } catch {
@@ -97,7 +97,7 @@ const YouTubeBrowserModal: React.FC<YouTubeBrowserModalProps> = ({ isOpen, onClo
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleSearch()}
-            placeholder="Search your YouTube channel..."
+            placeholder="Search YouTube..."
             className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-white/20"
           />
           <button onClick={handleSearch} className="px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-gray-300 text-sm transition-all">

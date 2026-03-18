@@ -77,7 +77,7 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose }) => {
                         setIsSearchingCloud(true);
                         Promise.all([
                             activeScopes.includes('drive') ? drive.search(query).catch(() => ({ files: [] })) : Promise.resolve({ files: [] }),
-                            activeScopes.includes('youtube') ? youtube.searchMyVideos(query).catch(() => ({ items: [] })) : Promise.resolve({ items: [] })
+                            activeScopes.includes('youtube') ? youtube.searchGlobal(query).catch(() => ({ items: [] })) : Promise.resolve({ items: [] })
                         ]).then(([driveRes, ytRes]) => {
                             setDriveResults((driveRes as any).files || []);
                             setYoutubeResults((ytRes as any).items || []);
