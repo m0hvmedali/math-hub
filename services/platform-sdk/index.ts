@@ -8,6 +8,7 @@ import { translate } from './translate';
 import { keep } from './keep';
 import { ai } from './ai';
 import { voice } from './voice';
+import { docs } from './docs';
 
 export interface GoogleOmni {
   drive: typeof drive;
@@ -20,6 +21,7 @@ export interface GoogleOmni {
   keep: typeof keep;
   ai: typeof ai;
   voice: typeof voice;
+  docs: typeof docs;
 }
 
 /**
@@ -36,9 +38,10 @@ export const useGoogleOmni = (): GoogleOmni => {
     translate,
     keep,
     ai,
-    voice
+    voice,
+    docs
   };
 };
 
 // Export individual services for direct component use where preferred
-export { auth, drive, youtube, tasks, gmail, calendar, translate, keep, ai, voice };
+export { auth, drive, youtube, tasks, gmail, calendar, translate, keep, ai, voice, docs };

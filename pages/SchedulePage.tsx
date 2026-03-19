@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { calendar } from '../services/platform-sdk/calendar';
 import { auth } from '../services/platform-sdk/auth';
 import { generateText } from '../services/ai-router';
-import { ClockIcon, SparkleIcon, GoogleIcon, PlusIcon, RefreshIcon } from '../components/Icons';
+import { ClockIcon, SparkleIcon, GoogleIcon, PlusIcon, RefreshIcon, CheckCircleIcon } from '../components/Icons';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface CalendarEvent {
@@ -19,6 +19,8 @@ const SchedulePage: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [isOptimizing, setIsOptimizing] = useState(false);
     const [optimizationResult, setOptimizationResult] = useState<string | null>(null);
+    const [proposedActions, setProposedActions] = useState<any[]>([]);
+    const [isApplying, setIsApplying] = useState(false);
     const [isConnected, setIsConnected] = useState(false);
 
     const fetchEvents = useCallback(async () => {
@@ -53,8 +55,21 @@ const SchedulePage: React.FC = () => {
         if (events.length === 0) return;
         setIsOptimizing(true);
         setOptimizationResult(null);
+        setProposedActions([]);
 
-        const eventData = events.map(e => ({
+        // Filter events for today and tomorrow only
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const dayAfterTomorrow = new Date(today);
+        dayAfterTomorrow.setDate(today.getDate() + 2);
+
+        const targetEvents = events.filter(e => {
+            const date = new Date(e.start.dateTime || e.start.date || '');
+            return date >= today && date < dayAfterTomorrow;
+        });
+
+        const eventData = targetEvents.map(e => ({
+            id: e.id,
             title: e.summary,
             start: e.start.dateTime || e.start.date,
             end: e.end.dateTime || e.end.date,
@@ -62,25 +77,60 @@ const SchedulePage: React.FC = () => {
         }));
 
         const prompt = `
-            أنا طالب وهذه هي مواعيدي في تقويم جوجل لهذا الأسبوع:
+            أنا طالب وهذه هي مواعيدي في تقويم جوجل لليوم وغداً فقط:
             ${JSON.stringify(eventData)}
 
-            من فضلك قم بتحليل هذا الجدول وتقديم 3-5 اقتراحات لتحسينه (مثلاً: إضافة فترات دراسة مركزة، تحديد فجوات زمنية ضائعة، اقتراح وقت أفضل للنوم).
-            تحدث معي كرفيق ذكي ومشجع.
-            
-            أريد الرد بأسلوب "ملاح واعي".
+            قم بتحليل هذا الجدول وتقديم اقتراحات لتحسينه (إضافة فترات دراسة, تعديل أوقات, حذف فراغات غير مفيدة).
+            استجب **فقط** بصيغة JSON متوافقة تماماً مع هذا الهيكل:
+            {
+               "message": "نص التوجيه والتحفيز هنا بكل المودة كرفيق وملاح...",
+               "actions": [
+                   { "type": "add", "summary": "دراسة عميقة", "start": "2026-03-20T10:00:00Z", "end": "2026-03-20T11:00:00Z", "description": "وصف مقترح" },
+                   { "type": "update", "eventId": "id_here", "updates": { "summary": "اسم جديد", "start": { "dateTime": "..." }, "end": { "dateTime": "..." } } },
+                   { "type": "delete", "eventId": "id_here" }
+               ]
+            }
         `;
 
         try {
             const suggestion = await generateText(prompt, { 
-                system: "أنت رفيق، ملاح أكاديمي خبير في تنظيم الوقت وعلم الأعصاب التعليمي.",
-                task: 'chat'
+                system: "أنت ملاح أكاديمي خبير. تخرج فقط JSON صحيح 100%.",
+                task: 'medium_task',
+                json: true
             });
-            setOptimizationResult(suggestion);
+            
+            const cleaned = suggestion.replace(/^```json\s*/, '').replace(/```\s*$/, '').trim();
+            const result = JSON.parse(cleaned);
+
+            setOptimizationResult(result.message || "اكتمل التحليل بنجاح.");
+            setProposedActions(result.actions || []);
         } catch (error) {
             console.error("Optimization failed:", error);
+            setOptimizationResult("عذراً، حدث خطأ في تحليل الجدول. حاول مرة أخرى.");
         } finally {
             setIsOptimizing(false);
+        }
+    };
+
+    const handleApplyActions = async () => {
+        setIsApplying(true);
+        try {
+            for (const action of proposedActions) {
+                if (action.type === 'add' && action.summary && action.start && action.end) {
+                    await calendar.createEvent(action.summary, action.start, action.end, action.description);
+                } else if (action.type === 'update' && action.eventId && action.updates) {
+                    await calendar.updateEvent(action.eventId, action.updates);
+                } else if (action.type === 'delete' && action.eventId) {
+                    await calendar.deleteEvent(action.eventId);
+                }
+            }
+            setProposedActions([]);
+            await fetchEvents();
+        } catch (error) {
+            console.error("Failed to apply actions:", error);
+            alert("حدث خطأ أثناء تطبيق التعديلات.");
+        } finally {
+            setIsApplying(false);
         }
     };
 
@@ -244,8 +294,41 @@ const SchedulePage: React.FC = () => {
                                         <div className="text-sm space-y-4 whitespace-pre-wrap font-medium">
                                             {optimizationResult}
                                         </div>
+                                        {proposedActions.length > 0 && (
+                                            <div className="mt-6 space-y-3">
+                                                <h4 className="text-white font-bold mb-4 flex items-center gap-2">
+                                                    <SparkleIcon className="w-4 h-4 text-brand-cyan" />
+                                                    Proposed Changes
+                                                </h4>
+                                                {proposedActions.map((action, idx) => (
+                                                    <div key={idx} className="p-3 bg-white/5 rounded-xl border border-white/10 flex items-center justify-between text-sm">
+                                                        <div className="flex items-center gap-3">
+                                                            <span className={`px-2 py-1 rounded text-[10px] font-black uppercase tracking-wider ${
+                                                                action.type === 'add' ? 'bg-green-500/20 text-green-400' :
+                                                                action.type === 'delete' ? 'bg-red-500/20 text-red-400' :
+                                                                'bg-blue-500/20 text-blue-400'
+                                                            }`}>
+                                                                {action.type}
+                                                            </span>
+                                                            <span className="text-gray-200 font-medium truncate max-w-[150px] md:max-w-xs text-right dir-rtl">
+                                                                {action.summary || (action.updates && action.updates.summary) || 'Event Modification'}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                                
+                                                <button
+                                                    onClick={handleApplyActions}
+                                                    disabled={isApplying}
+                                                    className="w-full mt-4 py-3 bg-brand-cyan text-black font-black rounded-xl hover:scale-[1.02] transition-transform flex items-center justify-center gap-2 disabled:opacity-50"
+                                                >
+                                                    {isApplying ? <RefreshIcon className="w-5 h-5 animate-spin" /> : <CheckCircleIcon className="w-5 h-5" />}
+                                                    {isApplying ? 'Applying Changes...' : 'Approve & Apply Auto Sync'}
+                                                </button>
+                                            </div>
+                                        )}
                                         <button 
-                                            onClick={() => setOptimizationResult(null)}
+                                            onClick={() => { setOptimizationResult(null); setProposedActions([]); }}
                                             className="mt-8 text-sm text-gray-500 hover:text-white transition-colors flex items-center gap-2"
                                         >
                                             <RefreshIcon className="w-4 h-4" /> Reset Analysis

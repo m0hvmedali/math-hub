@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { AppContext } from '../App';
 import { useHubCore } from '../utils/HubCore';
+import { useGoogleOmni } from '../services/platform-sdk';
 
 export interface QuickNote {
   id: string;
@@ -37,12 +38,15 @@ interface FloatingQuickNoteProps {
 const FloatingQuickNote: React.FC<FloatingQuickNoteProps> = ({ hideButton, forceOpen, onClose }) => {
   const location = useLocation();
   const { user, subjects } = useContext(AppContext) as any;
+  const { docs, auth } = useGoogleOmni();
   const [isOpen, setIsOpen] = useState(false);
   const effectiveOpen = forceOpen !== undefined ? forceOpen : isOpen;
   const [noteContent, setNoteContent] = useState('');
   const [selectedColor, setSelectedColor] = useState(NOTE_COLORS[0]);
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportUrl, setExportUrl] = useState<string | null>(null);
 
   // Drag state
   const [position, setPosition] = useState({ x: 24, y: window.innerHeight - 96 });
@@ -165,6 +169,26 @@ const FloatingQuickNote: React.FC<FloatingQuickNoteProps> = ({ hideButton, force
     }
   };
 
+  const handleExportDocs = async () => {
+    if (!noteContent.trim() || !docs) return;
+    try {
+      if (!auth.getToken()) {
+        await auth.login();
+      }
+      setIsExporting(true);
+      const ctx = getContext();
+      const title = ctx.lessonName ? `Math Hub Note: ${ctx.lessonName}` : 'Math Hub Quick Note';
+      const result = await docs.exportNoteToDoc(title, noteContent);
+      setExportUrl(result.url);
+      setTimeout(() => setExportUrl(null), 4000);
+    } catch (err) {
+      console.error("Docs export failed", err);
+      alert("Failed to export to Google Docs. Please check console.");
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const ctx = getContext();
   const contextLabel = ctx.lessonName
     ? `📍 ${ctx.subjectName} → ${ctx.branchName} → ${ctx.lessonName}`
@@ -266,22 +290,41 @@ const FloatingQuickNote: React.FC<FloatingQuickNoteProps> = ({ hideButton, force
             </div>
 
             {/* Save Button */}
-            <div className="p-4 pt-2">
+            <div className="p-4 pt-2 flex flex-col gap-2">
               {showSuccess ? (
                 <div className="w-full py-3 rounded-2xl text-center font-black text-sm flex items-center justify-center gap-2"
                      style={{ background: '#10B981', color: 'white' }}>
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
                   Saved!
                 </div>
-              ) : (
-                <button
-                  onClick={handleSave}
-                  disabled={!noteContent.trim() || isSaving}
-                  className="w-full py-3 rounded-2xl font-black text-sm text-white transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40"
-                  style={{ background: selectedColor.border }}
+              ) : exportUrl ? (
+                <a
+                  href={exportUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-3 rounded-2xl text-center font-black text-sm flex items-center justify-center gap-2 bg-blue-500 text-white"
                 >
-                  {isSaving ? 'Saving...' : '💾 Save Note'}
-                </button>
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                  Open in Google Docs
+                </a>
+              ) : (
+                <>
+                  <button
+                    onClick={handleExportDocs}
+                    disabled={!noteContent.trim() || isExporting || isSaving}
+                    className="w-full py-2.5 rounded-2xl font-bold text-sm bg-blue-500/10 hover:bg-blue-500/20 text-blue-500 border border-blue-500/30 transition-all disabled:opacity-40"
+                  >
+                    {isExporting ? 'Exporting...' : '📄 Export to Google Docs'}
+                  </button>
+                  <button
+                    onClick={handleSave}
+                    disabled={!noteContent.trim() || isSaving || isExporting}
+                    className="w-full py-3 rounded-2xl font-black text-sm text-white transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40"
+                    style={{ background: selectedColor.border }}
+                  >
+                    {isSaving ? 'Saving...' : '💾 Save locally'}
+                  </button>
+                </>
               )}
             </div>
           </div>

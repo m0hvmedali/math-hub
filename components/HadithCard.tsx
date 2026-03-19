@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Hadith, UserHadithProgress } from '../hooks/useWisdom';
+import { WisdomItem, WisdomProgress } from '../hooks/useWisdom';
 import { SparkleIcon, BookOpenIcon, CheckCircleIcon, RefreshIcon, TrophyIcon } from './Icons';
 
 interface HadithCardProps {
-  hadith: Hadith;
-  progress?: UserHadithProgress;
+  hadith: any;
+  progress?: WisdomProgress;
   onUpdate: (action: 'understand' | 'repeat' | 'favorite') => Promise<void>;
   variant?: 'compact' | 'hero' | 'overlay';
 }
