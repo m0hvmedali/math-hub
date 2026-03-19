@@ -13,21 +13,33 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { model, messages, stream, format } = req.body;
   const authHeader = req.headers.authorization;
 
-  // INTERNAL FALLBACK KEYS (Trying both with and without 'cloud' suffix)
+  // INTERNAL FALLBACK KEYS
   const BASE_KEY = '4e1fe3f137c14098b49c0349cb63d7ab.MjZZusjbMyjNkLgp33uW_0uD';
-  const keysToTry = authHeader && authHeader !== 'Bearer ' 
-    ? [authHeader] 
-    : [`Bearer ${process.env.VITE_OLLAMA_API_KEY || BASE_KEY}`, `Bearer ${BASE_KEY}cloud`].filter(Boolean);
+  const variations = [
+    BASE_KEY,
+    `${BASE_KEY}cloud`,
+    `Bearer ${BASE_KEY}`,
+    `Bearer ${BASE_KEY}cloud`
+  ];
 
-  console.log(`[Ollama Proxy] Request: model=${model}, keysToTry=${keysToTry.length}`);
+  const keysToTry = (authHeader && authHeader !== 'Bearer ') 
+    ? [authHeader, ...variations] 
+    : variations;
 
-  let lastError = null;
+  console.log(`[Ollama Proxy] Starting diagnostic run with ${keysToTry.length} keys...`);
+
+  let lastStatus = 0;
+  let lastBody = '';
+
   for (const apiKey of keysToTry) {
     try {
+      // Ensure we have a properly formatted Bearer token for the real request
+      const finalAuth = apiKey.startsWith('Bearer ') ? apiKey : `Bearer ${apiKey}`;
+      
       const response = await fetch('https://ollama.com/api/chat', {
         method: 'POST',
         headers: {
-          'Authorization': apiKey,
+          'Authorization': finalAuth,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -38,29 +50,33 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }),
       });
 
-      if (response.status === 401) {
-        lastError = 'Invalid API Key';
-        continue; // Try next key
+      lastStatus = response.status;
+      lastBody = await response.text();
+
+      if (response.ok) {
+        console.log('[Ollama Proxy] ✅ Success');
+        return res.status(200).json(JSON.parse(lastBody));
       }
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`[Ollama Proxy] Upstream Error ${response.status}:`, errorText);
-        return res.status(response.status).json({ error: errorText || 'Ollama API error', source: 'upstream' });
-      }
-
-      const data = await response.json();
-      console.log('[Ollama Proxy] Success');
-      return res.status(200).json(data);
+      console.warn(`[Ollama Proxy] ⚠️ Key failed with ${response.status}: ${lastBody.slice(0, 50)}...`);
+      if (response.status !== 401) break; // If it's not an auth error, don't keep trying keys
     } catch (error: any) {
-      console.error('[Ollama Proxy] Fetch Error:', error);
-      lastError = error.message;
+      console.error('[Ollama Proxy] ❌ Fetch Error:', error.message);
+      lastBody = error.message;
     }
   }
 
-  return res.status(401).json({ 
-    error: lastError || 'All API keys failed on Ollama Cloud', 
-    details: 'If you are using custom keys, ensure they are correct in .env or Vercel Dashboard.',
-    source: 'proxy_fallback'
+  // If we got here, all attempts failed. Return a 200 with an error object
+  // so the frontend can read the internal details without browser 401 blocking.
+  return res.status(200).json({ 
+    error: true,
+    message: 'Ollama Cloud Authentication Failed',
+    lastStatus,
+    upstreamBody: lastBody,
+    diagnostics: {
+      model,
+      keysAttempted: keysToTry.length,
+      envKeySet: !!process.env.VITE_OLLAMA_API_KEY
+    }
   });
 }

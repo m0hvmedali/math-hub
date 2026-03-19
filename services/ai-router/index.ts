@@ -51,11 +51,15 @@ async function ollamaChat(params: {
       ...(params.format ? { format: params.format } : {}),
     }),
   });
-  if (!resp.ok) {
-    const errBody = await resp.text().catch(() => resp.statusText);
-    throw new Error(`Ollama Proxy ${resp.status}: ${errBody}`);
+  const data = await resp.json();
+  
+  // Handle diagnostic 200-but-error responses
+  if (data.error === true) {
+    console.error('[AI Router] Proxy Diagnostic Error:', data);
+    throw new Error(`Ollama Cloud Error: ${data.message} (Upstream: ${data.lastStatus})`);
   }
-  return resp.json();
+
+  return data;
 }
 
 // ── Site Knowledge ─────────────────────────────────────────────────────────────
