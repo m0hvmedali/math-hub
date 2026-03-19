@@ -116,6 +116,13 @@ class Assistant {
   }
 
   /**
+   * Get all registered commands.
+   */
+  getAvailableCommands(): HubCommand[] {
+    return Array.from(this.commands.values());
+  }
+
+  /**
    * Execute a sequence of commands (Macro).
    */
   runSequence(ids: string[]) {
