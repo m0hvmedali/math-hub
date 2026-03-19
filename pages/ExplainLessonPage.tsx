@@ -62,7 +62,7 @@ const ExplainLessonPage: React.FC = () => {
                     </div>
                     <span className="text-[10px] font-black tracking-[0.4em] text-brand-magenta uppercase font-outfit">Neural Professor v4.0</span>
                 </div>
-                <h1 className="text-5xl md:text-7xl font-black text-white tracking-tighter leading-none mb-6">
+                <h1 className="text-4xl md:text-6xl lg:text-7xl font-black text-white tracking-tighter leading-none mb-6">
                     {language === 'ar' ? 'البروفيسور AI' : 'Explain Lab'}<span className="text-brand-magenta">.</span>
                 </h1>
                 <p className="text-gray-500 font-bold max-w-xl text-lg">

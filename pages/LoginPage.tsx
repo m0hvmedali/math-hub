@@ -29,7 +29,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
             <div className="absolute bottom-[-20%] right-[-20%] w-[50vw] h-[50vw] bg-accent-violet/10 rounded-full blur-[120px]"></div>
 
             <div className="relative z-10 w-full max-w-md text-center">
-                <h1 className="text-5xl md:text-7xl font-black text-[var(--text-primary)] mb-2 tracking-tighter uppercase">MATH<span className="text-brand-cyan">HUB</span></h1>
+                <h1 className="text-4xl md:text-6xl lg:text-7xl font-black text-[var(--text-primary)] mb-2 tracking-tighter uppercase">MATH<span className="text-brand-cyan">HUB</span></h1>
                 <p className="text-[var(--text-muted)] text-lg mb-12 tracking-widest uppercase">Identify Yourself</p>
 
                 <form onSubmit={handleSubmit} className="flex flex-col gap-4">

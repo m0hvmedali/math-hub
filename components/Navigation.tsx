@@ -1,7 +1,7 @@
 import React, { useContext, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { AppContext } from '../App';
-import { HomeIcon, GlobeIcon, BeakerIcon, ClockIcon, SparkleIcon, TrendingUpIcon, SearchHistoryIcon, SettingsIcon } from './Icons';
+import { HomeIcon, GlobeIcon, BeakerIcon, ClockIcon, SparkleIcon, TrendingUpIcon, SearchHistoryIcon, SettingsIcon, LockIcon } from './Icons';
 import { useThemeEngine } from '../hooks/useThemeEngine';
 import ThemeStatusBadge from './ThemeStatusBadge';
 
@@ -143,6 +143,7 @@ const Navigation: React.FC = () => {
                                     { to: '/daily-analysis', icon: <span className="text-lg">❖</span>, label: language === 'ar' ? 'التحليل اليومي' : 'Daily Analysis' },
                                     { to: '/ai-monitor', icon: <span className="text-lg">🛡️</span>, label: language === 'ar' ? ' Neural Watchdog' : 'Neural Watchdog' },
                                     { to: '/search-history', icon: <SearchHistoryIcon className="w-5 h-5 text-gray-400" />, label: language === 'ar' ? 'سجل البحث' : 'Search History' },
+                                    { to: '/vault', icon: <LockIcon className="w-5 h-5 text-[#d4af37]" />, label: language === 'ar' ? 'التوثيق الصامت' : 'Quiet Vault' },
                                     { type: 'divider' },
                                     { to: '/settings', icon: <SettingsIcon className="w-5 h-5 text-gray-400" />, label: language === 'ar' ? 'الإعدادات' : 'Settings' },
                                     { isButton: true, icon: <svg className="w-5 h-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>, label: language === 'ar' ? 'خروج' : 'Logout' }

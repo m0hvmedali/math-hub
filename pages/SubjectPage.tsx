@@ -94,7 +94,7 @@ const SubjectPage: React.FC = () => {
                         <ArrowLeftIcon className={`w-4 h-4 mr-2 transition-transform group-hover:-translate-x-1 ${language === 'ar' ? 'ml-2 transform rotate-180 group-hover:translate-x-1' : ''}`} />
                         {language === 'ar' ? 'العودة للمواد' : 'Back to Materials'}
                     </button>
-                    <h1 className="text-6xl md:text-8xl font-black text-white leading-none tracking-tighter mb-4">
+                    <h1 className="text-4xl md:text-6xl lg:text-8xl font-black text-white leading-none tracking-tighter mb-4">
                         {subject.name}
                     </h1>
                 </div>

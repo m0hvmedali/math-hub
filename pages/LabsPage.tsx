@@ -295,7 +295,7 @@ const LabsPage: React.FC = () => {
                         </div>
                         <span className="text-xs font-black tracking-[0.2em] text-brand-cyan uppercase">Research & Development</span>
                     </div>
-                    <h1 className="text-5xl md:text-7xl font-black text-white tracking-tight">
+                    <h1 className="text-4xl md:text-6xl lg:text-7xl font-black text-white tracking-tight">
                         Experimental <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-cyan to-brand-magenta">Labs</span>
                     </h1>
                 </div>

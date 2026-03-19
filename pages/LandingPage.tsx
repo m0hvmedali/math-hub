@@ -36,7 +36,7 @@ const LandingPage: React.FC = () => {
               <span className="w-1.5 h-1.5 bg-cyan-400 rounded-full animate-pulse"></span>
               منصة الطالب الذكية
             </div>
-            <h1 className="text-5xl sm:text-6xl font-black tracking-tight leading-tight mb-6">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl font-black tracking-tight leading-tight mb-6">
               <span className="text-white">Math Hub</span>
               <br />
               <span className="bg-gradient-to-r from-cyan-400 to-blue-500 text-transparent bg-clip-text">

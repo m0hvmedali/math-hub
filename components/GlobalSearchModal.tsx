@@ -114,7 +114,7 @@ const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, onClose, 
                         </div>
                         
                         <div className="flex flex-col gap-4 max-w-2xl">
-                            <div className="flex bg-white/5 border border-white/10 rounded-xl p-1 w-max">
+                            <div className="flex flex-wrap md:flex-nowrap bg-white/5 border border-white/10 rounded-xl p-1 w-full md:w-max max-w-full">
                                 <button 
                                     onClick={() => setMode('search')}
                                     className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${mode === 'search' ? 'bg-accent-blue text-white shadow-lg' : 'text-gray-400 hover:text-white'}`}
@@ -131,7 +131,7 @@ const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, onClose, 
                                 </button>
                             </div>
                             
-                            <div className="flex gap-4 w-full">
+                            <div className="flex flex-col md:flex-row gap-4 w-full">
                                 <input 
                                     type="text"
                                     value={searchTerm}

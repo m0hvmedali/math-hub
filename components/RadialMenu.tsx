@@ -12,8 +12,8 @@ const RadialMenu: React.FC<RadialMenuProps> = ({ onAddSubject, onAddBranch, onAd
 
     const items = [
         { icon: SparkleIcon, label: 'Subject', color: 'bg-accent-blue', action: onAddSubject, angle: -90 },
-        { icon: TargetIcon, label: 'Branch', color: 'bg-accent-cyan', action: onAddBranch, angle: -30 },
-        { icon: BookOpenIcon, label: 'Lesson', color: 'bg-accent-green', action: onAddLesson, angle: 150 },
+        { icon: TargetIcon, label: 'Branch', color: 'bg-accent-cyan', action: onAddBranch, angle: -135 },
+        { icon: BookOpenIcon, label: 'Lesson', color: 'bg-accent-green', action: onAddLesson, angle: -180 },
     ];
 
     return (

@@ -433,7 +433,7 @@ const DashboardPage: React.FC = () => {
                         <span className="text-[var(--text-muted)] font-bold uppercase tracking-widest text-xs">{language === 'ar' ? 'وقت المذاكرة اليومي' : 'Daily Study Time'}</span>
                         <ClockIcon className="w-6 h-6 text-brand-cyan" />
                     </div>
-                    <div className="text-5xl font-black text-[var(--text-primary)]">{dailyTime} <span className="text-xl text-[var(--text-muted)]">min</span></div>
+                    <div className="text-4xl md:text-5xl font-black text-[var(--text-primary)]">{dailyTime} <span className="text-xl text-[var(--text-muted)]">min</span></div>
                     <div className="mt-4 h-1.5 w-full bg-[var(--progress-track)] rounded-full overflow-hidden">
                         <div className="h-full bg-brand-cyan" style={{ width: `${Math.min((dailyTime / 180) * 100, 100)}%` }}></div>
                     </div>
@@ -484,7 +484,7 @@ const DashboardPage: React.FC = () => {
                         <div className="p-6 bg-brand-purple/20 rounded-full mb-8 animate-pulse text-brand-purple">
                             <SparkleIcon className="w-16 h-16" />
                         </div>
-                        <h2 className="text-5xl font-black text-white mb-4 tracking-tighter">
+                        <h2 className="text-3xl md:text-5xl font-black text-white mb-4 tracking-tighter">
                             {language === 'ar' ? 'الفضاء العميق' : 'Deep Space'}
                         </h2>
                         <p className="text-xl text-gray-400 mb-10 max-w-lg mx-auto leading-relaxed">

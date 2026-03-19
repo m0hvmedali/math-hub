@@ -424,7 +424,7 @@ const MeasuringDevicesLab: React.FC = () => {
                                 </div>
                                 <span className="text-xs font-black tracking-[0.4em] text-brand-cyan uppercase">Advanced Engineering Lab</span>
                             </div>
-                            <h1 className="text-6xl md:text-8xl font-black text-white tracking-tighter leading-[0.9]">
+                            <h1 className="text-4xl md:text-6xl lg:text-8xl font-black text-white tracking-tighter leading-[0.9]">
                                 Measuring <br/>
                                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-cyan to-brand-magenta">Instruments</span>
                             </h1>

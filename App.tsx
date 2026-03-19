@@ -60,7 +60,8 @@ import CalendarBrowserModal from './components/CalendarBrowserModal';
 import LandingPage from './pages/LandingPage';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import AIMonitorPage from './pages/AIMonitorPage';
-
+import QuietVaultPage from './pages/QuietVaultPage';
+import ContextStitcherModal from './components/ContextStitcherModal';
 
 export const AppContext = createContext<{
     subjects: Subject[];
@@ -772,7 +773,7 @@ const App: React.FC = () => {
                 )}
                 {user && <LabAnnouncement />}
                 {showOnboarding && <OnboardingStories onComplete={handleOnboardingComplete} />}
-                <main className="flex-1 w-full flex flex-col">
+                <main className="flex-1 w-full flex flex-col pb-24 lg:pb-0">
                     <Routes>
                         <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <LandingPage />} />
                         <Route path="/privacy" element={<PrivacyPolicyPage />} />
@@ -808,6 +809,7 @@ const App: React.FC = () => {
                         <Route path="/notes" element={<ProtectedRoute><NotesPage /></ProtectedRoute>} />
                         <Route path="/wisdom" element={<ProtectedRoute><WisdomLibraryPage /></ProtectedRoute>} />
                         <Route path="/gmail" element={<ProtectedRoute><GmailPage /></ProtectedRoute>} />
+                        <Route path="/vault" element={<ProtectedRoute><QuietVaultPage /></ProtectedRoute>} />
                     </Routes>
                 </main>
             </div>
@@ -863,6 +865,15 @@ const App: React.FC = () => {
                 </div>
 
             )}
+            {/* Global Overlays & Modals */}
+            <ContextStitcherModal />
+            <AssistantOverlay isOpen={isAssistantOpen} onClose={() => setIsAssistantOpen(false)} />
+            <SearchOverlay isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+            <DriveBrowserModal isOpen={isDriveOpen} onClose={() => setIsDriveOpen(false)} />
+            <YouTubeBrowserModal isOpen={isYouTubeOpen} onClose={() => setIsYouTubeOpen(false)} />
+            <TasksBrowserModal isOpen={isTasksOpen} onClose={() => setIsTasksOpen(false)} />
+            <CalendarBrowserModal isOpen={isCalendarOpen} onClose={() => setIsCalendarOpen(false)} />
+
         </AppContext.Provider>
         </TimerProvider>
         </SpotifyProvider>

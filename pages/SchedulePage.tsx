@@ -110,7 +110,7 @@ const SchedulePage: React.FC = () => {
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                 >
-                    <h1 className="text-5xl font-black mb-3 flex items-center gap-4 tracking-tighter">
+                    <h1 className="text-3xl md:text-4xl lg:text-5xl font-black mb-3 flex items-center gap-4 tracking-tighter">
                         <div className="p-3 bg-brand-cyan/20 rounded-2xl border border-brand-cyan/30">
                             <ClockIcon className="w-10 h-10 text-brand-cyan animate-pulse-slow" />
                         </div>

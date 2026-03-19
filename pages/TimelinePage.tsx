@@ -80,7 +80,7 @@ const TimelinePage: React.FC = () => {
   return (
     <div className="p-6 md:p-12 max-w-5xl mx-auto pb-32 animate-fade-in">
       <header className="mb-12">
-        <h1 className="text-5xl md:text-6xl font-black text-white tracking-tighter mb-4 flex items-center gap-4">
+        <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white tracking-tighter mb-4 flex items-center gap-4">
           <TrendingUpIcon className="w-12 h-12 text-brand-cyan" /> Smart Timeline
         </h1>
         <p className="text-gray-400 text-xl font-medium">Your path to mastery, automatically optimized.</p>

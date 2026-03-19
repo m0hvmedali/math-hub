@@ -57,6 +57,50 @@ export interface AIResponse {
   reasoning?: string;
 }
 
+// ── Usage Tracking & Caching ─────────────────────────────────────────────────
+const USAGE_LIMITS: Record<string, number> = {
+  'gemini': 300,      // daily
+  'openrouter': 200,  // gpt-oss daily
+  'groq': 500,        // kimi-k2 / llama daily 
+  'mistral': 100      // mistral daily
+};
+
+// Simple fast string hashing for prompt deduplication
+const hashPrompt = (str: string) => {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return hash.toString();
+};
+
+const getTodayKey = () => `ai_usage_${new Date().toISOString().split('T')[0]}`;
+
+function checkUsage(provider: string): boolean {
+  try {
+    const raw = localStorage.getItem(getTodayKey());
+    const usage = raw ? JSON.parse(raw) : {};
+    const count = usage[provider] || 0;
+    const limit = USAGE_LIMITS[provider] || 50;
+    return count < limit;
+  } catch (e) {
+    return true; // fail open
+  }
+}
+
+function incrementUsage(provider: string) {
+  try {
+    const key = getTodayKey();
+    const raw = localStorage.getItem(key);
+    const usage = raw ? JSON.parse(raw) : {};
+    usage[provider] = (usage[provider] || 0) + 1;
+    localStorage.setItem(key, JSON.stringify(usage));
+  } catch (e) {
+    // disregard tracking errors
+  }
+}
+
 // ── Fetch Helpers ─────────────────────────────────────────────────────────────
 
 async function callOpenRouter(req: AIRequest, model: string, key: string): Promise<AIResponse> {
@@ -151,19 +195,42 @@ import { monitor } from './monitor';
 export async function routeAI(req: AIRequest): Promise<AIResponse> {
   const startTime = Date.now();
   const task = req.task || 'brain';
+  
+  // 1. Check Cache (Deduplication)
+  const cacheKey = `ai_cache_${task}_${hashPrompt(req.prompt + (req.systemInstruction || ''))}`;
+  try {
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+          const parsed = JSON.parse(cached);
+          if (parsed && parsed.text) {
+              console.log(`[AI Router] Cache hit for ${task}`);
+              return parsed;
+          }
+      }
+  } catch (e) { /* ignore cache read errors */ }
+
   let result: AIResponse | null = null;
   let error: any = null;
 
   try {
     switch (task) {
       case 'brain':
-        // User requested Gemini specifically
-        result = await callGemini(req).catch(() => callOpenRouter(req, 'google/gemini-2.0-flash-001', OPENROUTER_KEY));
+        if (checkUsage('gemini')) {
+            result = await callGemini(req).catch(() => callOpenRouter(req, 'google/gemini-2.0-flash-001', OPENROUTER_KEY));
+        } else if (checkUsage('openrouter')) {
+            result = await callOpenRouter(req, 'google/gemini-2.0-flash-001', OPENROUTER_KEY);
+        } else {
+            result = await callGroq(req, 'llama-3.1-8b-instant', GROQ_LLAMA_KEY);
+        }
         break;
       
       case 'lesson_explanation':
       case 'daily_analysis':
-        result = await callGemini(req);
+        if (checkUsage('gemini')) {
+            result = await callGemini(req);
+        } else {
+            result = await callGroq(req, 'llama-3.1-8b-instant', GROQ_LLAMA_KEY);
+        }
         break;
       
       case 'long_context':
@@ -179,16 +246,20 @@ export async function routeAI(req: AIRequest): Promise<AIResponse> {
         break;
       
       case 'medium_task':
-        const resp = await fetch('https://api.mistral.ai/v1/chat/completions', {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${MISTRAL_KEY}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            model: 'mistral-medium-latest',
-            messages: [{ role: 'user', content: req.prompt }]
-          })
-        });
-        const data = await resp.json();
-        result = { text: data.choices[0].message.content, provider: 'mistral' };
+        if (checkUsage('mistral')) {
+            const resp = await fetch('https://api.mistral.ai/v1/chat/completions', {
+              method: 'POST',
+              headers: { 'Authorization': `Bearer ${MISTRAL_KEY}`, 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                model: 'mistral-medium-latest',
+                messages: [{ role: 'user', content: req.prompt }]
+              })
+            });
+            const data = await resp.json();
+            result = { text: data.choices[0].message.content, provider: 'mistral' };
+        } else {
+            result = await callGroq(req, 'llama-3.1-8b-instant', GROQ_LLAMA_KEY);
+        }
         break;
 
       case 'image':
@@ -196,13 +267,32 @@ export async function routeAI(req: AIRequest): Promise<AIResponse> {
         break;
 
       default:
-                result = await callOpenRouter(req, 'google/gemini-2.0-flash-001', OPENROUTER_KEY);
+        if (checkUsage('openrouter')) {
+            result = await callOpenRouter(req, 'google/gemini-2.0-flash-001', OPENROUTER_KEY);
+        } else {
+            result = await callGroq(req, 'llama-3.1-8b-instant', GROQ_LLAMA_KEY);
+        }
     }
+    
+    // Increment usage for the successful provider
+    if (result && result.provider) {
+        if (result.provider.includes('gemini')) incrementUsage('gemini');
+        else if (result.provider.includes('groq') || result.provider.includes('kimi')) incrementUsage('groq');
+        else if (result.provider.includes('mistral')) incrementUsage('mistral');
+        else incrementUsage('openrouter');
+        
+        // 5. Store Result in Cache
+        try {
+            localStorage.setItem(cacheKey, JSON.stringify(result));
+        } catch (e) { /* ignore cache write errors */ }
+    }
+    
     return result!;
   } catch (err: any) {
     error = err;
     console.warn(`[AI Router] Primary provider for ${task} failed, falling back to Llama 3.1`, err);
     result = await callGroq(req, 'llama-3.1-8b-instant', GROQ_LLAMA_KEY).catch(() => callGemini(req));
+    // If fallback succeeds, we do NOT cache it to avoid caching degraded answers
     return result;
   } finally {
     monitor.logCall({
