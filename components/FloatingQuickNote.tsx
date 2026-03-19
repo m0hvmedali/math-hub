@@ -43,7 +43,9 @@ const FloatingQuickNote: React.FC = () => {
   const dragRef = useRef<{ startX: number; startY: number; initialX: number; initialY: number } | null>(null);
 
   useEffect(() => {
-    setPosition({ x: 24, y: window.innerHeight - 96 });
+    // Move up on mobile to avoid nav bar
+    const initialY = window.innerWidth < 768 ? window.innerHeight - 160 : window.innerHeight - 96;
+    setPosition({ x: 24, y: initialY });
   }, []);
 
   const handlePointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {

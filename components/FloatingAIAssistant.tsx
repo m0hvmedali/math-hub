@@ -16,7 +16,7 @@ const FloatingAIAssistant: React.FC = () => {
     return (
         <>
             {/* The Floating Bubble */}
-            <div className="fixed bottom-6 right-6 z-[60] flex flex-col items-end gap-3 group">
+            <div className="fixed bottom-6 right-6 z-[90] flex flex-col items-end gap-3 group">
                 {/* Tooltip on Hover */}
                 <div className="px-4 py-2 bg-black/80 backdrop-blur-md border border-brand-purple/30 rounded-xl text-[10px] font-black uppercase tracking-widest text-white opacity-0 transition-all group-hover:opacity-100 group-hover:-translate-y-2 pointer-events-none shadow-glow-purple">
                     Academic Assistant

@@ -38,7 +38,7 @@ const FloatingSpotifyWidget: React.FC = () => {
   };
 
   return (
-    <div className="fixed bottom-20 md:bottom-6 right-4 md:right-6 z-[95] flex flex-col items-end gap-2">
+    <div className="fixed bottom-[104px] md:bottom-6 right-4 md:right-6 z-[95] flex flex-col items-end gap-2">
       {/* Expanded Panel */}
       {isExpanded && (
         <div className="w-[340px] max-h-[480px] overflow-hidden rounded-3xl border border-[var(--glass-border)] shadow-2xl animate-scale-in origin-bottom-right"

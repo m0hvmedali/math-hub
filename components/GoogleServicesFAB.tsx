@@ -76,7 +76,7 @@ const GoogleServicesFAB: React.FC<GoogleServicesFABProps> = ({
   ];
 
   return (
-    <div className="fixed bottom-24 right-5 z-50 flex flex-col-reverse items-end gap-3">
+    <div className="fixed bottom-[184px] md:bottom-24 right-5 z-[100] flex flex-col-reverse items-end gap-3">
       {/* Service Buttons */}
       {isOpen && SERVICES.map((svc, i) => (
         <div
