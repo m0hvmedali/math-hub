@@ -8,8 +8,6 @@
  * 4. Groq (Llama/Kimi)                               — final fallback
  */
 
-// ollama npm package is NOT used — it requires node:fs/node:path which breaks browser builds.
-// We call the Ollama Cloud REST API directly via fetch instead.
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import {
   getActiveModelsForTask,
@@ -26,12 +24,11 @@ const GROQ_LLAMA_KEY = (import.meta.env.VITE_GROQ_LLAMA_KEY     || '').trim();
 const GEMMA_KEY      = (import.meta.env.VITE_OPENROUTER_GEMMA_KEY || '').trim();
 const MISTRAL_KEY    = (import.meta.env.VITE_MISTRAL_API_KEY    || '').trim();
 
-// ── Ollama Cloud REST API (browser-compatible fetch) ─────────────────────────
-const OLLAMA_HOST = 'https://ollama.com';
+// ── Ollama Cloud REST API (browser-compatible fetch via Vercel Proxy) ────────
+const OLLAMA_HOST = '/api/ai/ollama';
 
 /**
- * Low-level call to Ollama REST API.
- * POST /api/chat  (non-streaming)
+ * Low-level call to Ollama REST API (Proxied through /api/ai/ollama)
  */
 async function ollamaChat(params: {
   model: string;
@@ -39,7 +36,7 @@ async function ollamaChat(params: {
   format?: 'json';
   apiKey: string;
 }): Promise<{ message: { content: string } }> {
-  const resp = await fetch(`${OLLAMA_HOST}/api/chat`, {
+  const resp = await fetch(OLLAMA_HOST, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${params.apiKey}`,
@@ -54,7 +51,7 @@ async function ollamaChat(params: {
   });
   if (!resp.ok) {
     const errBody = await resp.text().catch(() => resp.statusText);
-    throw new Error(`Ollama ${resp.status}: ${errBody}`);
+    throw new Error(`Ollama Proxy ${resp.status}: ${errBody}`);
   }
   return resp.json();
 }
@@ -124,14 +121,24 @@ function cleanJson(raw: string): string {
   // Strip ```json ... ``` or ``` ... ```
   const fenceMatch = s.match(/```(?:json)?\s*([\s\S]*?)```/);
   if (fenceMatch) s = fenceMatch[1].trim();
+  
   // Find the first { or [ and last } or ]
-  const firstBrace = Math.min(
-    s.indexOf('{') === -1 ? Infinity : s.indexOf('{'),
-    s.indexOf('[') === -1 ? Infinity : s.indexOf('[')
-  );
-  if (firstBrace === Infinity) return s;
-  const lastBrace = Math.max(s.lastIndexOf('}'), s.lastIndexOf(']'));
+  const firstCurly = s.indexOf('{');
+  const firstSquare = s.indexOf('[');
+  let firstBrace = -1;
+  
+  if (firstCurly !== -1 && firstSquare !== -1) firstBrace = Math.min(firstCurly, firstSquare);
+  else if (firstCurly !== -1) firstBrace = firstCurly;
+  else if (firstSquare !== -1) firstBrace = firstSquare;
+
+  if (firstBrace === -1) return s;
+
+  const lastCurly = s.lastIndexOf('}');
+  const lastSquare = s.lastIndexOf(']');
+  const lastBrace = Math.max(lastCurly, lastSquare);
+
   if (lastBrace === -1 || lastBrace < firstBrace) return s;
+
   return s.slice(firstBrace, lastBrace + 1);
 }
 

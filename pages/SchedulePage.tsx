@@ -98,31 +98,13 @@ const SchedulePage: React.FC = () => {
         `;
 
         try {
-            const suggestion = await generateText(prompt, { 
+            const resultRaw = await generateText(prompt, { 
                 system: "أنت ملاح أكاديمي خبير. تخرج فقط JSON صحيح 100%. لا تضف أي نص خارج الأقواس المتعرجة {}.",
                 task: 'medium_task',
                 json: true
             });
             
-            // Extract JSON from potential commentary
-            const firstBrace = suggestion.indexOf('{');
-            const lastBrace = suggestion.lastIndexOf('}');
-            
-            if (firstBrace === -1 || lastBrace === -1) {
-                throw new Error("No JSON object found in response");
-            }
-            
-            let jsonPart = suggestion.substring(firstBrace, lastBrace + 1);
-            
-            // Fix bad control characters (like literal newlines inside strings)
-            jsonPart = jsonPart.replace(/[\u0000-\u001F]+/g, (match) => {
-                if (match === '\n') return '\\n';
-                if (match === '\r') return '\\r';
-                if (match === '\t') return '\\t';
-                return '';
-            });
-
-            const result = JSON.parse(jsonPart);
+            const result = JSON.parse(resultRaw);
 
             setOptimizationResult(result.message || "اكتمل التحليل بنجاح.");
             setProposedActions(result.actions || []);
