@@ -1,4 +1,4 @@
-import React, { useState, useCallback, createContext, useEffect } from 'react';
+import FloatingAIAssistant from './components/FloatingAIAssistant';
 import { Routes, Route, Navigate, NavLink, useLocation } from 'react-router-dom';
 import WhiteboardPage from './pages/WhiteboardPage';
 import { Subject, CourseBranch, Lesson, StudySession, Task, Importance, Competition, CrashTask, ErrorCause, KnowledgeError, CustomNode, ManualLink } from './types';
@@ -768,6 +768,7 @@ const App: React.FC = () => {
                 {user && <YouTubeBrowserModal isOpen={isYouTubeOpen} onClose={() => setIsYouTubeOpen(false)} />}
                 {user && <TasksBrowserModal isOpen={isTasksOpen} onClose={() => setIsTasksOpen(false)} />}
                 {user && <CalendarBrowserModal isOpen={isCalendarOpen} onClose={() => setIsCalendarOpen(false)} />}
+                {user && <FloatingAIAssistant />}
                 {user && (
                     <GoogleServicesFAB
                         onOpenGmail={() => { window.location.href = '/gmail'; }}

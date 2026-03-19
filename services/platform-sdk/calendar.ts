@@ -15,6 +15,16 @@ class CalendarService {
   }
 
   /**
+   * List user's primary calendar events in a specific time range
+   */
+  public async getEventsByRange(timeMin: string, timeMax: string, maxResults: number = 250) {
+    const res = await auth.fetchWithAuth(
+      `${BASE_URL}/calendars/primary/events?timeMin=${timeMin}&timeMax=${timeMax}&maxResults=${maxResults}&singleEvents=true&orderBy=startTime`
+    );
+    return res.json();
+  }
+
+  /**
    * Create a new event
    * @param summary Title
    * @param start ISO String
@@ -30,6 +40,17 @@ class CalendarService {
         start: { dateTime: start },
         end: { dateTime: end }
       })
+    });
+    return res.json();
+  }
+
+  /**
+   * Update an existing event
+   */
+  public async updateEvent(eventId: string, updates: any) {
+    const res = await auth.fetchWithAuth(`${BASE_URL}/calendars/primary/events/${eventId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(updates)
     });
     return res.json();
   }

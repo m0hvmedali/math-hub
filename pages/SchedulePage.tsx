@@ -1,95 +1,278 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { supabase } from '../supabaseClient';
-import { ClockIcon } from '../components/Icons';
+import { calendar } from '../services/platform-sdk/calendar';
+import { generateText } from '../services/ai-router';
+import { ClockIcon, SparkleIcon, GoogleIcon, PlusIcon, RefreshIcon } from '../components/Icons';
+import { motion, AnimatePresence } from 'framer-motion';
+
+interface CalendarEvent {
+    id: string;
+    summary: string;
+    description?: string;
+    start: { dateTime?: string; date?: string };
+    end: { dateTime?: string; date?: string };
+    colorId?: string;
+}
 
 const SchedulePage: React.FC = () => {
-    const [schedule, setSchedule] = useState<Record<string, string>>({
-        'Saturday': '', 'Sunday': '', 'Monday': '', 'Tuesday': '', 'Wednesday': '', 'Thursday': '', 'Friday': ''
-    });
-    const [isSaving, setIsSaving] = useState(false);
-    const [dbId, setDbId] = useState<string | null>(null);
+    const [events, setEvents] = useState<CalendarEvent[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isOptimizing, setIsOptimizing] = useState(false);
+    const [optimizationResult, setOptimizationResult] = useState<string | null>(null);
+    const [isConnected, setIsConnected] = useState(false);
 
-    const days = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+    const fetchEvents = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const now = new Date();
+            const startOfWeek = new Date(now.setDate(now.getDate() - now.getDay())); // Sunday
+            startOfWeek.setHours(0, 0, 0, 0);
+            
+            const endOfWeek = new Date(startOfWeek);
+            endOfWeek.setDate(endOfWeek.getDate() + 7);
+            endOfWeek.setHours(23, 59, 59, 999);
 
-    const fetchSchedule = useCallback(async () => {
-        if (!supabase) return;
-        const { data } = await supabase
-            .from('timeline_items')
-            .select('*')
-            .eq('type', 'weekly_schedule')
-            .limit(1);
-
-        if (data && data.length > 0) {
-            try {
-                const loadedSchedule = JSON.parse(data[0].content);
-                setSchedule(loadedSchedule);
-                setDbId(data[0].id);
-            } catch (e) {
-                console.error("Error parsing schedule", e);
+            const data = await calendar.getEventsByRange(startOfWeek.toISOString(), endOfWeek.toISOString());
+            if (data.items) {
+                setEvents(data.items);
+                setIsConnected(true);
             }
+        } catch (error) {
+            console.error("Error fetching events:", error);
+            setIsConnected(false);
+        } finally {
+            setIsLoading(false);
         }
     }, []);
 
     useEffect(() => {
-        fetchSchedule();
-    }, [fetchSchedule]);
+        fetchEvents();
+    }, [fetchEvents]);
 
-    const handleSave = async () => {
-        if (!supabase) return;
-        setIsSaving(true);
-        const contentString = JSON.stringify(schedule);
+    const handleOptimize = async () => {
+        if (events.length === 0) return;
+        setIsOptimizing(true);
+        setOptimizationResult(null);
 
-        if (dbId) {
-            await supabase.from('timeline_items').update({ content: contentString }).eq('id', dbId);
-        } else {
-            const { data } = await supabase.from('timeline_items').insert([{
-                type: 'weekly_schedule',
-                content: contentString
-            }]).select();
-            if (data) setDbId(data[0].id);
+        const eventData = events.map(e => ({
+            title: e.summary,
+            start: e.start.dateTime || e.start.date,
+            end: e.end.dateTime || e.end.date,
+            desc: e.description
+        }));
+
+        const prompt = `
+            أنا طالب وهذه هي مواعيدي في تقويم جوجل لهذا الأسبوع:
+            ${JSON.stringify(eventData)}
+
+            من فضلك قم بتحليل هذا الجدول وتقديم 3-5 اقتراحات لتحسينه (مثلاً: إضافة فترات دراسة مركزة، تحديد فجوات زمنية ضائعة، اقتراح وقت أفضل للنوم).
+            تحدث معي كرفيق ذكي ومشجع.
+            
+            أريد الرد بأسلوب "ملاح واعي".
+        `;
+
+        try {
+            const suggestion = await generateText(prompt, { 
+                system: "أنت رفيق، ملاح أكاديمي خبير في تنظيم الوقت وعلم الأعصاب التعليمي.",
+                task: 'chat'
+            });
+            setOptimizationResult(suggestion);
+        } catch (error) {
+            console.error("Optimization failed:", error);
+        } finally {
+            setIsOptimizing(false);
         }
-        setIsSaving(false);
     };
 
-    const handleChange = (day: string, value: string) => {
-        setSchedule(prev => ({ ...prev, [day]: value }));
+    const formatDate = (isoString?: string) => {
+        if (!isoString) return '';
+        return new Date(isoString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    };
+
+    const getDayName = (isoString?: string) => {
+        if (!isoString) return '';
+        return new Date(isoString).toLocaleDateString('ar-EG', { weekday: 'long' });
     };
 
     return (
-        <div className="p-6 md:p-12 max-w-7xl mx-auto pb-32">
-            <header className="flex flex-col md:flex-row md:justify-between md:items-center mb-10 gap-4">
-                <div>
-                    <h1 className="text-4xl font-bold text-white mb-2 flex items-center gap-3">
-                        <ClockIcon className="w-10 h-10 text-brand-cyan" />
-                        Weekly Schedule
-                    </h1>
-                    <p className="text-gray-400 text-lg">Plan your academic week.</p>
-                </div>
-                <button
-                    onClick={handleSave}
-                    disabled={isSaving}
-                    className="bg-brand-cyan text-white font-bold px-8 py-3 rounded-xl hover:bg-blue-600 transition-all disabled:opacity-50 text-lg shadow-lg"
+        <div className="p-6 md:p-12 max-w-7xl mx-auto pb-32 min-h-screen bg-black text-white">
+            <header className="flex flex-col md:flex-row md:justify-between md:items-center mb-12 gap-6">
+                <motion.div 
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
                 >
-                    {isSaving ? 'Saving...' : 'Save Schedule'}
-                </button>
+                    <h1 className="text-5xl font-black mb-3 flex items-center gap-4 tracking-tighter">
+                        <div className="p-3 bg-brand-cyan/20 rounded-2xl border border-brand-cyan/30">
+                            <ClockIcon className="w-10 h-10 text-brand-cyan animate-pulse-slow" />
+                        </div>
+                        Smart Schedule
+                    </h1>
+                    <p className="text-gray-400 text-xl font-medium max-w-lg">
+                        Real-time synchronization with Google Calendar & AI optimization.
+                    </p>
+                </motion.div>
+
+                <div className="flex items-center gap-4">
+                    <button
+                        onClick={handleOptimize}
+                        disabled={isOptimizing || events.length === 0}
+                        className="group relative flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-brand-purple to-indigo-600 rounded-2xl font-bold text-lg shadow-glow-purple transition-all hover:scale-105 active:scale-95 disabled:opacity-50 overflow-hidden"
+                    >
+                        <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <SparkleIcon className={`w-6 h-6 ${isOptimizing ? 'animate-spin' : ''}`} />
+                        {isOptimizing ? 'AI Analyzing...' : 'AI Optimize'}
+                    </button>
+                    
+                    <button
+                        onClick={fetchEvents}
+                        className="p-4 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-colors"
+                    >
+                        <RefreshIcon className={`w-6 h-6 text-gray-400 ${isLoading ? 'animate-spin' : ''}`} />
+                    </button>
+                </div>
             </header>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {days.map(day => (
-                    <div key={day} className="glass-card border border-[var(--glass-border)] rounded-2xl p-6 hover:border-gray-600 transition-colors group shadow-sm">
-                        <h3 className="text-xl font-bold text-white mb-4 flex items-center justify-between">
-                            {day}
-                            <span className="w-3 h-3 rounded-full bg-gray-700 group-hover:bg-brand-cyan transition-colors"></span>
-                        </h3>
-                        <textarea
-                            value={schedule[day]}
-                            onChange={(e) => handleChange(day, e.target.value)}
-                            placeholder={`Plan for ${day}...`}
-                            className="w-full h-48 bg-gray-800/50 border border-[var(--glass-border)] rounded-xl p-4 text-base text-white focus:outline-none focus:ring-2 focus:ring-brand-cyan focus:bg-gray-800 resize-none leading-relaxed"
-                        />
+            {!isConnected && !isLoading ? (
+                <div className="flex flex-col items-center justify-center py-32 glass-card rounded-3xl border border-white/5 bg-white/[0.02]">
+                    <div className="w-24 h-24 bg-red-500/10 rounded-full flex items-center justify-center mb-6">
+                        <GoogleIcon className="w-12 h-12 text-red-500" />
                     </div>
-                ))}
-            </div>
+                    <h2 className="text-3xl font-bold mb-4">Google Calendar Not Linked</h2>
+                    <p className="text-gray-400 text-center max-w-md mb-8">
+                        Link your Google account to sync your academic calendar and unlock AI scheduling features.
+                    </p>
+                    <button className="px-10 py-4 bg-white text-black font-black rounded-2xl hover:scale-105 transition-transform">
+                        Connect Now
+                    </button>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Events Column */}
+                    <div className="lg:col-span-2 space-y-6">
+                        <h2 className="text-2xl font-bold mb-6 flex items-center gap-3">
+                            Current Week
+                            <span className="text-sm font-medium px-3 py-1 bg-brand-cyan/10 text-brand-cyan rounded-full border border-brand-cyan/20">
+                                {events.length} Events
+                            </span>
+                        </h2>
+
+                        {isLoading ? (
+                            <div className="space-y-4">
+                                {[1, 2, 3].map(i => (
+                                    <div key={i} className="h-32 bg-white/5 rounded-2xl animate-pulse" />
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                {events.map((event, idx) => (
+                                    <motion.div
+                                        key={event.id}
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: idx * 0.05 }}
+                                        className="group relative flex items-center gap-6 p-6 glass-card border border-white/5 rounded-2xl hover:border-brand-cyan/30 transition-all hover:bg-white/[0.04]"
+                                    >
+                                        <div className="flex flex-col items-center min-w-[80px]">
+                                            <span className="text-xs font-black uppercase tracking-tighter text-brand-cyan opacity-60">
+                                                {formatDate(event.start.dateTime)}
+                                            </span>
+                                            <div className="w-px h-8 bg-gradient-to-b from-brand-cyan/40 to-transparent my-2" />
+                                            <span className="text-[10px] font-medium text-gray-500">
+                                                {getDayName(event.start.dateTime || event.start.date)}
+                                            </span>
+                                        </div>
+
+                                        <div className="flex-1">
+                                            <h3 className="text-xl font-bold mb-1 group-hover:text-brand-cyan transition-colors">
+                                                {event.summary}
+                                            </h3>
+                                            {event.description && (
+                                                <p className="text-sm text-gray-500 line-clamp-1">{event.description}</p>
+                                            )}
+                                        </div>
+
+                                        <div className="w-2 h-12 bg-gray-800 rounded-full overflow-hidden">
+                                            <motion.div 
+                                                className="w-full bg-brand-cyan"
+                                                initial={{ height: 0 }}
+                                                animate={{ height: '60%' }}
+                                            />
+                                        </div>
+                                    </motion.div>
+                                ))}
+
+                                {events.length === 0 && (
+                                    <div className="py-20 text-center opacity-40">
+                                        <PlusIcon className="w-12 h-12 mx-auto mb-4" />
+                                        <p className="text-xl font-medium">No events found for this week.</p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* AI Insights Sidebar */}
+                    <div className="space-y-8">
+                        <div className="glass-card p-8 rounded-3xl border border-white/5 bg-gradient-to-br from-white/[0.05] to-transparent sticky top-8">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="p-2 bg-brand-purple/20 rounded-lg">
+                                    <SparkleIcon className="w-6 h-6 text-brand-purple" />
+                                </div>
+                                <h2 className="text-2xl font-black">AI Insights</h2>
+                            </div>
+
+                            <AnimatePresence mode="wait">
+                                {optimizationResult ? (
+                                    <motion.div
+                                        key="result"
+                                        initial={{ opacity: 0, scale: 0.95 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        className="prose prose-invert prose-p:text-gray-300 prose-p:leading-relaxed"
+                                    >
+                                        <div className="text-sm space-y-4 whitespace-pre-wrap font-medium">
+                                            {optimizationResult}
+                                        </div>
+                                        <button 
+                                            onClick={() => setOptimizationResult(null)}
+                                            className="mt-8 text-sm text-gray-500 hover:text-white transition-colors flex items-center gap-2"
+                                        >
+                                            <RefreshIcon className="w-4 h-4" /> Reset Analysis
+                                        </button>
+                                    </motion.div>
+                                ) : isOptimizing ? (
+                                    <motion.div
+                                        key="loading"
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        className="py-12 flex flex-col items-center gap-4 text-center"
+                                    >
+                                        <div className="w-16 h-16 border-4 border-brand-purple/20 border-t-brand-purple rounded-full animate-spin" />
+                                        <p className="text-gray-400 animate-pulse font-medium">
+                                            Maneuvering your academic path...
+                                        </p>
+                                    </motion.div>
+                                ) : (
+                                    <motion.div
+                                        key="empty"
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        className="py-12 text-center"
+                                    >
+                                        <p className="text-gray-500 mb-6 font-medium">
+                                            No recent optimization. Click the button above to analyze your schedule.
+                                        </p>
+                                        <div className="p-6 bg-white/5 rounded-2xl border border-white/5">
+                                            <h4 className="text-xs font-black uppercase tracking-widest text-brand-purple mb-2">Pro Tip</h4>
+                                            <p className="text-[13px] text-gray-400">
+                                                Add your lectures and study sessions to Google Calendar first for a more accurate result.
+                                            </p>
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
