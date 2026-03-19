@@ -1,3 +1,4 @@
+import React, { useState, useCallback, createContext, useEffect } from 'react';
 import FloatingAIAssistant from './components/FloatingAIAssistant';
 import { Routes, Route, Navigate, NavLink, useLocation } from 'react-router-dom';
 import WhiteboardPage from './pages/WhiteboardPage';

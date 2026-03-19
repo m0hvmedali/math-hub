@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
 import { calendar } from '../services/platform-sdk/calendar';
+import { auth } from '../services/platform-sdk/auth';
 import { generateText } from '../services/ai-router';
 import { ClockIcon, SparkleIcon, GoogleIcon, PlusIcon, RefreshIcon } from '../components/Icons';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -83,6 +83,15 @@ const SchedulePage: React.FC = () => {
         }
     };
 
+    const handleConnect = async () => {
+        try {
+            await auth.login();
+            fetchEvents();
+        } catch (error) {
+            console.error("Login failed:", error);
+        }
+    };
+
     const formatDate = (isoString?: string) => {
         if (!isoString) return '';
         return new Date(isoString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -140,7 +149,10 @@ const SchedulePage: React.FC = () => {
                     <p className="text-gray-400 text-center max-w-md mb-8">
                         Link your Google account to sync your academic calendar and unlock AI scheduling features.
                     </p>
-                    <button className="px-10 py-4 bg-white text-black font-black rounded-2xl hover:scale-105 transition-transform">
+                    <button 
+                        onClick={handleConnect}
+                        className="px-10 py-4 bg-white text-black font-black rounded-2xl hover:scale-105 transition-transform"
+                    >
                         Connect Now
                     </button>
                 </div>
