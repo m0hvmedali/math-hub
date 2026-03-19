@@ -164,14 +164,15 @@ const MarkdownRenderer: React.FC<Props> = ({ content, textColor = 'text-gray-200
   return (
     <div className={`space-y-2 text-sm leading-relaxed ${textColor}`} dir="auto">
       {blocks.map((block, idx) => {
+        const blockKey = `${block.type}-${idx}-${(block.text || block.code || '').slice(0, 20)}`;
         switch (block.type) {
           case 'hr':
-            return <hr key={idx} className="border-white/10 my-3" />;
+            return <hr key={blockKey} className="border-white/10 my-3" />;
 
           case 'h': {
             const Tag = `h${block.level}` as keyof JSX.IntrinsicElements;
             return (
-              <Tag key={idx} className={`${H_STYLES[block.level] || H_STYLES[2]} ${H_BORDERS[block.level] || ''}`}>
+              <Tag key={blockKey} className={`${H_STYLES[block.level] || H_STYLES[2]} ${H_BORDERS[block.level] || ''}`}>
                 {parseInline(block.text)}
               </Tag>
             );
@@ -179,7 +180,7 @@ const MarkdownRenderer: React.FC<Props> = ({ content, textColor = 'text-gray-200
 
           case 'blockquote':
             return (
-              <blockquote key={idx} className="border-l-4 border-yellow-500/50 pl-3 py-1 bg-yellow-500/5 rounded-r-lg italic text-yellow-200/80">
+              <blockquote key={blockKey} className="border-l-4 border-yellow-500/50 pl-3 py-1 bg-yellow-500/5 rounded-r-lg italic text-yellow-200/80">
                 {block.lines.map((l: string, j: number) => (
                   <p key={j}>{parseInline(l)}</p>
                 ))}
@@ -188,7 +189,7 @@ const MarkdownRenderer: React.FC<Props> = ({ content, textColor = 'text-gray-200
 
           case 'ul':
             return (
-              <ul key={idx} className="space-y-1.5 ml-2">
+              <ul key={blockKey} className="space-y-1.5 ml-2">
                 {block.items.map((item: string, j: number) => (
                   <li key={j} className="flex items-start gap-2">
                     <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-brand-cyan flex-shrink-0" />
@@ -200,7 +201,7 @@ const MarkdownRenderer: React.FC<Props> = ({ content, textColor = 'text-gray-200
 
           case 'ol':
             return (
-              <ol key={idx} className="space-y-1.5 ml-2">
+              <ol key={blockKey} className="space-y-1.5 ml-2">
                 {block.items.map((item: string, j: number) => (
                   <li key={j} className="flex items-start gap-2">
                     <span className="mt-0.5 w-5 h-5 rounded-full bg-purple-500/20 text-purple-300 text-[10px] font-black flex-shrink-0 flex items-center justify-center">
@@ -214,7 +215,7 @@ const MarkdownRenderer: React.FC<Props> = ({ content, textColor = 'text-gray-200
 
           case 'code':
             return (
-              <div key={idx} className="rounded-2xl bg-black/60 border border-white/10 overflow-hidden">
+              <div key={blockKey} className="rounded-2xl bg-black/60 border border-white/10 overflow-hidden">
                 {block.lang && (
                   <div className="px-3 py-1 bg-white/5 border-b border-white/5 text-[9px] font-black text-brand-cyan uppercase tracking-widest">
                     {block.lang}
@@ -229,7 +230,7 @@ const MarkdownRenderer: React.FC<Props> = ({ content, textColor = 'text-gray-200
           case 'table': {
             const [header, ...rows] = block.cells as string[][];
             return (
-              <div key={idx} className="overflow-x-auto rounded-2xl border border-white/10 my-2">
+              <div key={blockKey} className="overflow-x-auto rounded-2xl border border-white/10 my-2">
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="bg-white/[0.05] border-b border-white/10">
@@ -259,7 +260,7 @@ const MarkdownRenderer: React.FC<Props> = ({ content, textColor = 'text-gray-200
           case 'p':
           default:
             return (
-              <p key={idx} className="leading-relaxed">
+              <p key={blockKey} className="leading-relaxed">
                 {parseInline(block.text || '')}
               </p>
             );
