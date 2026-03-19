@@ -13,20 +13,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { model, messages, stream, format } = req.body;
   const authHeader = req.headers.authorization;
 
-  // Log with redaction
-  const redactedAuth = authHeader ? `${authHeader.substring(0, 10)}...` : 'NONE';
-  console.log(`[Ollama Proxy] Request: model=${model}, hasAuth=${redactedAuth}`);
+  // INTERNAL FALLBACK KEY
+  const DEFAULT_KEY = '4e1fe3f137c14098b49c0349cb63d7ab.MjZZusjbMyjNkLgp33uW_0uDcloud';
+  const apiKey = (authHeader && authHeader !== 'Bearer ') ? authHeader : `Bearer ${process.env.VITE_OLLAMA_API_KEY || DEFAULT_KEY}`;
 
-  if (!authHeader || authHeader === 'Bearer ') {
-    console.warn('[Ollama Proxy] Blocked: No Authorization header provided by client');
-    return res.status(401).json({ error: 'No Authorization header found. Please ensure VITE_OLLAMA_API_KEY is defined.' });
-  }
+  console.log(`[Ollama Proxy] Request: model=${model}, usingFallback=${!authHeader || authHeader === 'Bearer '}`);
 
   try {
     const response = await fetch('https://ollama.com/api/chat', {
       method: 'POST',
       headers: {
-        'Authorization': authHeader,
+        'Authorization': apiKey,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
