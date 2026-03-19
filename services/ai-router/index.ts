@@ -9,12 +9,18 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // ── Keys ──────────────────────────────────────────────────────────────────────
-const OPENROUTER_KEY = import.meta.env.VITE_OPENROUTER_API_KEY || '';
-const GEMINI_KEY     = import.meta.env.VITE_GEMINI_API_KEY     || '';
-const GROQ_KIMI_KEY  = import.meta.env.VITE_GROQ_KIMI_KEY      || '';
-const GROQ_LLAMA_KEY = import.meta.env.VITE_GROQ_LLAMA_KEY     || '';
-const MISTRAL_KEY    = import.meta.env.VITE_MISTRAL_API_KEY    || '';
-const GEMMA_KEY      = import.meta.env.VITE_OPENROUTER_GEMMA_KEY || '';
+// ── Keys ──────────────────────────────────────────────────────────────────────
+const OPENROUTER_KEY = (import.meta.env.VITE_OPENROUTER_API_KEY || '').trim();
+const GEMINI_KEY     = (import.meta.env.VITE_GEMINI_API_KEY     || '').trim();
+const GROQ_KIMI_KEY  = (import.meta.env.VITE_GROQ_KIMI_KEY      || '').trim();
+const GROQ_LLAMA_KEY = (import.meta.env.VITE_GROQ_LLAMA_KEY     || '').trim();
+const MISTRAL_KEY    = (import.meta.env.VITE_MISTRAL_API_KEY    || '').trim();
+const GEMMA_KEY      = (import.meta.env.VITE_OPENROUTER_GEMMA_KEY || '').trim();
+
+console.groupCollapsed("[AI Router] Environment Initialization");
+console.log("OpenRouter Key Found:", !!OPENROUTER_KEY, OPENROUTER_KEY ? `(Starts with: ${OPENROUTER_KEY.slice(0, 6)}...)` : "(MISSING)");
+console.log("Gemini Key Found:", !!GEMINI_KEY, GEMINI_KEY ? `(Starts with: ${GEMINI_KEY.slice(0, 6)}...)` : "(MISSING)");
+console.groupEnd();
 
 // ── Site Knowledge ─────────────────────────────────────────────────────────────
 const SITE_KNOWLEDGE = `
@@ -151,7 +157,8 @@ export async function routeAI(req: AIRequest): Promise<AIResponse> {
   try {
     switch (task) {
       case 'brain':
-                result = await callOpenRouter(req, 'google/gemini-2.0-flash-001', OPENROUTER_KEY);
+        // User requested Gemini specifically
+        result = await callGemini(req).catch(() => callOpenRouter(req, 'google/gemini-2.0-flash-001', OPENROUTER_KEY));
         break;
       
       case 'lesson_explanation':
