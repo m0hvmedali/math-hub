@@ -6,7 +6,14 @@ import FloatingSpotifyWidget from './FloatingSpotifyWidget';
 import FloatingQuickNote from './FloatingQuickNote';
 import GoogleServicesFAB from './GoogleServicesFAB';
 
-const FloatingSpeedDial: React.FC = () => {
+interface FloatingSpeedDialProps {
+    onOpenCalendar?: () => void;
+    onOpenTasks?: () => void;
+    onOpenDrive?: () => void;
+    onOpenYouTube?: () => void;
+}
+
+const FloatingSpeedDial: React.FC<FloatingSpeedDialProps> = ({ onOpenCalendar, onOpenTasks, onOpenDrive, onOpenYouTube }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [activeTool, setActiveTool] = useState<'AI' | 'SPOTIFY' | 'NOTE' | 'GOOGLE' | null>(null);
 
@@ -39,12 +46,11 @@ const FloatingSpeedDial: React.FC = () => {
                 hideButton 
                 forceOpen={activeTool === 'GOOGLE'} 
                 onClose={() => setActiveTool(null)}
-                // Reusing props from App.tsx - will be passed down via context or similar if needed
-                onOpenGmail={() => { window.location.href = '/gmail'; setActiveTool(null); }}
-                onOpenCalendar={() => { /* This might need a trigger in App.tsx */ setActiveTool(null); }}
-                onOpenTasks={() => { setActiveTool(null); }}
-                onOpenDrive={() => { setActiveTool(null); }}
-                onOpenYouTube={() => { setActiveTool(null); }}
+                onOpenGmail={() => { window.location.href = '#/gmail'; setActiveTool(null); }}
+                onOpenCalendar={() => { if (onOpenCalendar) onOpenCalendar(); setActiveTool(null); }}
+                onOpenTasks={() => { if (onOpenTasks) onOpenTasks(); setActiveTool(null); }}
+                onOpenDrive={() => { if (onOpenDrive) onOpenDrive(); setActiveTool(null); }}
+                onOpenYouTube={() => { if (onOpenYouTube) onOpenYouTube(); setActiveTool(null); }}
             />
 
             {/* Speed Dial Menu */}

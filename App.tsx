@@ -764,7 +764,12 @@ const App: React.FC = () => {
             >
                 {user && <Navigation />}
                 {user && (
-                    <FloatingSpeedDial />
+                    <FloatingSpeedDial
+                        onOpenCalendar={() => setIsCalendarOpen(true)}
+                        onOpenTasks={() => setIsTasksOpen(true)}
+                        onOpenDrive={() => setIsDriveOpen(true)}
+                        onOpenYouTube={() => setIsYouTubeOpen(true)}
+                    />
                 )}
                 {user && (
                     <div className="px-6 py-4 max-w-7xl mx-auto w-full">
