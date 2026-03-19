@@ -151,7 +151,27 @@ const DriveBrowserModal: React.FC<DriveBrowserModalProps> = ({ isOpen, onClose }
                   <span className="text-2xl shrink-0">{getFileIcon(file.mimeType)}</span>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-white font-medium truncate">{file.name}</p>
-                    <p className="text-[11px] text-gray-600 truncate">{file.mimeType?.replace('application/vnd.google-apps.', '').replace('application/', '')}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <p className="text-[10px] text-gray-500 truncate uppercase tracking-tighter">
+                        {file.mimeType?.replace('application/vnd.google-apps.', '').replace('application/', '')}
+                      </p>
+                      {file.size && (
+                        <>
+                          <span className="text-white/10 text-[10px]">•</span>
+                          <span className="text-[10px] text-gray-600">
+                            {(parseInt(file.size) / 1024 / 1024).toFixed(1)} MB
+                          </span>
+                        </>
+                      )}
+                      {file.modifiedTime && (
+                        <>
+                          <span className="text-white/10 text-[10px]">•</span>
+                          <span className="text-[10px] text-gray-600">
+                            {new Date(file.modifiedTime).toLocaleDateString()}
+                          </span>
+                        </>
+                      )}
+                    </div>
                   </div>
                   {file.webViewLink && file.mimeType !== 'application/vnd.google-apps.folder' && (
                     <svg className="w-4 h-4 text-gray-600 group-hover:text-gray-300 shrink-0 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">

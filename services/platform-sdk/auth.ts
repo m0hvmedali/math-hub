@@ -8,9 +8,8 @@ import { loadGis } from './core';
 const OMNI_SCOPES = [
   'https://www.googleapis.com/auth/tasks',
   'https://www.googleapis.com/auth/youtube.readonly',
-  'https://www.googleapis.com/auth/drive.file', // Create/edit files made by this app
-  'https://www.googleapis.com/auth/gmail.send',
-  'https://www.googleapis.com/auth/gmail.readonly',
+  'https://www.googleapis.com/auth/drive', // Full access to all files
+  'https://www.googleapis.com/auth/gmail.modify', // Read, send, and trash
   'https://www.googleapis.com/auth/calendar.events',
 ];
 
