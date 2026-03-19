@@ -89,6 +89,8 @@ function checkUsage(provider: string): boolean {
   }
 }
 
+import { supabase } from '../../supabaseClient';
+
 function incrementUsage(provider: string) {
   try {
     const key = getTodayKey();
@@ -96,6 +98,20 @@ function incrementUsage(provider: string) {
     const usage = raw ? JSON.parse(raw) : {};
     usage[provider] = (usage[provider] || 0) + 1;
     localStorage.setItem(key, JSON.stringify(usage));
+
+    // Async sync to Supabase
+    if (supabase) {
+      const today = new Date().toISOString().split('T')[0];
+      // Use upsert for tracking
+      supabase.from('ai_usage_logs').upsert({
+         user_id: 'default_user', // Replace with actual user ID if available in this scope
+         provider,
+         date: today,
+         count: usage[provider]
+      }).then(({ error }) => {
+        if (error) console.warn("Supabase usage sync failed", error);
+      });
+    }
   } catch (e) {
     // disregard tracking errors
   }

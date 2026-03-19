@@ -170,7 +170,7 @@ const FloatingQuickNote: React.FC<FloatingQuickNoteProps> = ({ hideButton, force
   };
 
   const handleExportDocs = async () => {
-    if (!noteContent.trim() || !docs) return;
+    if (!noteContent.trim() || !docs || !supabase) return;
     try {
       if (!auth.getToken()) {
         await auth.login();
@@ -178,12 +178,29 @@ const FloatingQuickNote: React.FC<FloatingQuickNoteProps> = ({ hideButton, force
       setIsExporting(true);
       const ctx = getContext();
       const title = ctx.lessonName ? `Math Hub Note: ${ctx.lessonName}` : 'Math Hub Quick Note';
+      
+      // 1. Export to Google Docs
       const result = await docs.exportNoteToDoc(title, noteContent);
       setExportUrl(result.url);
-      setTimeout(() => setExportUrl(null), 4000);
+
+      // 2. Also save to local history (Supabase)
+      await supabase.from('quick_notes').insert({
+        user_id: user,
+        content: noteContent.trim() + `\n\n(Exported to Google Docs: ${result.url})`,
+        color: selectedColor.name,
+        subject_id: ctx.subjectId,
+        branch_id: ctx.branchId,
+        lesson_id: ctx.lessonId,
+        subject_name: ctx.subjectName,
+        branch_name: ctx.branchName,
+        lesson_name: ctx.lessonName,
+        page_path: ctx.path,
+      });
+
+      setTimeout(() => setExportUrl(null), 6000);
     } catch (err) {
-      console.error("Docs export failed", err);
-      alert("Failed to export to Google Docs. Please check console.");
+      console.error("Docs export/sync failed", err);
+      alert("Failed to export/sync to Google Docs. Please check console.");
     } finally {
       setIsExporting(false);
     }

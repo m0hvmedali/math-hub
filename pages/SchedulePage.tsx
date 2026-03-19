@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { calendar } from '../services/platform-sdk/calendar';
 import { auth } from '../services/platform-sdk/auth';
 import { generateText } from '../services/ai-router';
-import { ClockIcon, SparkleIcon, GoogleIcon, PlusIcon, RefreshIcon, CheckCircleIcon } from '../components/Icons';
+import { ClockIcon, SparkleIcon, GoogleIcon, PlusIcon, RefreshIcon, CheckCircleIcon, XIcon } from '../components/Icons';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface CalendarEvent {
@@ -22,6 +22,11 @@ const SchedulePage: React.FC = () => {
     const [proposedActions, setProposedActions] = useState<any[]>([]);
     const [isApplying, setIsApplying] = useState(false);
     const [isConnected, setIsConnected] = useState(false);
+    
+    // Add Event State
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+    const [newEvent, setNewEvent] = useState({ summary: '', start: '', end: '', description: '' });
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const fetchEvents = useCallback(async () => {
         setIsLoading(true);
@@ -94,12 +99,23 @@ const SchedulePage: React.FC = () => {
 
         try {
             const suggestion = await generateText(prompt, { 
-                system: "أنت ملاح أكاديمي خبير. تخرج فقط JSON صحيح 100%.",
+                system: "أنت ملاح أكاديمي خبير. تخرج فقط JSON صحيح 100%. لا تستخدم سطور جديدة داخل النصوص إلا إذا كانت للهياكل البرمجية.",
                 task: 'medium_task',
                 json: true
             });
             
-            const cleaned = suggestion.replace(/^```json\s*/, '').replace(/```\s*$/, '').trim();
+            // Clean up backticks and potential control characters
+            let cleaned = suggestion.replace(/^```json\s*/, '').replace(/```\s*$/, '').trim();
+            
+            // Fix bad control characters (like literal newlines inside strings)
+            // This replaces literal newlines and tabs inside quotes that might break JSON.parse
+            cleaned = cleaned.replace(/[\u0000-\u001F]+/g, (match) => {
+                if (match === '\n') return '\\n';
+                if (match === '\r') return '\\r';
+                if (match === '\t') return '\\t';
+                return '';
+            });
+
             const result = JSON.parse(cleaned);
 
             setOptimizationResult(result.message || "اكتمل التحليل بنجاح.");
@@ -109,6 +125,40 @@ const SchedulePage: React.FC = () => {
             setOptimizationResult("عذراً، حدث خطأ في تحليل الجدول. حاول مرة أخرى.");
         } finally {
             setIsOptimizing(false);
+        }
+    };
+
+    const handleDeleteEvent = async (eventId: string) => {
+        if (!confirm('هل أنت متأكد من حذف هذا الحدث؟')) return;
+        try {
+            await calendar.deleteEvent(eventId);
+            await fetchEvents();
+        } catch (error) {
+            console.error("Delete failed:", error);
+            alert("فشل حذف الحدث.");
+        }
+    };
+
+    const handleAddEvent = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newEvent.summary || !newEvent.start || !newEvent.end) return;
+        
+        setIsSubmitting(true);
+        try {
+            await calendar.createEvent(
+                newEvent.summary,
+                new Date(newEvent.start).toISOString(),
+                new Date(newEvent.end).toISOString(),
+                newEvent.description
+            );
+            setIsAddModalOpen(false);
+            setNewEvent({ summary: '', start: '', end: '', description: '' });
+            await fetchEvents();
+        } catch (error) {
+            console.error("Add failed:", error);
+            alert("فشل إضافة الحدث.");
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -172,6 +222,13 @@ const SchedulePage: React.FC = () => {
                 </motion.div>
 
                 <div className="flex items-center gap-4">
+                    <button 
+                        onClick={() => setIsAddModalOpen(true)}
+                        className="px-6 py-4 bg-white/5 border border-white/10 rounded-2xl text-white font-bold hover:bg-white/10 transition-all flex items-center gap-2"
+                    >
+                        <PlusIcon className="w-5 h-5 text-brand-cyan" />
+                        New Event
+                    </button>
                     <button
                         onClick={handleOptimize}
                         disabled={isOptimizing || events.length === 0}
@@ -245,9 +302,18 @@ const SchedulePage: React.FC = () => {
                                         </div>
 
                                         <div className="flex-1">
-                                            <h3 className="text-xl font-bold mb-1 group-hover:text-brand-cyan transition-colors">
-                                                {event.summary}
-                                            </h3>
+                                            <div className="flex items-center justify-between mb-1">
+                                                <h3 className="text-xl font-bold group-hover:text-brand-cyan transition-colors truncate">
+                                                    {event.summary}
+                                                </h3>
+                                                <button 
+                                                    onClick={() => handleDeleteEvent(event.id)}
+                                                    className="p-2 hover:bg-red-500/20 text-red-400 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    title="Delete Event"
+                                                >
+                                                    <XIcon className="w-5 h-5" />
+                                                </button>
+                                            </div>
                                             {event.description && (
                                                 <p className="text-sm text-gray-500 line-clamp-1">{event.description}</p>
                                             )}
@@ -369,6 +435,70 @@ const SchedulePage: React.FC = () => {
                     </div>
                 </div>
             )}
+            {/* Add Event Modal */}
+            <AnimatePresence>
+                {isAddModalOpen && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                        <motion.div 
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                            className="absolute inset-0 bg-black/60 backdrop-blur-md" 
+                            onClick={() => setIsAddModalOpen(false)} 
+                        />
+                        <motion.div 
+                            initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+                            className="relative w-full max-w-md bg-white/10 backdrop-blur-2xl border border-white/20 rounded-[2.5rem] p-8 shadow-2xl overflow-hidden"
+                        >
+                            <h2 className="text-2xl font-black text-white mb-6 uppercase tracking-tight">Create New Event</h2>
+                            <form onSubmit={handleAddEvent} className="space-y-4">
+                                <input 
+                                    type="text" 
+                                    placeholder="Event Title"
+                                    value={newEvent.summary}
+                                    onChange={e => setNewEvent({...newEvent, summary: e.target.value})}
+                                    className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl text-white outline-none focus:border-brand-cyan/50 transition-all font-bold"
+                                    required
+                                />
+                                <div className="grid grid-cols-1 gap-4">
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-white/40 ml-2">Start Time</label>
+                                        <input 
+                                            type="datetime-local" 
+                                            value={newEvent.start}
+                                            onChange={e => setNewEvent({...newEvent, start: e.target.value})}
+                                            className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl text-white outline-none focus:border-brand-cyan/50 transition-all font-bold"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-black uppercase tracking-widest text-white/40 ml-2">End Time</label>
+                                        <input 
+                                            type="datetime-local" 
+                                            value={newEvent.end}
+                                            onChange={e => setNewEvent({...newEvent, end: e.target.value})}
+                                            className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl text-white outline-none focus:border-brand-cyan/50 transition-all font-bold"
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                                <textarea 
+                                    placeholder="Description (Optional)"
+                                    value={newEvent.description}
+                                    onChange={e => setNewEvent({...newEvent, description: e.target.value})}
+                                    className="w-full px-6 py-4 bg-white/5 border border-white/10 rounded-2xl text-white outline-none focus:border-brand-cyan/50 transition-all font-bold min-h-[100px]"
+                                />
+                                <button 
+                                    type="submit"
+                                    disabled={isSubmitting}
+                                    className="w-full py-4 bg-brand-cyan text-black font-black rounded-2xl hover:scale-105 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-3"
+                                >
+                                    {isSubmitting ? <RefreshIcon className="w-5 h-5 animate-spin" /> : <PlusIcon className="w-5 h-5" />}
+                                    {isSubmitting ? 'Creating...' : 'Create Event'}
+                                </button>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

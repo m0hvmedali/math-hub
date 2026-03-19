@@ -4,6 +4,7 @@ import { fetchTavilyResults, checkSearchLimit, TavilyResult } from '../utils/sea
 import { generateAIContent } from '../utils/aiHelper';
 import { AppContext } from '../App';
 import { useCosmicStore } from '../store/useCosmicStore';
+import { supabase } from '../supabaseClient';
 
 interface GlobalSearchModalProps {
     isOpen: boolean;
@@ -35,6 +36,20 @@ const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, onClose, 
             }
         }
     }, [isOpen, user, query, initialQuery]);
+
+    const recordSearchHistory = async (type: 'web' | 'chat', query: string, count: number = 0) => {
+        if (!user || !supabase) return;
+        try {
+            await supabase.from('search_history').insert({
+                user_id: user.id || user,
+                query,
+                type,
+                results_count: count
+            });
+        } catch (e) {
+            console.warn("History recording failed", e);
+        }
+    };
 
     const performSearch = async () => {
         if (!searchTerm.trim() || !user) return;
@@ -90,6 +105,7 @@ const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, onClose, 
             const context = `You are a highly intelligent AI assistant embedded in a global search modal for an educational app. Keep your answers reasonably concise but very informative and engaging. Previous context: ${chatHistory.slice(-4).map(m => `${m.role}: ${m.content}`).join('\n')}`;
             
             const aiResponse = await generateAIContent(userMsg, context, false);
+            recordSearchHistory('chat', userMsg);
             
             setChatHistory(prev => [...prev, { role: 'ai', content: aiResponse }]);
         } catch (err) {
