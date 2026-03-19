@@ -99,30 +99,36 @@ const SchedulePage: React.FC = () => {
 
         try {
             const suggestion = await generateText(prompt, { 
-                system: "أنت ملاح أكاديمي خبير. تخرج فقط JSON صحيح 100%. لا تستخدم سطور جديدة داخل النصوص إلا إذا كانت للهياكل البرمجية.",
+                system: "أنت ملاح أكاديمي خبير. تخرج فقط JSON صحيح 100%. لا تضف أي نص خارج الأقواس المتعرجة {}.",
                 task: 'medium_task',
                 json: true
             });
             
-            // Clean up backticks and potential control characters
-            let cleaned = suggestion.replace(/^```json\s*/, '').replace(/```\s*$/, '').trim();
+            // Extract JSON from potential commentary
+            const firstBrace = suggestion.indexOf('{');
+            const lastBrace = suggestion.lastIndexOf('}');
+            
+            if (firstBrace === -1 || lastBrace === -1) {
+                throw new Error("No JSON object found in response");
+            }
+            
+            let jsonPart = suggestion.substring(firstBrace, lastBrace + 1);
             
             // Fix bad control characters (like literal newlines inside strings)
-            // This replaces literal newlines and tabs inside quotes that might break JSON.parse
-            cleaned = cleaned.replace(/[\u0000-\u001F]+/g, (match) => {
+            jsonPart = jsonPart.replace(/[\u0000-\u001F]+/g, (match) => {
                 if (match === '\n') return '\\n';
                 if (match === '\r') return '\\r';
                 if (match === '\t') return '\\t';
                 return '';
             });
 
-            const result = JSON.parse(cleaned);
+            const result = JSON.parse(jsonPart);
 
             setOptimizationResult(result.message || "اكتمل التحليل بنجاح.");
             setProposedActions(result.actions || []);
-        } catch (error) {
+        } catch (error: any) {
             console.error("Optimization failed:", error);
-            setOptimizationResult("عذراً، حدث خطأ في تحليل الجدول. حاول مرة أخرى.");
+            setOptimizationResult(`عذراً، فشل التحليل الفني. (Error: ${error.message})`);
         } finally {
             setIsOptimizing(false);
         }
