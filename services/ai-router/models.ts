@@ -23,7 +23,7 @@ export interface ModelConfig {
 
 // ── Default API keys ───────────────────────────────────────────────────────────
 const OLLAMA_API_KEY =
-  import.meta.env.VITE_OLLAMA_API_KEY ||
+  (import.meta.env.VITE_OLLAMA_API_KEY || '').trim() ||
   '4e1fe3f137c14098b49c0349cb63d7ab.MjZZusjbMyjNkLgp33uW_0uDcloud';
 
 // ── Model Registry ─────────────────────────────────────────────────────────────
@@ -74,7 +74,8 @@ function loadRegistry(): ModelConfig[] {
       // Merge with defaults to catch newly added fields
       return DEFAULT_MODELS.map(def => {
         const saved = parsed.find(p => p.id === def.id);
-        return saved ? { ...def, ...saved } : def;
+        // Ensure apiKey and model ID are always updated from defaults if missing
+        return saved ? { ...def, ...saved, apiKey: saved.apiKey || def.apiKey, model: def.model } : def;
       });
     }
   } catch (_) { /* ignore */ }

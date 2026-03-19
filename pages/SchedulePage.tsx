@@ -157,7 +157,12 @@ const SchedulePage: React.FC = () => {
                 if (action.type === 'add' && action.summary && action.start && action.end) {
                     await calendar.createEvent(action.summary, action.start, action.end, action.description);
                 } else if (action.type === 'update' && action.eventId && action.updates) {
-                    await calendar.updateEvent(action.eventId, action.updates);
+                    // Google Calendar API expects start/end as objects with dateTime or date
+                    const payload = { ...action.updates };
+                    if (typeof payload.start === 'string') payload.start = { dateTime: payload.start };
+                    if (typeof payload.end === 'string') payload.end = { dateTime: payload.end };
+                    
+                    await calendar.updateEvent(action.eventId, payload);
                 } else if (action.type === 'delete' && action.eventId) {
                     await calendar.deleteEvent(action.eventId);
                 }

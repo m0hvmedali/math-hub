@@ -13,8 +13,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { model, messages, stream, format } = req.body;
   const authHeader = req.headers.authorization;
 
-  if (!authHeader) {
-    return res.status(401).json({ error: 'Missing Authorization header' });
+  // Log with redaction
+  const redactedAuth = authHeader ? `${authHeader.substring(0, 10)}...` : 'NONE';
+  console.log(`[Ollama Proxy] Request: model=${model}, hasAuth=${redactedAuth}`);
+
+  if (!authHeader || authHeader === 'Bearer ') {
+    console.warn('[Ollama Proxy] Blocked: No Authorization header provided by client');
+    return res.status(401).json({ error: 'No Authorization header found. Please ensure VITE_OLLAMA_API_KEY is defined.' });
   }
 
   try {
@@ -34,10 +39,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (!response.ok) {
       const errorText = await response.text();
+      console.error(`[Ollama Proxy] Upstream Error ${response.status}:`, errorText);
       return res.status(response.status).json({ error: errorText || 'Ollama API error' });
     }
 
     const data = await response.json();
+    console.log('[Ollama Proxy] Success');
     return res.status(200).json(data);
   } catch (error: any) {
     console.error('[Ollama Proxy] Error:', error);

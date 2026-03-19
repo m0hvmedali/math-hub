@@ -36,6 +36,8 @@ async function ollamaChat(params: {
   format?: 'json';
   apiKey: string;
 }): Promise<{ message: { content: string } }> {
+  console.log(`[AI Router] Calling Ollama Proxy: ${OLLAMA_HOST}, model=${params.model}, keyLen=${params.apiKey?.length || 0}`);
+  
   const resp = await fetch(OLLAMA_HOST, {
     method: 'POST',
     headers: {
@@ -343,7 +345,7 @@ async function fallbackPrimary(req: AIRequest): Promise<AIResponse> {
   // Try Gemini first
   try { return await callGemini(req); } catch (_) {}
   // Then OpenRouter
-  try { return await callOpenRouter(req, 'google/gemini-3.1-flash-lite-preview:free', OPENROUTER_KEY); } catch (_) {}
+  try { return await callOpenRouter(req, 'google/gemini-2.0-flash-lite-preview-02-05:free', OPENROUTER_KEY); } catch (_) {}
   // Finally Groq
   return await callGroq(req, 'llama-3.1-8b-instant', GROQ_LLAMA_KEY);
 }
