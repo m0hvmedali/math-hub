@@ -31,6 +31,7 @@ const Navigation: React.FC = () => {
     ];
 
     const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     return (
         <nav className="sticky top-0 z-50 w-full bg-black/80 backdrop-blur-2xl border-b border-white/5 px-6 md:px-12 py-3.5 flex items-center justify-between shadow-2xl animate-fade-in group/nav">
@@ -47,6 +48,20 @@ const Navigation: React.FC = () => {
                         <span className="text-[8px] font-black text-brand-cyan uppercase tracking-[0.4em] opacity-60 group-hover/logo:opacity-100 transition-opacity">Intelligence</span>
                     </div>
                 </NavLink>
+
+                {/* Mobile Menu Toggle */}
+                <button 
+                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                    className="lg:hidden p-2 text-gray-400 hover:text-white transition-all transform active:scale-95"
+                >
+                    <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        {isMobileMenuOpen ? (
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
+                        ) : (
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 6h16M4 12h16m-7 6h7" />
+                        )}
+                    </svg>
+                </button>
 
                 {/* Main Navigation Links */}
                 <div className="hidden lg:flex items-center gap-10">
@@ -157,6 +172,29 @@ const Navigation: React.FC = () => {
                     )}
                 </div>
             </div>
+            
+            {/* Mobile Navigation Menu */}
+            {isMobileMenuOpen && (
+                <div className="absolute top-[100%] left-0 w-full bg-black/95 backdrop-blur-3xl border-b border-white/10 lg:hidden animate-fade-in z-[40]">
+                    <div className="flex flex-col p-6 gap-3">
+                        {tabs.map((tab) => {
+                            const isActive = location.pathname === tab.path || (tab.path !== '/' && location.pathname.startsWith(tab.path));
+                            const Icon = tab.icon;
+                            return (
+                                <NavLink
+                                    key={tab.id}
+                                    to={tab.path}
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    className={`flex items-center gap-4 text-[11px] font-black uppercase tracking-widest transition-all p-4 rounded-2xl border ${isActive ? 'bg-brand-cyan/10 border-brand-cyan/30 text-white shadow-glow-brand' : 'bg-white/5 border-white/5 text-gray-400'}`}
+                                >
+                                    <Icon className="w-5 h-5 text-brand-cyan" />
+                                    <span>{tab.label}</span>
+                                </NavLink>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
         </nav>
     );
 };

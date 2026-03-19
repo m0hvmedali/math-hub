@@ -94,9 +94,13 @@ ${contentSummary ? `ملخص محتوى الدرس: ${contentSummary}` : ''}
 
             setMessages(prev => [...prev, { role: 'assistant', content: response.text }]);
         } catch (err: any) {
+            const errorMsg = language === 'ar' 
+                ? 'عذراً، حدث خطأ في النظام العصبي. يرجى التأكد من صحة مفاتيح الـ API (VITE_GEMINI_API_KEY) ومن وجود مساحة كافية في ذاكرة المتصفح.' 
+                : 'Apologies, a neural error occurred. Please check your API keys (VITE_GEMINI_API_KEY) and ensure you have enough browser storage space.';
+            
             setMessages(prev => [...prev, {
                 role: 'assistant',
-                content: language === 'ar' ? 'عذراً، حدث خطأ في النظام العصبي.' : 'Apologies, a neural error occurred.',
+                content: errorMsg,
             }]);
         } finally {
             setIsLoading(false);

@@ -145,7 +145,7 @@ export async function routeAI(req: AIRequest): Promise<AIResponse> {
   try {
     switch (task) {
       case 'brain':
-        result = await callOpenRouter(req, 'openai/gpt-oss-120b:free', OPENROUTER_KEY);
+        result = await callOpenRouter(req, 'google/gemini-2.0-flash-exp:free', OPENROUTER_KEY);
         break;
       
       case 'lesson_explanation':
@@ -183,7 +183,7 @@ export async function routeAI(req: AIRequest): Promise<AIResponse> {
         break;
 
       default:
-        result = await callOpenRouter(req, 'openai/gpt-oss-120b:free', OPENROUTER_KEY);
+        result = await callOpenRouter(req, 'google/gemini-2.0-flash-exp:free', OPENROUTER_KEY);
     }
     return result!;
   } catch (err: any) {
