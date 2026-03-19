@@ -134,33 +134,38 @@ async function callGemini(req: AIRequest): Promise<AIResponse> {
   return { text: result.response.text(), provider: 'gemini-1.5-flash' };
 }
 
-// ── Router ────────────────────────────────────────────────────────────────────
+import { monitor } from './monitor';
 
 export async function routeAI(req: AIRequest): Promise<AIResponse> {
+  const startTime = Date.now();
   const task = req.task || 'brain';
+  let result: AIResponse | null = null;
+  let error: any = null;
 
   try {
     switch (task) {
       case 'brain':
-        return await callOpenRouter(req, 'openai/gpt-oss-120b:free', OPENROUTER_KEY);
+        result = await callOpenRouter(req, 'openai/gpt-oss-120b:free', OPENROUTER_KEY);
+        break;
       
       case 'lesson_explanation':
       case 'daily_analysis':
-        return await callGemini(req);
+        result = await callGemini(req);
+        break;
       
       case 'long_context':
-        // User requested moonshotai/kimi-k2-instruct-0905 with GROQ_KIMI_KEY
-        // Note: We'll try it via Groq if that was the intent, or fall back to Gemini
-        return await callGroq(req, 'kimi-k2-instruct-0905', GROQ_KIMI_KEY).catch(() => callGemini(req));
+        result = await callGroq(req, 'kimi-k2-instruct-0905', GROQ_KIMI_KEY).catch(() => callGemini(req));
+        break;
       
       case 'fast_task':
-        return await callGroq(req, 'llama-3.1-8b-instant', GROQ_LLAMA_KEY);
+        result = await callGroq(req, 'llama-3.1-8b-instant', GROQ_LLAMA_KEY);
+        break;
       
       case 'formatting':
-        return await callOpenRouter(req, 'google/gemma-3-27b-it:free', GEMMA_KEY);
+        result = await callOpenRouter(req, 'google/gemma-3-27b-it:free', GEMMA_KEY);
+        break;
       
       case 'medium_task':
-        // Mistral via standalone API
         const resp = await fetch('https://api.mistral.ai/v1/chat/completions', {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${MISTRAL_KEY}`, 'Content-Type': 'application/json' },
@@ -170,17 +175,36 @@ export async function routeAI(req: AIRequest): Promise<AIResponse> {
           })
         });
         const data = await resp.json();
-        return { text: data.choices[0].message.content, provider: 'mistral' };
+        result = { text: data.choices[0].message.content, provider: 'mistral' };
+        break;
 
       case 'image':
-        return await callGemini(req);
+        result = await callGemini(req);
+        break;
 
       default:
-        return await callOpenRouter(req, 'openai/gpt-oss-120b:free', OPENROUTER_KEY);
+        result = await callOpenRouter(req, 'openai/gpt-oss-120b:free', OPENROUTER_KEY);
     }
-  } catch (err) {
+    return result!;
+  } catch (err: any) {
+    error = err;
     console.warn(`[AI Router] Primary provider for ${task} failed, falling back to Llama 3.1`, err);
-    return await callGroq(req, 'llama-3.1-8b-instant', GROQ_LLAMA_KEY).catch(() => callGemini(req));
+    result = await callGroq(req, 'llama-3.1-8b-instant', GROQ_LLAMA_KEY).catch(() => callGemini(req));
+    return result;
+  } finally {
+    monitor.logCall({
+      model: result?.provider || 'unknown',
+      provider: result?.provider.includes('gemini') ? 'gemini' : 
+                result?.provider.includes('gpt') ? 'openrouter' :
+                result?.provider.includes('mistral') ? 'mistral' : 
+                result?.provider.includes('tavily') ? 'tavily' : 'groq',
+      task,
+      duration: Date.now() - startTime,
+      status: error && !result ? 'error' : 'success',
+      error: error?.message,
+      prompt: req.prompt,
+      response: result?.text
+    });
   }
 }
 

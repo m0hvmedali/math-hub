@@ -59,6 +59,7 @@ import TasksBrowserModal from './components/TasksBrowserModal';
 import CalendarBrowserModal from './components/CalendarBrowserModal';
 import LandingPage from './pages/LandingPage';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
+import AIMonitorPage from './pages/AIMonitorPage';
 
 
 export const AppContext = createContext<{
@@ -798,6 +799,7 @@ const App: React.FC = () => {
                         <Route path="/subject/:subjectId/branch/:branchId/lesson/:lessonId" element={<ProtectedRoute><BranchPage /></ProtectedRoute>} />
                         <Route path="/whiteboard/:type/:id" element={<ProtectedRoute><WhiteboardPage /></ProtectedRoute>} />
                         <Route path="/whiteboard/:type/:id/:subjectId/:branchId/:lessonId" element={<ProtectedRoute><WhiteboardPage /></ProtectedRoute>} />
+                        <Route path="/ai-monitor" element={<ProtectedRoute><AIMonitorPage /></ProtectedRoute>} />
                         <Route path="/profile" element={<ProtectedRoute><AnalyticsPage /></ProtectedRoute>} />
                         <Route path="/wishes" element={<ProtectedRoute><WishesPage /></ProtectedRoute>} />
                         <Route path="/schedule" element={<ProtectedRoute><SchedulePage /></ProtectedRoute>} />
