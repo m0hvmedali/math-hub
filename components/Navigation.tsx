@@ -100,6 +100,15 @@ const Navigation: React.FC = () => {
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                 </button>
 
+                {/* Assistant Trigger */}
+                <button 
+                    onClick={() => setIsAssistantOpen(true)}
+                    className="text-brand-purple hover:text-brand-cyan transition-all transform hover:scale-110 active:scale-90"
+                    title={language === 'ar' ? 'مساعد الذكاء الاصطناعي' : 'AI Assistant'}
+                >
+                    <SparkleIcon className="w-5 h-5 shadow-glow-purple" />
+                </button>
+
                 {/* Search Trigger */}
                 <button 
                     onClick={() => setIsSearchOpen(true)}
@@ -124,7 +133,7 @@ const Navigation: React.FC = () => {
                     {isMenuOpen && (
                         <>
                             <div className="fixed inset-0 z-40" onClick={() => setIsMenuOpen(false)}></div>
-                            <div className="absolute right-0 top-full mt-6 bg-[#0A0A0A]/90 backdrop-blur-3xl border border-white/10 rounded-[2rem] shadow-[0_32px_80px_rgba(0,0,0,0.8)] z-[9999] flex flex-col items-center p-4 gap-4 animate-scale-in origin-top-right border-brand-cyan/20">
+                            <div className="absolute right-0 top-full mt-6 bg-[#0A0A0A]/90 backdrop-blur-3xl border border-white/10 rounded-[2rem] shadow-[0_32px_80px_rgba(0,0,0,0.8)] z-[9999] flex flex-col items-center p-4 gap-4 animate-scale-in origin-top-right border-brand-cyan/20 max-h-[75vh] overflow-y-auto custom-scrollbar overflow-x-hidden">
                                 
                                 <div className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-2 px-4">{language === 'ar' ? 'لوحة التحكم' : 'Control Lab'}</div>
 
@@ -192,6 +201,14 @@ const Navigation: React.FC = () => {
                                 </NavLink>
                             );
                         })}
+                        {/* Mobile Assistant Trigger */}
+                        <button
+                            onClick={() => { setIsAssistantOpen(true); setIsMobileMenuOpen(false); }}
+                            className="flex items-center gap-4 text-[11px] font-black uppercase tracking-widest transition-all p-4 rounded-2xl border bg-brand-purple/10 border-brand-purple/30 text-white shadow-glow-purple"
+                        >
+                            <SparkleIcon className="w-5 h-5 text-brand-purple" />
+                            <span>{language === 'ar' ? 'مساعد الذكاء الاصطناعي' : 'AI Assistant'}</span>
+                        </button>
                     </div>
                 </div>
             )}

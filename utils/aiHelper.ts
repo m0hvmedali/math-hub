@@ -130,7 +130,7 @@ async function generateAIContent(prompt: string, systemInstruction: string, json
     const res = await routeAI({
         prompt,
         systemInstruction,
-        task: json ? 'json' : 'chat',
+        task: json ? 'formatting' : 'fast_task',
         responseFormat: json ? 'json' : 'text',
     });
     return res.text;
@@ -245,12 +245,15 @@ export const transcribeAudio = async (base64Audio: string, mimeType: string = 'a
     const genAI = getAiClient();
     return callWithRetry(async () => {
         try {
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash", systemInstruction: "Transcribe the audio exactly as spoken in Arabic." });
+            const model = genAI.getGenerativeModel({ 
+                model: "gemini-2.0-flash", 
+                systemInstruction: "Transcribe the audio exactly as spoken in Arabic.",
+                safetySettings: SAFETY_SETTINGS 
+            });
             const response = await model.generateContent({
                 contents: [
                     { role: "user", parts: [{ inlineData: { mimeType: mimeType, data: base64Audio } }] }
-                ],
-                config: { safetySettings: SAFETY_SETTINGS }
+                ]
             });
             return response.response.text();
         } catch (error) {

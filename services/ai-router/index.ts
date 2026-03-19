@@ -124,14 +124,14 @@ async function callGemini(req: AIRequest): Promise<AIResponse> {
     throw new Error('No Gemini key. Please check your .env file.');
   }
   const genAI = new GoogleGenerativeAI(GEMINI_KEY);
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
   if (req.imageBase64) {
     const result = await model.generateContent([
       req.prompt,
       { inlineData: { data: req.imageBase64.replace(/^data:[^;]+;base64,/, ''), mimeType: req.imageMimeType || 'image/jpeg' } }
     ]);
-    return { text: result.response.text(), provider: 'gemini-1.5-flash' };
+    return { text: result.response.text(), provider: 'gemini-2.0-flash' };
   }
 
   const result = await model.generateContent({
@@ -143,7 +143,7 @@ async function callGemini(req: AIRequest): Promise<AIResponse> {
     generationConfig: (req.responseFormat === 'json' ? { responseMimeType: 'application/json' } : undefined) as any,
   });
 
-  return { text: result.response.text(), provider: 'gemini-1.5-flash' };
+  return { text: result.response.text(), provider: 'gemini-2.0-flash' };
 }
 
 import { monitor } from './monitor';

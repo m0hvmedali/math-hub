@@ -3,8 +3,15 @@ import { useLocation } from 'react-router-dom';
 import GeminiChatWidget from './GeminiChatWidget';
 import { SparkleIcon } from './Icons';
 
-const FloatingAIAssistant: React.FC = () => {
+interface FloatingAIAssistantProps {
+    hideButton?: boolean;
+    forceOpen?: boolean;
+    onClose?: () => void;
+}
+
+const FloatingAIAssistant: React.FC<FloatingAIAssistantProps> = ({ hideButton, forceOpen, onClose }) => {
     const [isOpen, setIsOpen] = useState(false);
+    const effectiveOpen = forceOpen !== undefined ? forceOpen : isOpen;
     const location = useLocation();
 
     // Always show everywhere per user request
@@ -13,7 +20,8 @@ const FloatingAIAssistant: React.FC = () => {
     return (
         <>
             {/* The Floating Bubble */}
-            <div className="fixed bottom-[100px] right-6 md:bottom-6 md:right-6 z-[110] flex flex-col items-end gap-3 group">
+            {!hideButton && (
+                <div className="fixed bottom-[100px] right-6 md:bottom-6 md:right-6 z-[110] flex flex-col items-end gap-3 group">
                 {/* Tooltip on Hover */}
                 <div className="px-4 py-2 bg-black/80 backdrop-blur-md border border-brand-purple/30 rounded-xl text-[10px] font-black uppercase tracking-widest text-white opacity-0 transition-all group-hover:opacity-100 group-hover:-translate-y-2 pointer-events-none shadow-glow-purple">
                     Academic Assistant
@@ -30,12 +38,13 @@ const FloatingAIAssistant: React.FC = () => {
                     {/* Scanning Border Animation */}
                     <div className="absolute inset-0 border-2 border-white/30 rounded-2xl animate-ping opacity-20" />
                 </button>
-            </div>
+                </div>
+            )}
 
             {/* The Gemini Chat Widget */}
-            {isOpen && (
+            {effectiveOpen && (
                 <GeminiChatWidget 
-                    onClose={() => setIsOpen(false)} 
+                    onClose={onClose || (() => setIsOpen(false))} 
                     // Optional: extract context from URL or state to pass to Gemini
                 />
             )}

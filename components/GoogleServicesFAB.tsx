@@ -7,6 +7,9 @@ interface GoogleServicesFABProps {
   onOpenTasks: () => void;
   onOpenDrive: () => void;
   onOpenYouTube: () => void;
+  hideButton?: boolean;
+  forceOpen?: boolean;
+  onClose?: () => void;
 }
 
 const GoogleServicesFAB: React.FC<GoogleServicesFABProps> = ({
@@ -15,8 +18,12 @@ const GoogleServicesFAB: React.FC<GoogleServicesFABProps> = ({
   onOpenTasks,
   onOpenDrive,
   onOpenYouTube,
+  hideButton,
+  forceOpen,
+  onClose,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const effectiveOpen = forceOpen !== undefined ? forceOpen : isOpen;
   const { auth } = useGoogleOmni();
   const isConnected = !!auth.getToken();
 
@@ -76,9 +83,9 @@ const GoogleServicesFAB: React.FC<GoogleServicesFABProps> = ({
   ];
 
   return (
-    <div className="fixed bottom-[184px] md:bottom-24 right-5 z-[100] flex flex-col-reverse items-end gap-3">
+    <div className={hideButton ? "" : "fixed bottom-[184px] md:bottom-24 right-5 z-[100] flex flex-col-reverse items-end gap-3"}>
       {/* Service Buttons */}
-      {isOpen && SERVICES.map((svc, i) => (
+      {effectiveOpen && SERVICES.map((svc, i) => (
         <div
           key={svc.label}
           className="flex items-center gap-2"
@@ -100,22 +107,24 @@ const GoogleServicesFAB: React.FC<GoogleServicesFABProps> = ({
       ))}
 
       {/* Main FAB */}
-      <button
-        onClick={() => setIsOpen(o => !o)}
-        className={`w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 border ${
-          isOpen
-            ? 'bg-white/10 border-white/20 rotate-45'
-            : 'bg-gradient-to-br from-blue-500 to-indigo-600 border-white/10'
-        }`}
-      >
-        {isOpen ? (
-          <svg viewBox="0 0 24 24" className="w-6 h-6 text-white" fill="none" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12"/>
-          </svg>
-        ) : (
-          <span className="text-white font-black text-2xl" style={{fontFamily:'sans-serif'}}>G</span>
-        )}
-      </button>
+      {!hideButton && (
+        <button
+          onClick={() => setIsOpen(o => !o)}
+          className={`w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 border ${
+            isOpen
+              ? 'bg-white/10 border-white/20 rotate-45'
+              : 'bg-gradient-to-br from-blue-500 to-indigo-600 border-white/10'
+          }`}
+        >
+          {isOpen ? (
+            <svg viewBox="0 0 24 24" className="w-6 h-6 text-white" fill="none" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          ) : (
+            <span className="text-white font-black text-2xl" style={{fontFamily:'sans-serif'}}>G</span>
+          )}
+        </button>
+      )}
 
       <style>{`
         @keyframes fadeInUp {

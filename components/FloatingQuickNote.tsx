@@ -28,10 +28,17 @@ const NOTE_COLORS = [
   { name: 'Orange',  bg: '#FFEDD5', text: '#9A3412', border: '#F97316' },
 ];
 
-const FloatingQuickNote: React.FC = () => {
+interface FloatingQuickNoteProps {
+  hideButton?: boolean;
+  forceOpen?: boolean;
+  onClose?: () => void;
+}
+
+const FloatingQuickNote: React.FC<FloatingQuickNoteProps> = ({ hideButton, forceOpen, onClose }) => {
   const location = useLocation();
   const { user, subjects } = useContext(AppContext) as any;
   const [isOpen, setIsOpen] = useState(false);
+  const effectiveOpen = forceOpen !== undefined ? forceOpen : isOpen;
   const [noteContent, setNoteContent] = useState('');
   const [selectedColor, setSelectedColor] = useState(NOTE_COLORS[0]);
   const [isSaving, setIsSaving] = useState(false);
@@ -168,32 +175,34 @@ const FloatingQuickNote: React.FC = () => {
   return (
     <>
       {/* Floating Quick Note Button */}
-      <button
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onClick={(e) => {
-          if (dragRef.current && (Math.abs(e.clientX - dragRef.current.startX) > 5 || Math.abs(e.clientY - dragRef.current.startY) > 5)) return;
-          setIsOpen(!isOpen);
-        }}
-        className="fixed z-[95] group flex items-center justify-center w-14 h-14 rounded-full border border-white/10 shadow-xl hover:border-amber-400/50 transition-colors cursor-move"
-        style={{ 
-          background: 'rgba(10, 10, 10, 0.9)', 
-          backdropFilter: 'blur(16px)',
-          left: position.x,
-          top: position.y,
-          touchAction: 'none'
-        }}
-        title="Quick Note (Drag to move)"
-      >
-        <span className="text-xl pointer-events-none">📝</span>
-      </button>
+      {!hideButton && (
+        <button
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          onClick={(e) => {
+            if (dragRef.current && (Math.abs(e.clientX - dragRef.current.startX) > 5 || Math.abs(e.clientY - dragRef.current.startY) > 5)) return;
+            setIsOpen(!isOpen);
+          }}
+          className="fixed z-[95] group flex items-center justify-center w-14 h-14 rounded-full border border-white/10 shadow-xl hover:border-amber-400/50 transition-colors cursor-move"
+          style={{ 
+            background: 'rgba(10, 10, 10, 0.9)', 
+            backdropFilter: 'blur(16px)',
+            left: position.x,
+            top: position.y,
+            touchAction: 'none'
+          }}
+          title="Quick Note (Drag to move)"
+        >
+          <span className="text-xl pointer-events-none">📝</span>
+        </button>
+      )}
 
       {/* Sticky Note Modal */}
-      {isOpen && (
+      {effectiveOpen && (
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
           {/* Backdrop */}
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsOpen(false)} />
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => onClose ? onClose() : setIsOpen(false)} />
           
           {/* Sticky Note */}
           <div
@@ -211,7 +220,7 @@ const FloatingQuickNote: React.FC = () => {
                   Quick Note
                 </span>
               </div>
-              <button onClick={() => setIsOpen(false)} className="p-1.5 rounded-full hover:bg-black/10 transition-colors">
+              <button onClick={() => onClose ? onClose() : setIsOpen(false)} className="p-1.5 rounded-full hover:bg-black/10 transition-colors">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke={selectedColor.text}><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>

@@ -52,7 +52,7 @@ import WisdomLibraryPage from './pages/WisdomLibraryPage';
 import FloatingWisdom from './components/FloatingWisdom';
 import { WisdomItem, useWisdom } from './hooks/useWisdom';
 import GmailPage from './pages/GmailPage';
-import GoogleServicesFAB from './components/GoogleServicesFAB';
+import FloatingSpeedDial from './components/FloatingSpeedDial';
 import DriveBrowserModal from './components/DriveBrowserModal';
 import YouTubeBrowserModal from './components/YouTubeBrowserModal';
 import TasksBrowserModal from './components/TasksBrowserModal';
@@ -762,23 +762,8 @@ const App: React.FC = () => {
                 style={{ color: 'var(--text-primary)' }}
             >
                 {user && <Navigation />}
-                {user && <FloatingSpotifyWidget />}
-                {user && <FloatingQuickNote />}
-                {user && <AssistantOverlay isOpen={isAssistantOpen} onClose={() => setIsAssistantOpen(false)} />}
-                {user && <SearchOverlay isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />}
-                {user && <DriveBrowserModal isOpen={isDriveOpen} onClose={() => setIsDriveOpen(false)} />}
-                {user && <YouTubeBrowserModal isOpen={isYouTubeOpen} onClose={() => setIsYouTubeOpen(false)} />}
-                {user && <TasksBrowserModal isOpen={isTasksOpen} onClose={() => setIsTasksOpen(false)} />}
-                {user && <CalendarBrowserModal isOpen={isCalendarOpen} onClose={() => setIsCalendarOpen(false)} />}
-                {user && <FloatingAIAssistant />}
                 {user && (
-                    <GoogleServicesFAB
-                        onOpenGmail={() => { window.location.href = '/gmail'; }}
-                        onOpenCalendar={() => setIsCalendarOpen(true)}
-                        onOpenTasks={() => setIsTasksOpen(true)}
-                        onOpenDrive={() => setIsDriveOpen(true)}
-                        onOpenYouTube={() => setIsYouTubeOpen(true)}
-                    />
+                    <FloatingSpeedDial />
                 )}
                 {user && (
                     <div className="px-6 py-4 max-w-7xl mx-auto w-full">

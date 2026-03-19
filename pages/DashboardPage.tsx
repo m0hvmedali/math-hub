@@ -20,6 +20,8 @@ import { useHubCore, assistant } from '../utils/HubCore';
 import WisdomCard from '../components/WisdomCard';
 import WisdomProgress from '../components/WisdomProgress';
 import NeuralBriefing from '../components/NeuralBriefing';
+import { useWisdomRotation, localQuotes } from '../hooks/useWisdomRotation';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const DashboardPage: React.FC = () => {
     const { 
@@ -119,18 +121,18 @@ const DashboardPage: React.FC = () => {
     const [isStudying, setIsStudying] = useState(false);
     const [startTime, setStartTime] = useState<number | null>(null);
 
+    const { activeMode } = useWisdomRotation(30000);
+
     useEffect(() => {
         if (!currentWisdom) {
             fetchNextWisdom({ state: 'study' });
         }
-
-        // Automatic rotation every 60 seconds
-        const rotationInterval = setInterval(() => {
-            fetchNextWisdom({ state: 'study' });
-        }, 60000);
-
-        return () => clearInterval(rotationInterval);
     }, [user, currentWisdom, fetchNextWisdom]);
+
+    // Random local quote for rotation
+    const randomLocalQuote = useMemo(() => {
+        return localQuotes[Math.floor(Math.random() * localQuotes.length)];
+    }, [activeMode]);
 
     // Spaced Repetition: Lessons to review today
     const reviewLessons = useMemo(() => {
@@ -252,9 +254,67 @@ const DashboardPage: React.FC = () => {
                 query={searchQuery}
             />
 
-            {/* Neural Intelligence Briefing */}
+            {/* Consolidated Wisdom Hub (30s Rotation) */}
             <div className="max-w-5xl mx-auto px-6 md:px-12 mb-12 relative z-[70] -mt-12">
-                <NeuralBriefing />
+                <AnimatePresence mode="wait">
+                    {activeMode === 'AI_BRIEFING' && (
+                        <motion.div
+                            key="briefing"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                        >
+                            <NeuralBriefing />
+                        </motion.div>
+                    )}
+
+                    {activeMode === 'SUPABASE_WISDOM' && currentWisdom && (
+                        <motion.div
+                            key="wisdom"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                            className="cursor-pointer group"
+                            onClick={() => fetchNextWisdom({ state: 'study' })}
+                        >
+                            <div className="p-8 bg-white/5 backdrop-blur-3xl rounded-[2.5rem] border border-white/10 hover:border-brand-cyan/40 transition-all duration-500 shadow-2xl relative overflow-hidden text-center">
+                                <div className="absolute inset-0 bg-gradient-to-tr from-brand-cyan/5 via-transparent to-brand-purple/5" />
+                                <p className={`relative z-10 text-2xl md:text-3xl font-black text-white mb-6 leading-relaxed ${currentWisdom.type === 'poetry' ? 'italic font-serif' : ''}`} dir="rtl">
+                                    "{currentWisdom.text}"
+                                </p>
+                                <div className="relative z-10 flex items-center justify-center gap-4">
+                                    <span className="w-12 h-px bg-brand-cyan/20" />
+                                    <span className="text-xs font-black uppercase tracking-[0.3em] text-brand-cyan/60">{currentWisdom.author || currentWisdom.source}</span>
+                                    <span className="w-12 h-px bg-brand-cyan/20" />
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+
+                    {activeMode === 'LOCAL_QUOTE' && (
+                        <motion.div
+                            key="local"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -20 }}
+                        >
+                            <div className="p-8 bg-white/5 backdrop-blur-3xl rounded-[2.5rem] border border-white/10 hover:border-brand-magenta/40 transition-all duration-500 shadow-2xl relative overflow-hidden text-center">
+                                <div className="absolute inset-0 bg-gradient-to-tr from-brand-magenta/5 via-transparent to-brand-cyan/5" />
+                                <p className="relative z-10 text-2xl md:text-3xl font-black text-white mb-6 leading-relaxed" dir="rtl">
+                                    "{randomLocalQuote.ar}"
+                                </p>
+                                <p className="relative z-10 text-sm font-medium text-gray-400 italic mb-4">
+                                    {randomLocalQuote.en}
+                                </p>
+                                <div className="relative z-10 flex items-center justify-center gap-4">
+                                    <span className="w-12 h-px bg-brand-magenta/20" />
+                                    <span className="text-xs font-black uppercase tracking-[0.3em] text-brand-magenta/60">{language === 'ar' ? 'اقتباس معرفي' : 'Knowledge Quote'}</span>
+                                    <span className="w-12 h-px bg-brand-magenta/20" />
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </div>
 
             {/* OTT Hero Banner */}
@@ -271,26 +331,6 @@ const DashboardPage: React.FC = () => {
                     <h1 className="text-4xl md:text-5xl lg:text-6xl font-black mb-4 leading-tight truncate">
                         {priorityLesson ? priorityLesson.lesson.name : (language === 'ar' ? 'ابدأ رحلتك المعرفية' : 'Start Your Journey')}
                     </h1>
-                    
-                    {currentWisdom && (
-                      <div className="mb-8 animate-premium-fade cursor-pointer group" onClick={() => fetchNextWisdom({ state: 'study' })}>
-                        <div className={`p-6 bg-white/5 backdrop-blur-xl rounded-[2rem] border border-white/10 max-w-2xl group-hover:border-brand-cyan/40 transition-all duration-500 relative overflow-hidden`}>
-                           {/* Cinematic Glow Background */}
-                           <div className="absolute inset-0 bg-gradient-to-tr from-brand-cyan/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                           
-                           <div className="relative z-10 text-right" dir="rtl">
-                             <p className={`text-lg md:text-2xl lg:text-3xl font-black text-white mb-4 leading-normal tracking-tight ${currentWisdom.type === 'poetry' ? 'italic font-serif' : ''}`}>
-                               "{currentWisdom.text}"
-                             </p>
-                             <div className="flex items-center justify-end gap-3">
-                               <span className="w-8 h-[2px] bg-brand-cyan/40"></span>
-                               <p className="text-sm text-gray-400 font-bold uppercase tracking-[0.2em]">{currentWisdom.author || currentWisdom.source}</p>
-                               {currentWisdom.is_golden && <span className="text-[10px] bg-accent-amber/10 text-accent-amber px-2 py-0.5 rounded border border-accent-amber/20 font-black tracking-widest">GOLDEN ⭐</span>}
-                             </div>
-                           </div>
-                        </div>
-                      </div>
-                    )}
 
                     <p className="text-lg md:text-xl text-gray-300 max-w-2xl mb-8 font-medium">
                         {priorityLesson
