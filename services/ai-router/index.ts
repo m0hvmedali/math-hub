@@ -8,7 +8,8 @@
  * 4. Groq (Llama/Kimi)                               — final fallback
  */
 
-import { Ollama } from 'ollama';
+// ollama npm package is NOT used — it requires node:fs/node:path which breaks browser builds.
+// We call the Ollama Cloud REST API directly via fetch instead.
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import {
   getActiveModelsForTask,
@@ -25,22 +26,37 @@ const GROQ_LLAMA_KEY = (import.meta.env.VITE_GROQ_LLAMA_KEY     || '').trim();
 const GEMMA_KEY      = (import.meta.env.VITE_OPENROUTER_GEMMA_KEY || '').trim();
 const MISTRAL_KEY    = (import.meta.env.VITE_MISTRAL_API_KEY    || '').trim();
 
-// ── Ollama Cloud Client ────────────────────────────────────────────────────────
-let _ollamaClient: Ollama | null = null;
+// ── Ollama Cloud REST API (browser-compatible fetch) ─────────────────────────
+const OLLAMA_HOST = 'https://ollama.com';
 
-function getOllamaClient(apiKey: string): Ollama {
-  // Create a fresh client per key to support different keys per model
-  return new Ollama({
-    host: 'https://ollama.com',
-    fetch: (url: string, options?: RequestInit) => {
-      const headers = {
-        ...(options?.headers || {}),
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      };
-      return fetch(url, { ...options, headers });
+/**
+ * Low-level call to Ollama REST API.
+ * POST /api/chat  (non-streaming)
+ */
+async function ollamaChat(params: {
+  model: string;
+  messages: { role: string; content: string }[];
+  format?: 'json';
+  apiKey: string;
+}): Promise<{ message: { content: string } }> {
+  const resp = await fetch(`${OLLAMA_HOST}/api/chat`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${params.apiKey}`,
+      'Content-Type': 'application/json',
     },
-  } as any);
+    body: JSON.stringify({
+      model: params.model,
+      messages: params.messages,
+      stream: false,
+      ...(params.format ? { format: params.format } : {}),
+    }),
+  });
+  if (!resp.ok) {
+    const errBody = await resp.text().catch(() => resp.statusText);
+    throw new Error(`Ollama ${resp.status}: ${errBody}`);
+  }
+  return resp.json();
 }
 
 // ── Site Knowledge ─────────────────────────────────────────────────────────────
@@ -122,10 +138,10 @@ function cleanJson(raw: string): string {
 // ── Health Check ──────────────────────────────────────────────────────────────
 async function checkModel(m: ModelConfig): Promise<boolean> {
   try {
-    const client = getOllamaClient(m.apiKey || '');
-    await (client as any).chat({
+    await ollamaChat({
       model: m.model,
       messages: [{ role: 'user', content: 'ping' }],
+      apiKey: m.apiKey || '',
     });
     return true;
   } catch {
@@ -155,10 +171,8 @@ export function startHealthChecks() {
 
 // ── Ollama Call ───────────────────────────────────────────────────────────────
 async function callOllama(req: AIRequest, m: ModelConfig): Promise<AIResponse> {
-  const client = getOllamaClient(m.apiKey || '');
-
   // Build message history
-  const messages: { role: 'user' | 'assistant' | 'system'; content: string }[] = [];
+  const messages: { role: string; content: string }[] = [];
 
   if (req.systemInstruction) {
     messages.push({ role: 'system', content: req.systemInstruction + '\n\n' + SITE_KNOWLEDGE });
@@ -173,11 +187,12 @@ async function callOllama(req: AIRequest, m: ModelConfig): Promise<AIResponse> {
   let rawText = '';
 
   for (const chunk of chunks) {
-    const payload = [...messages, { role: 'user' as const, content: chunk }];
-    const res = await (client as any).chat({
+    const payload = [...messages, { role: 'user', content: chunk }];
+    const res = await ollamaChat({
       model: m.model,
       messages: payload,
       format: req.responseFormat === 'json' ? 'json' : undefined,
+      apiKey: m.apiKey || '',
     });
     const chunkContent: string = res.message?.content || '';
     rawText += chunkContent;
