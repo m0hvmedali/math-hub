@@ -164,19 +164,6 @@ export const analyzeDayAndPlan = async (
     gradeLevel: GradeLevel
 ): Promise<AnalysisResponse> => {
 
-    // CACHING LOGIC
-    const today = new Date().toLocaleDateString('en-CA');
-    const cacheKey = `daily_analysis_v2_${gradeLevel}_${today}`;
-    try {
-        const cached = localStorage.getItem(cacheKey);
-        if (cached) {
-            console.log("💾 Using Cached Analysis");
-            const parsed = JSON.parse(cached);
-            // Deep merge with fallback to ensure safety even for cached data
-            return { ...FALLBACK_RESPONSE, ...parsed, quranicLink: { ...FALLBACK_RESPONSE.quranicLink, ...(parsed.quranicLink || {}) } };
-        }
-    } catch (e) { console.warn(e); }
-
     // FALLBACK DATA (Offline Mode)
     const FALLBACK_RESPONSE: AnalysisResponse = {
         summary: {
@@ -205,6 +192,19 @@ export const analyzeDayAndPlan = async (
         quranicLink: { verse: "وَأَن لَّيْسَ لِلْإِنسَانِ إِلَّا مَا سَعَىٰ", surah: "النجم", behavioralExplanation: "السعي هو المطلوب." },
         balanceScore: 75
     };
+
+    // CACHING LOGIC
+    const today = new Date().toLocaleDateString('en-CA');
+    const cacheKey = `daily_analysis_v2_${gradeLevel}_${today}`;
+    try {
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) {
+            console.log("💾 Using Cached Analysis");
+            const parsed = JSON.parse(cached);
+            // Deep merge with fallback to ensure safety even for cached data
+            return { ...FALLBACK_RESPONSE, ...parsed, quranicLink: { ...FALLBACK_RESPONSE.quranicLink, ...(parsed.quranicLink || {}) } };
+        }
+    } catch (e) { console.warn(e); }
 
     const prompt = `
     بيانات المستخدم:
