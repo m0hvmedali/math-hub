@@ -18,7 +18,7 @@ class GoogleAIManager {
   /**
    * Generates text content using Gemini Pro
    */
-  public async generateText(prompt: string, modelType: string = 'gemini-1.5-pro'): Promise<string> {
+  public async generateText(prompt: string, modelType: string = 'gemini-3.1-flash-lite-preview'): Promise<string> {
     if (!API_KEY) {
       throw new Error('Gemini API Key is missing');
     }
@@ -37,7 +37,7 @@ class GoogleAIManager {
       throw new Error('Gemini API Key is missing');
     }
 
-    const model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
+    const model = this.genAI.getGenerativeModel({ model: 'gemini-3.1-flash-lite-preview' });
     
     const imageParts = [
       {

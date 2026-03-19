@@ -246,7 +246,7 @@ export const transcribeAudio = async (base64Audio: string, mimeType: string = 'a
     return callWithRetry(async () => {
         try {
             const model = genAI.getGenerativeModel({ 
-                model: "gemini-2.0-flash", 
+                model: "gemini-3.1-flash-lite-preview", 
                 systemInstruction: "Transcribe the audio exactly as spoken in Arabic.",
                 safetySettings: SAFETY_SETTINGS 
             });
@@ -314,7 +314,7 @@ export const getAiResponse = async (
 
     try {
         const model = genAI.getGenerativeModel({
-            model: opts?.model || "gemini-1.5-flash",
+            model: opts?.model || "gemini-3.1-flash-lite-preview",
             generationConfig: { responseMimeType: "application/json" }
         });
 

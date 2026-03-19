@@ -48,13 +48,14 @@ export interface AIRequest {
   imageBase64?: string;
   imageMimeType?: string;
   responseFormat?: 'text' | 'json';
-  history?: any[];
+  history?: { role: 'user' | 'assistant'; content: string; thoughtSignature?: string }[];
 }
 
 export interface AIResponse {
   text: string;
   provider: string;
   reasoning?: string;
+  thoughtSignature?: string;
 }
 
 // ── Usage Tracking & Caching ─────────────────────────────────────────────────
@@ -186,26 +187,44 @@ async function callGemini(req: AIRequest): Promise<AIResponse> {
     throw new Error('No Gemini key. Please check your .env file.');
   }
   const genAI = new GoogleGenerativeAI(GEMINI_KEY);
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+  const MODEL_ID = 'gemini-3.1-flash-lite-preview';
+  const model = genAI.getGenerativeModel({ model: MODEL_ID });
 
   if (req.imageBase64) {
     const result = await model.generateContent([
       req.prompt,
       { inlineData: { data: req.imageBase64.replace(/^data:[^;]+;base64,/, ''), mimeType: req.imageMimeType || 'image/jpeg' } }
     ]);
-    return { text: result.response.text(), provider: 'gemini-2.0-flash' };
+    return { text: result.response.text(), provider: MODEL_ID };
   }
 
   const result = await model.generateContent({
     contents: [
-      ...(req.systemInstruction ? [{ role: 'user' as 'user', parts: [{ text: `[System] ${req.systemInstruction}` }] }, { role: 'model' as 'model', parts: [{ text: 'Understood.' }] }] : []),
-      ...(req.history || []).map(h => ({ role: (h.role === 'assistant' ? 'model' : 'user') as 'user' | 'model', parts: [{ text: h.content }] })),
-      { role: 'user' as 'user', parts: [{ text: req.prompt }] }
+      ...(req.systemInstruction ? [
+        { role: 'user' as const, parts: [{ text: `[System] ${req.systemInstruction}` }] }, 
+        { role: 'model' as const, parts: [{ text: 'Understood.' }] }
+      ] : []),
+      ...(req.history || []).map(h => ({
+        role: (h.role === 'assistant' ? 'model' : 'user') as 'user' | 'model',
+        parts: [
+          { text: h.content } as any,
+          ...(h.thoughtSignature ? [{ thought_signature: h.thoughtSignature } as any] : [])
+        ]
+      })),
+      { role: 'user' as const, parts: [{ text: req.prompt }] }
     ],
     generationConfig: (req.responseFormat === 'json' ? { responseMimeType: 'application/json' } : undefined) as any,
   });
 
-  return { text: result.response.text(), provider: 'gemini-2.0-flash' };
+  const response = result.response;
+  const candidate = (response as any).candidates?.[0];
+  const thoughtSignature = candidate?.content?.parts?.find((p: any) => p.thought_signature)?.thought_signature;
+
+  return { 
+    text: response.text(), 
+    provider: MODEL_ID,
+    thoughtSignature 
+  };
 }
 
 import { monitor } from './monitor';
@@ -237,12 +256,12 @@ export async function routeAI(req: AIRequest): Promise<AIResponse> {
             result = await callGemini(req).catch(async (err) => {
               if (err.message?.includes('429')) {
                 console.warn("[AI Router] Gemini 429, falling back to OpenRouter");
-                return await callOpenRouter(req, 'google/gemini-2.0-flash-001', OPENROUTER_KEY);
+                return await callOpenRouter(req, 'google/gemini-3.1-flash-lite-preview:free', OPENROUTER_KEY);
               }
               throw err;
-            }).catch(() => callOpenRouter(req, 'google/gemini-2.0-flash-001', OPENROUTER_KEY));
+            }).catch(() => callOpenRouter(req, 'google/gemini-3.1-flash-lite-preview:free', OPENROUTER_KEY));
         } else if (checkUsage('openrouter')) {
-            result = await callOpenRouter(req, 'google/gemini-2.0-flash-001', OPENROUTER_KEY);
+            result = await callOpenRouter(req, 'google/gemini-3.1-flash-lite-preview:free', OPENROUTER_KEY);
         } else {
             result = await callGroq(req, 'llama-3.1-8b-instant', GROQ_LLAMA_KEY);
         }
@@ -292,7 +311,7 @@ export async function routeAI(req: AIRequest): Promise<AIResponse> {
 
       default:
         if (checkUsage('openrouter')) {
-            result = await callOpenRouter(req, 'google/gemini-2.0-flash-001', OPENROUTER_KEY);
+            result = await callOpenRouter(req, 'google/gemini-3.1-flash-lite-preview:free', OPENROUTER_KEY);
         } else {
             result = await callGroq(req, 'llama-3.1-8b-instant', GROQ_LLAMA_KEY);
         }
