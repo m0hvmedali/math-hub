@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { assistant } from '../utils/HubCore';
-import { CommandIcon, SearchIcon, ActivityIcon } from './Icons';
+import { CommandIcon, SearchIcon, ActivityIcon, SparkleIcon } from './Icons';
+import { generateText } from '../services/ai-router';
 
 interface AssistantOverlayProps {
   isOpen: boolean;
@@ -10,6 +11,7 @@ interface AssistantOverlayProps {
 const AssistantOverlay: React.FC<AssistantOverlayProps> = ({ isOpen, onClose }) => {
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [isAiThinking, setIsAiThinking] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   
   const allCommands = assistant.getAvailableCommands();
@@ -36,9 +38,24 @@ const AssistantOverlay: React.FC<AssistantOverlayProps> = ({ isOpen, onClose }) 
       if (selected) {
         assistant.runCommand(selected.id);
         onClose();
+      } else if (query.trim()) {
+        handleAiBrain();
       }
     } else if (e.key === 'Escape') {
       onClose();
+    }
+  };
+
+  const handleAiBrain = async () => {
+    if (!query.trim() || isAiThinking) return;
+    setIsAiThinking(true);
+    try {
+        await assistant.performBrainAction(query, generateText);
+        onClose();
+    } catch (err) {
+        console.error("AI Brain error", err);
+    } finally {
+        setIsAiThinking(false);
     }
   };
 
@@ -78,6 +95,7 @@ const AssistantOverlay: React.FC<AssistantOverlayProps> = ({ isOpen, onClose }) 
         <div className="max-h-[400px] overflow-y-auto p-2 custom-scrollbar">
           {filteredCommands.length > 0 ? (
             filteredCommands.map((cmd, i) => (
+              // ... existing mapping ...
               <div
                 key={cmd.id}
                 className={`flex items-center gap-4 p-4 rounded-2xl cursor-pointer transition-all duration-200 ${
@@ -101,6 +119,24 @@ const AssistantOverlay: React.FC<AssistantOverlayProps> = ({ isOpen, onClose }) 
                 )}
               </div>
             ))
+          ) : query.trim() ? (
+            <div 
+                className="p-8 group/ai cursor-pointer hover:bg-brand-cyan/5 transition-all rounded-3xl border border-dashed border-white/10 hover:border-brand-cyan/30 mx-4 my-2"
+                onClick={handleAiBrain}
+            >
+              <div className="flex items-center gap-6">
+                <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-purple to-brand-cyan flex items-center justify-center text-xl shadow-glow-brand ${isAiThinking ? 'animate-pulse' : 'group-hover/ai:rotate-12 transition-transform'}`}>
+                    {isAiThinking ? '🧠' : <SparkleIcon className="w-6 h-6 text-white" />}
+                </div>
+                <div className="text-left">
+                    <h4 className="text-white font-black text-lg">{isAiThinking ? (language === 'ar' ? 'جاري التفكير...' : 'Brain is active...') : (language === 'ar' ? 'اسأل الذكاء الاصطناعي' : 'Ask AI Brain')}</h4>
+                    <p className="text-sm text-gray-500 mt-1">"{query}"</p>
+                </div>
+                <div className="ml-auto bg-brand-cyan/10 text-brand-cyan px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border border-brand-cyan/20">
+                    Press Enter to interpret
+                </div>
+              </div>
+            </div>
           ) : (
             <div className="p-12 text-center text-accent-beige/40">
               <p>No commands matched your query</p>

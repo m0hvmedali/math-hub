@@ -54,7 +54,10 @@ export interface AIResponse {
 // ── Fetch Helpers ─────────────────────────────────────────────────────────────
 
 async function callOpenRouter(req: AIRequest, model: string, key: string): Promise<AIResponse> {
-  if (!key) throw new Error(`Missing key for ${model}`);
+  if (!key) {
+    console.warn(`[AI Router] Missing OpenRouter key for ${model}`);
+    throw new Error(`Missing key for ${model}. Please check VITE_OPENROUTER_API_KEY.`);
+  }
   
   const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
@@ -110,7 +113,10 @@ async function callGroq(req: AIRequest, model: string, key: string): Promise<AIR
 }
 
 async function callGemini(req: AIRequest): Promise<AIResponse> {
-  if (!GEMINI_KEY) throw new Error('No Gemini key');
+  if (!GEMINI_KEY) {
+    console.warn("[AI Router] Missing Gemini API key (VITE_GEMINI_API_KEY)");
+    throw new Error('No Gemini key. Please check your .env file.');
+  }
   const genAI = new GoogleGenerativeAI(GEMINI_KEY);
   const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
@@ -145,7 +151,7 @@ export async function routeAI(req: AIRequest): Promise<AIResponse> {
   try {
     switch (task) {
       case 'brain':
-        result = await callOpenRouter(req, 'google/gemini-2.0-flash-exp:free', OPENROUTER_KEY);
+                result = await callOpenRouter(req, 'google/gemini-2.0-flash-001', OPENROUTER_KEY);
         break;
       
       case 'lesson_explanation':
@@ -183,7 +189,7 @@ export async function routeAI(req: AIRequest): Promise<AIResponse> {
         break;
 
       default:
-        result = await callOpenRouter(req, 'google/gemini-2.0-flash-exp:free', OPENROUTER_KEY);
+                result = await callOpenRouter(req, 'google/gemini-2.0-flash-001', OPENROUTER_KEY);
     }
     return result!;
   } catch (err: any) {

@@ -132,31 +132,42 @@ class Assistant {
   }
 
   /**
-   * Use the Central Brain (GPT-OSS-120B) to interpret a command and execute it.
+   * Use the Central Brain (AI Router) to interpret a command and execute it.
    */
   async performBrainAction(input: string, generateTextFn: any) {
     console.log(`[Assistant] Brain is thinking: ${input}`);
     const atoms = Array.from(hubCore['pages'].keys());
+    const macros = this.getAvailableCommands();
+    
     const prompt = `
 User Command: "${input}"
-Available Atoms: ${atoms.join(', ')}
-Site Structure: (You know the site map)
+Available Atoms (Features): ${atoms.join(', ')}
+Available Macros (Registered Commands):
+${macros.map(m => `- ${m.id}: ${m.description}`).join('\n')}
 
-Your goal: Determine which atom and action to call.
-Return ONLY a valid JSON object: { "atomId": string, "action": string, "args": any[] }
-If you can't satisfy it, return { "error": "Reason" }
+Goal: Decide which action to execute. 
+Return ONLY a valid JSON object:
+If it's a Macro: { "commandId": "MACRO_ID", "args": [] }
+If it's an Atom Action: { "atomId": "ATOM_ID", "action": "ACTION_NAME", "args": [] }
+If unsure: { "error": "Reason" }
     `;
 
     try {
       const result = await generateTextFn(prompt, { task: 'brain', json: true });
-      const cmd = JSON.parse(result);
-      if (cmd.atomId && cmd.action) {
+      const cmd = typeof result === 'string' ? JSON.parse(result) : result;
+      
+      if (cmd.commandId) {
+        console.log(`[Assistant] AI executing Macro: ${cmd.commandId}`);
+        this.runCommand(cmd.commandId, ...(cmd.args || []));
+      } else if (cmd.atomId && cmd.action) {
+        console.log(`[Assistant] AI executing Atom Action: ${cmd.atomId}.${cmd.action}`);
         hubCore.execute(cmd.atomId, cmd.action, ...(cmd.args || []));
       } else if (cmd.error) {
-        console.error(`[Assistant] Brain error: ${cmd.error}`);
+        throw new Error(cmd.error);
       }
     } catch (e) {
-      console.error("[Assistant] Brain execution failed", e);
+      console.error("[Assistant] AI Brain failed", e);
+      throw e;
     }
   }
 }
