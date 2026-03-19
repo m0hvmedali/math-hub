@@ -1,6 +1,18 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { useGoogleLogin, googleLogout } from '@react-oauth/google';
-import { fetchTaskLists, fetchTasks, updateTaskStatus, GoogleTask, TaskList } from '../utils/googleTasksAPI';
+import { tasks as tasksService, auth } from '../services/platform-sdk';
+
+export interface TaskList {
+  id: string;
+  title: string;
+}
+
+export interface GoogleTask {
+  id: string;
+  title: string;
+  status: 'needsAction' | 'completed';
+  notes?: string;
+  due?: string;
+}
 
 interface TasksContextType {
   accessToken: string | null;
@@ -15,70 +27,68 @@ interface TasksContextType {
   refreshTasks: () => Promise<void>;
   completeTask: (taskId: string) => Promise<void>;
   addNoteToTask: (taskId: string, note: string) => Promise<void>;
+  createTask: (title: string, notes?: string, due?: string) => Promise<void>;
 }
 
 const TasksContext = createContext<TasksContextType | undefined>(undefined);
 
 export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [accessToken, setAccessToken] = useState<string | null>(localStorage.getItem('google_tasks_token'));
+  const [accessToken, setAccessToken] = useState<string | null>(auth.getToken());
   const [taskLists, setTaskLists] = useState<TaskList[]>([]);
   const [tasks, setTasks] = useState<GoogleTask[]>([]);
   const [activeTaskId, setActiveTaskId] = useState<string | null>(localStorage.getItem('active_google_task'));
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const login = useGoogleLogin({
-    onSuccess: (tokenResponse) => {
-      setAccessToken(tokenResponse.access_token);
-      localStorage.setItem('google_tasks_token', tokenResponse.access_token);
-      setError(null);
-    },
-    onError: (errorResponse) => {
+  const login = async () => {
+    try {
+      const token = await auth.login();
+      setAccessToken(token);
+    } catch (err) {
       setError('Login Failed');
-      console.error(errorResponse);
-    },
-    scope: 'https://www.googleapis.com/auth/tasks',
-  });
+    }
+  };
 
   const logout = useCallback(() => {
-    googleLogout();
+    auth.logout();
     setAccessToken(null);
     setTaskLists([]);
     setTasks([]);
     setActiveTaskId(null);
-    localStorage.removeItem('google_tasks_token');
     localStorage.removeItem('active_google_task');
   }, []);
 
   const refreshTasks = useCallback(async () => {
-    if (!accessToken) return;
+    if (!auth.getToken()) return;
     setIsLoading(true);
     setError(null);
     try {
-      const lists = await fetchTaskLists(accessToken);
+      const listData = await tasksService.getLists();
+      const lists = listData.items || [];
       setTaskLists(lists);
+      
       if (lists.length > 0) {
-        // Fetch tasks from the first list (usually default)
-        const defTasks = await fetchTasks(lists[0].id, accessToken);
-        setTasks(defTasks);
+        const taskData = await tasksService.listAll(lists[0].id);
+        setTasks(taskData.items || []);
       }
     } catch (err: any) {
-      if (err.message && err.message.includes('401')) {
-        logout(); // Token expired
+      if (err.message && err.message.includes('Unauthorized')) {
+        logout();
       } else {
         setError('Failed to fetch tasks');
       }
-      console.error(err);
     } finally {
       setIsLoading(false);
     }
-  }, [accessToken, logout]);
+  }, [logout]);
 
   useEffect(() => {
-    if (accessToken) {
-      refreshTasks();
+    const token = auth.getToken();
+    if (token) {
+        setAccessToken(token);
+        refreshTasks();
     }
-  }, [accessToken, refreshTasks]);
+  }, [refreshTasks]);
 
   const handleSetActiveTask = (taskId: string | null) => {
     setActiveTaskId(taskId);
@@ -90,37 +100,46 @@ export const TasksProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const completeTask = async (taskId: string) => {
-    if (!accessToken || taskLists.length === 0) return;
+    if (!auth.getToken() || taskLists.length === 0) return;
     try {
-      await updateTaskStatus(taskLists[0].id, taskId, { status: 'completed' }, accessToken);
-      // Remove from local list
+      await tasksService.complete(taskId, taskLists[0].id);
       setTasks(prev => prev.filter(t => t.id !== taskId));
       if (activeTaskId === taskId) {
         handleSetActiveTask(null);
       }
     } catch (err) {
-      console.error('Failed to complete task', err);
+        console.error('Failed to complete task', err);
     }
   };
 
   const addNoteToTask = async (taskId: string, noteAddition: string) => {
-    if (!accessToken || taskLists.length === 0) return;
+    if (!auth.getToken() || taskLists.length === 0) return;
     const task = tasks.find(t => t.id === taskId);
     if (!task) return;
 
     const newNotes = task.notes ? `${task.notes}\n${noteAddition}` : noteAddition;
     try {
-      const updatedTask = await updateTaskStatus(taskLists[0].id, taskId, { notes: newNotes }, accessToken);
-      setTasks(prev => prev.map(t => t.id === taskId ? updatedTask : t));
+      const updated = await tasksService.updateTask(taskId, { notes: newNotes }, taskLists[0].id);
+      setTasks(prev => prev.map(t => t.id === taskId ? updated : t));
     } catch (err) {
       console.error('Failed to update task notes', err);
     }
   };
 
+  const createTask = async (title: string, notes?: string, due?: string) => {
+    if (!auth.getToken() || taskLists.length === 0) return;
+    try {
+        const newTask = await tasksService.create(title, taskLists[0].id, notes, due);
+        setTasks(prev => [newTask, ...prev]);
+    } catch (err) {
+        console.error('Failed to create task', err);
+    }
+  }
+
   return (
     <TasksContext.Provider value={{
       accessToken, taskLists, tasks, activeTaskId, isLoading, error,
-      login, logout, setActiveTask: handleSetActiveTask, refreshTasks, completeTask, addNoteToTask
+      login, logout, setActiveTask: handleSetActiveTask, refreshTasks, completeTask, addNoteToTask, createTask
     }}>
       {children}
     </TasksContext.Provider>

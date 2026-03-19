@@ -86,7 +86,7 @@ const SearchHistoryPage: React.FC = () => {
                                     </div>
                                 )}
 
-                                {/* Global Results box */}
+                                 {/* Global Results box */}
                                 {item.globalResults?.length > 0 && (
                                     <div className="bg-white/[0.02] border border-white/5 p-5 rounded-2xl relative shadow-inner overflow-hidden">
                                         <div className="absolute top-0 right-0 bg-brand-cyan/20 text-brand-cyan text-[9px] font-black uppercase px-3 py-1 rounded-bl-xl border-b border-l border-brand-cyan/20">Web</div>
@@ -102,9 +102,44 @@ const SearchHistoryPage: React.FC = () => {
                                                     <div className="text-[9px] text-brand-cyan/40 mt-2 truncate font-medium">{res.url}</div>
                                                 </a>
                                             ))}
-                                            {item.globalResults.length > 5 && (
-                                                <div className="text-xs text-brand-cyan/70 font-bold px-2 py-1">+ {item.globalResults.length - 5} {language === 'ar' ? 'نتائج أخرى' : 'more results'}</div>
-                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Drive Results box */}
+                                {item.driveResults?.length > 0 && (
+                                    <div className="bg-white/[0.02] border border-white/5 p-5 rounded-2xl relative shadow-inner overflow-hidden">
+                                        <div className="absolute top-0 right-0 bg-brand-secondary/20 text-brand-secondary text-[9px] font-black uppercase px-3 py-1 rounded-bl-xl border-b border-l border-brand-secondary/20">Drive</div>
+                                        <h3 className="text-xs font-black tracking-widest text-gray-500 mb-4 flex items-center gap-2 uppercase">
+                                            <svg className="w-4 h-4 text-brand-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path></svg>
+                                            {language === 'ar' ? 'ملفات درايف' : 'Drive Files'}
+                                        </h3>
+                                        <div className="space-y-2.5">
+                                            {item.driveResults.slice(0, 5).map((f, i) => (
+                                                <a key={i} href={f.webViewLink} target="_blank" rel="noopener noreferrer" className="block p-3 rounded-xl bg-black/50 hover:bg-white/5 transition-all border border-white/5 hover:border-brand-secondary/30 group flex items-center gap-3">
+                                                    {f.iconLink && <img src={f.iconLink} className="w-4 h-4 shrink-0" alt="" />}
+                                                    <h5 className="text-white text-sm font-bold group-hover:text-brand-secondary transition-colors line-clamp-1">{f.name}</h5>
+                                                </a>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* YouTube Results box */}
+                                {item.youtubeResults?.length > 0 && (
+                                    <div className="bg-white/[0.02] border border-white/5 p-5 rounded-2xl relative shadow-inner overflow-hidden">
+                                        <div className="absolute top-0 right-0 bg-red-500/20 text-red-500 text-[9px] font-black uppercase px-3 py-1 rounded-bl-xl border-b border-l border-red-500/20">YouTube</div>
+                                        <h3 className="text-xs font-black tracking-widest text-gray-500 mb-4 flex items-center gap-2 uppercase">
+                                            <svg viewBox="0 0 24 24" className="w-4 h-4 text-red-500" fill="currentColor"><path d="M21.58 7.19c-.23-.86-.91-1.54-1.77-1.77C18.25 5 12 5 12 5s-6.25 0-7.81.42c-.86.23-1.54.91-1.77 1.77C2 8.75 2 12 2 12s0 3.25.42 4.81c.23.86.91 1.54 1.77 1.77C5.75 19 12 19 12 19s6.25 0 7.81-.42c.86-.23 1.54-.91 1.77-1.77C22 15.25 22 12 22 12s0-3.25-.42-4.81zM10 15V9l5.2 3-5.2 3z"/></svg>
+                                            {language === 'ar' ? 'فيديوهات يوتيوب' : 'YouTube Videos'}
+                                        </h3>
+                                        <div className="space-y-2.5">
+                                            {item.youtubeResults.slice(0, 5).map((v, i) => (
+                                                <a key={i} href={`https://www.youtube.com/watch?v=${v.id?.videoId}`} target="_blank" rel="noopener noreferrer" className="block p-3 rounded-xl bg-black/50 hover:bg-white/5 transition-all border border-white/5 hover:border-red-500/30 group flex items-center gap-3">
+                                                    <img src={v.snippet?.thumbnails?.default?.url} className="w-10 h-7 object-cover rounded shrink-0 bg-white/10" alt="" />
+                                                    <h5 className="text-white text-sm font-bold group-hover:text-red-400 transition-colors line-clamp-1">{v.snippet?.title}</h5>
+                                                </a>
+                                            ))}
                                         </div>
                                     </div>
                                 )}

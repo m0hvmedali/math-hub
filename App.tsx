@@ -54,6 +54,8 @@ import GmailPage from './pages/GmailPage';
 import GoogleServicesFAB from './components/GoogleServicesFAB';
 import DriveBrowserModal from './components/DriveBrowserModal';
 import YouTubeBrowserModal from './components/YouTubeBrowserModal';
+import TasksBrowserModal from './components/TasksBrowserModal';
+import CalendarBrowserModal from './components/CalendarBrowserModal';
 import LandingPage from './pages/LandingPage';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 
@@ -189,6 +191,8 @@ const App: React.FC = () => {
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [isDriveOpen, setIsDriveOpen] = useState(false);
     const [isYouTubeOpen, setIsYouTubeOpen] = useState(false);
+    const [isTasksOpen, setIsTasksOpen] = useState(false);
+    const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
     const { currentWisdom, progress: wisdomProgress, fetchNextWisdom, updateProgress: updateWisdomProgress } = useWisdom(user);
 
@@ -762,11 +766,13 @@ const App: React.FC = () => {
                 {user && <SearchOverlay isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />}
                 {user && <DriveBrowserModal isOpen={isDriveOpen} onClose={() => setIsDriveOpen(false)} />}
                 {user && <YouTubeBrowserModal isOpen={isYouTubeOpen} onClose={() => setIsYouTubeOpen(false)} />}
+                {user && <TasksBrowserModal isOpen={isTasksOpen} onClose={() => setIsTasksOpen(false)} />}
+                {user && <CalendarBrowserModal isOpen={isCalendarOpen} onClose={() => setIsCalendarOpen(false)} />}
                 {user && (
                     <GoogleServicesFAB
                         onOpenGmail={() => { window.location.href = '/gmail'; }}
-                        onOpenCalendar={() => window.open('https://calendar.google.com', '_blank')}
-                        onOpenTasks={() => window.open('https://tasks.google.com', '_blank')}
+                        onOpenCalendar={() => setIsCalendarOpen(true)}
+                        onOpenTasks={() => setIsTasksOpen(true)}
                         onOpenDrive={() => setIsDriveOpen(true)}
                         onOpenYouTube={() => setIsYouTubeOpen(true)}
                     />

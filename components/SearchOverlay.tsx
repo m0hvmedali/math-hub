@@ -112,7 +112,8 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose }) => {
 
 
     const handleCloseAttempt = () => {
-        if (query.trim().length > 2 && (localResults.length > 0 || globalResults.length > 0)) {
+        const hasResults = localResults.length > 0 || globalResults.length > 0 || youtubeResults.length > 0 || driveResults.length > 0;
+        if (query.trim().length > 2 && hasResults) {
             setShowSavePrompt(true);
         } else {
             resetAndClose();
@@ -131,7 +132,7 @@ const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose }) => {
 
     const handleSaveAndClose = () => {
         if (user) {
-            saveSearchToHistory(user, query, localResults, globalResults);
+            saveSearchToHistory(user, query, localResults, globalResults, youtubeResults, driveResults);
         }
         resetAndClose();
     };

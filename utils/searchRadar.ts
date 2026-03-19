@@ -211,10 +211,24 @@ export interface HistoryItem {
     timestamp: number;
     localResults: SearchResult[];
     globalResults: TavilyResult[];
+    youtubeResults?: any[];
+    driveResults?: any[];
 }
 
-export const saveSearchToHistory = (user: string, query: string, localResults: SearchResult[], globalResults: TavilyResult[]) => {
-    if (!query.trim() || (localResults.length === 0 && globalResults.length === 0)) return;
+export const saveSearchToHistory = (
+    user: string, 
+    query: string, 
+    localResults: SearchResult[], 
+    globalResults: TavilyResult[],
+    youtubeResults: any[] = [],
+    driveResults: any[] = []
+) => {
+    if (!query.trim()) return;
+    
+    // Save if there's at least some result or just if there's a query (user's preference)
+    const hasAnyResults = localResults.length > 0 || globalResults.length > 0 || youtubeResults.length > 0 || driveResults.length > 0;
+    if (!hasAnyResults) return;
+
     const historyKey = `search_history_${user}`;
     const history: HistoryItem[] = JSON.parse(localStorage.getItem(historyKey) || '[]');
     
@@ -223,7 +237,9 @@ export const saveSearchToHistory = (user: string, query: string, localResults: S
         query,
         timestamp: Date.now(),
         localResults,
-        globalResults
+        globalResults,
+        youtubeResults,
+        driveResults
     };
 
     const updatedHistory = [newItem, ...history].slice(0, 50); // Keep last 50

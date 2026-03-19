@@ -9,10 +9,23 @@ import { keep } from './keep';
 import { ai } from './ai';
 import { voice } from './voice';
 
+export interface GoogleOmni {
+  drive: typeof drive;
+  youtube: typeof youtube;
+  gmail: typeof gmail;
+  calendar: typeof calendar;
+  tasks: typeof tasks;
+  auth: typeof auth;
+  translate: typeof translate;
+  keep: typeof keep;
+  ai: typeof ai;
+  voice: typeof voice;
+}
+
 /**
  * Omni Hook for accessing all Google Platform APIs securely via the central orchestrator
  */
-export const useGoogleOmni = () => {
+export const useGoogleOmni = (): GoogleOmni => {
   return {
     auth,
     drive,

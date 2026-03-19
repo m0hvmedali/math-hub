@@ -8,23 +8,36 @@ class DriveService {
    * Search files in Google Drive by name
    * Uses proper Drive API query syntax: name contains 'term'
    */
-  public async search(rawQuery: string) {
+  /**
+   * Search files in Google Drive
+   * Targeted for personal file discovery
+   */
+  public async search(rawQuery: string = '') {
     let q: string;
 
-    // If the caller passed a pre-built Drive query (e.g. "'root' in parents"), use it as-is
-    // Otherwise build a proper name-based search query
-    const isRawDriveQuery = rawQuery.includes(' in ') || rawQuery.includes('name ') || rawQuery.includes('mimeType');
-    if (isRawDriveQuery) {
-      q = rawQuery;
+    if (!rawQuery.trim()) {
+      q = "trashed = false";
     } else {
-      // Escape single quotes in the search term
-      const safe = rawQuery.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-      q = `name contains '${safe}' and trashed=false`;
+      const isRawDriveQuery = rawQuery.includes(' in ') || rawQuery.includes('name ') || rawQuery.includes('mimeType');
+      if (isRawDriveQuery) {
+        q = rawQuery;
+      } else {
+        const safe = rawQuery.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        q = `name contains '${safe}' and trashed = false`;
+      }
     }
 
     const res = await auth.fetchWithAuth(
-      `${BASE_URL}/files?q=${encodeURIComponent(q)}&fields=nextPageToken,files(id,name,mimeType,webViewLink,iconLink,size)&orderBy=modifiedTime desc`
+      `${BASE_URL}/files?q=${encodeURIComponent(q)}&spaces=drive&fields=nextPageToken,files(id,name,mimeType,webViewLink,iconLink,size,modifiedTime)&orderBy=modifiedTime desc&pageSize=25`
     );
+    return res.json();
+  }
+
+  /**
+   * Get a single file by ID
+   */
+  public async getFile(fileId: string) {
+    const res = await auth.fetchWithAuth(`${BASE_URL}/files/${fileId}?fields=id,name,mimeType,webViewLink,iconLink,size,modifiedTime`);
     return res.json();
   }
 

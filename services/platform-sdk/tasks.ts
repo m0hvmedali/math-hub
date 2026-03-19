@@ -20,25 +20,32 @@ class TasksService {
   }
 
   /**
-   * Create a new task in a given list
+   * Create a new task with optional due date
    */
-  public async create(title: string, listId: string = '@default', notes?: string) {
+  public async create(title: string, listId: string = '@default', notes?: string, due?: string) {
     const res = await auth.fetchWithAuth(`${BASE_URL}/lists/${listId}/tasks`, {
       method: 'POST',
-      body: JSON.stringify({ title, notes })
+      body: JSON.stringify({ title, notes, due })
     });
     return res.json();
   }
 
   /**
-   * Mark a task as completed
+   * Update task details (title, notes, status, due)
    */
-  public async complete(taskId: string, listId: string = '@default') {
+  public async updateTask(taskId: string, updates: Partial<{ title: string; notes: string; status: string; due: string }>, listId: string = '@default') {
     const res = await auth.fetchWithAuth(`${BASE_URL}/lists/${listId}/tasks/${taskId}`, {
       method: 'PATCH',
-      body: JSON.stringify({ status: 'completed' })
+      body: JSON.stringify(updates)
     });
     return res.json();
+  }
+
+  /**
+   * Mark a task as completed (legacy wrapper)
+   */
+  public async complete(taskId: string, listId: string = '@default') {
+    return this.updateTask(taskId, { status: 'completed' }, listId);
   }
 
   /**

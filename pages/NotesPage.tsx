@@ -3,6 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import { AppContext } from '../App';
 import { QuickNote } from '../components/FloatingQuickNote';
+import { useGoogleOmni } from '../services/platform-sdk';
 
 const NOTE_COLORS: Record<string, { bg: string; text: string; border: string }> = {
   Yellow: { bg: '#FEF3C7', text: '#92400E', border: '#F59E0B' },
@@ -15,6 +16,7 @@ const NOTE_COLORS: Record<string, { bg: string; text: string; border: string }> 
 
 const NotesPage: React.FC = () => {
   const { user, language } = useContext(AppContext) as any;
+  const { drive, auth } = useGoogleOmni();
   const [notes, setNotes] = useState<QuickNote[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -46,6 +48,26 @@ const NotesPage: React.FC = () => {
     }
   };
 
+  const handleSyncToDrive = async () => {
+    if (!auth.getToken()) {
+       try {
+         await auth.login();
+       } catch (e) {
+         return;
+       }
+    }
+    
+    try {
+      const blob = new Blob([JSON.stringify(notes, null, 2)], { type: 'application/json' });
+      const file = new File([blob], 'math-hub-notes.json', { type: 'application/json' });
+      await drive.upload(file);
+      alert(language === 'ar' ? 'تمت المزامنة بنجاح مع Google Drive' : 'Synced successfully to Google Drive');
+    } catch (err) {
+      console.error(err);
+      alert('Sync failed');
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
@@ -68,8 +90,17 @@ const NotesPage: React.FC = () => {
                 : 'All ideas and notes you captured during your study sessions'}
             </p>
           </div>
-          <div className="flex items-center gap-4 text-xs font-black uppercase tracking-widest text-brand-cyan bg-brand-cyan/10 px-6 py-3 rounded-2xl border border-brand-cyan/20">
-            <span>{notes.length} {language === 'ar' ? 'ملاحظة' : 'Notes Saved'}</span>
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={handleSyncToDrive}
+              className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-[#F59E0B] bg-[#F59E0B]/10 px-6 py-3 rounded-2xl border border-[#F59E0B]/20 hover:bg-[#F59E0B]/20 transition-all"
+            >
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M7.71 3.5L1.15 15l3.43 6L10.14 9.5L7.71 3.5zm.56 5.5L12 21h7.7l-3.43-6-8-6zM22.85 15L18 6H9.5l3.43 6L22.85 15z"/></svg>
+              {language === 'ar' ? 'مزامنة مع السحابة' : 'Sync to Cloud'}
+            </button>
+            <div className="flex items-center gap-4 text-xs font-black uppercase tracking-widest text-brand-cyan bg-brand-cyan/10 px-6 py-3 rounded-2xl border border-brand-cyan/20">
+              <span>{notes.length} {language === 'ar' ? 'ملاحظة' : 'Notes Saved'}</span>
+            </div>
           </div>
         </header>
 
