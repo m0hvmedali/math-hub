@@ -3,6 +3,7 @@ import { AppContext } from '../App';
 import { useHubCore, assistant } from '../utils/HubCore';
 import { routeAI, generateText } from '../services/ai-router';
 import { SparkleIcon } from './Icons';
+import MarkdownRenderer from './MarkdownRenderer';
 
 interface Message {
     role: 'user' | 'assistant';
@@ -156,7 +157,11 @@ ${contentSummary ? `ملخص محتوى الدرس: ${contentSummary}` : ''}
                                     <span className="text-[9px] font-black text-brand-cyan uppercase tracking-widest">Neural Assistant</span>
                                 </div>
                             )}
-                            {msg.content}
+                            {msg.role === 'assistant' ? (
+                                <MarkdownRenderer content={msg.content} />
+                            ) : (
+                                msg.content
+                            )}
                         </div>
                     </div>
                 ))}
