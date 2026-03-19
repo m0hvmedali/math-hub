@@ -1,26 +1,47 @@
 /**
- * 🧠 AI Router - Centralized AI Intelligence Network (Advanced v2)
- * 
- * Orchestration:
- * - Central Brain: GPT-OSS-120B (OpenRouter)
- * - Specialized Tools: Gemini 1.5 Flash, Llama 3.1, Gemma 3, Mistral, Kimi K2
+ * 🧠 AI Gateway - Router v3 (Gateway Architecture)
+ *
+ * Orchestration priority:
+ * 1. Ollama Cloud models (DeepSeek → Kimi → Mistral) — by task affinity & priority
+ * 2. Gemini 3.1 Flash Lite Preview                    — primary fallback
+ * 3. OpenRouter (Gemini via cloud)                    — secondary fallback
+ * 4. Groq (Llama/Kimi)                               — final fallback
  */
 
+import { Ollama } from 'ollama';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import {
+  getActiveModelsForTask,
+  incrementModelUsage,
+  ModelConfig,
+  setModelEnabled,
+} from './models';
 
-// ── Keys ──────────────────────────────────────────────────────────────────────
-// ── Keys ──────────────────────────────────────────────────────────────────────
+// ── API Keys ───────────────────────────────────────────────────────────────────
 const OPENROUTER_KEY = (import.meta.env.VITE_OPENROUTER_API_KEY || '').trim();
 const GEMINI_KEY     = (import.meta.env.VITE_GEMINI_API_KEY     || '').trim();
 const GROQ_KIMI_KEY  = (import.meta.env.VITE_GROQ_KIMI_KEY      || '').trim();
 const GROQ_LLAMA_KEY = (import.meta.env.VITE_GROQ_LLAMA_KEY     || '').trim();
-const MISTRAL_KEY    = (import.meta.env.VITE_MISTRAL_API_KEY    || '').trim();
 const GEMMA_KEY      = (import.meta.env.VITE_OPENROUTER_GEMMA_KEY || '').trim();
+const MISTRAL_KEY    = (import.meta.env.VITE_MISTRAL_API_KEY    || '').trim();
 
-console.groupCollapsed("[AI Router] Environment Initialization");
-console.log("OpenRouter Key Found:", !!OPENROUTER_KEY, OPENROUTER_KEY ? `(Starts with: ${OPENROUTER_KEY.slice(0, 6)}...)` : "(MISSING)");
-console.log("Gemini Key Found:", !!GEMINI_KEY, GEMINI_KEY ? `(Starts with: ${GEMINI_KEY.slice(0, 6)}...)` : "(MISSING)");
-console.groupEnd();
+// ── Ollama Cloud Client ────────────────────────────────────────────────────────
+let _ollamaClient: Ollama | null = null;
+
+function getOllamaClient(apiKey: string): Ollama {
+  // Create a fresh client per key to support different keys per model
+  return new Ollama({
+    host: 'https://ollama.com',
+    fetch: (url: string, options?: RequestInit) => {
+      const headers = {
+        ...(options?.headers || {}),
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      };
+      return fetch(url, { ...options, headers });
+    },
+  } as any);
+}
 
 // ── Site Knowledge ─────────────────────────────────────────────────────────────
 const SITE_KNOWLEDGE = `
@@ -58,134 +79,99 @@ export interface AIResponse {
   thoughtSignature?: string;
 }
 
-// ── Usage Tracking & Caching ─────────────────────────────────────────────────
-const USAGE_LIMITS: Record<string, number> = {
-  'gemini': 300,      // daily
-  'openrouter': 200,  // gpt-oss daily
-  'groq': 500,        // kimi-k2 / llama daily 
-  'mistral': 100      // mistral daily
-};
-
-// Simple fast string hashing for prompt deduplication
-const hashPrompt = (str: string) => {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) - hash) + str.charCodeAt(i);
-    hash |= 0;
-  }
-  return hash.toString();
-};
-
-const getTodayKey = () => `ai_usage_${new Date().toISOString().split('T')[0]}`;
-
-function checkUsage(provider: string): boolean {
-  try {
-    const raw = localStorage.getItem(getTodayKey());
-    const usage = raw ? JSON.parse(raw) : {};
-    const count = usage[provider] || 0;
-    const limit = USAGE_LIMITS[provider] || 50;
-    return count < limit;
-  } catch (e) {
-    return true; // fail open
-  }
-}
-
-import { supabase } from '../../supabaseClient';
-
-function incrementUsage(provider: string) {
-  try {
-    const key = getTodayKey();
-    const raw = localStorage.getItem(key);
-    const usage = raw ? JSON.parse(raw) : {};
-    usage[provider] = (usage[provider] || 0) + 1;
-    localStorage.setItem(key, JSON.stringify(usage));
-
-    // Async sync to Supabase
-    if (supabase) {
-      const today = new Date().toISOString().split('T')[0];
-      // Use upsert with onConflict for reliable tracking
-      supabase.from('ai_usage_logs').upsert({
-         user_id: 'default_user', 
-         provider,
-         date: today,
-         count: usage[provider]
-      }, { onConflict: 'user_id,provider,date' }).then(({ error }) => {
-        if (error && error.code !== '23505') { // Ignore unique constraint conflicts if they still happen
-          console.warn("Supabase usage sync failed", error);
-        }
-      });
+// ── Text Chunking ─────────────────────────────────────────────────────────────
+/** Splits a prompt into chunks of ~3000 tokens (≈12000 chars) for large inputs */
+function chunkText(text: string, maxChars = 12000): string[] {
+  if (text.length <= maxChars) return [text];
+  const chunks: string[] = [];
+  let start = 0;
+  while (start < text.length) {
+    let end = start + maxChars;
+    // Try to break at a sentence boundary
+    if (end < text.length) {
+      const lastPeriod = text.lastIndexOf('.', end);
+      if (lastPeriod > start + maxChars * 0.5) end = lastPeriod + 1;
     }
-  } catch (e) {
-    // disregard tracking errors
+    chunks.push(text.slice(start, end).trim());
+    start = end;
+  }
+  return chunks;
+}
+
+// ── Health Check ──────────────────────────────────────────────────────────────
+async function checkModel(m: ModelConfig): Promise<boolean> {
+  try {
+    const client = getOllamaClient(m.apiKey || '');
+    await (client as any).chat({
+      model: m.model,
+      messages: [{ role: 'user', content: 'ping' }],
+    });
+    return true;
+  } catch {
+    return false;
   }
 }
 
-// ── Fetch Helpers ─────────────────────────────────────────────────────────────
+/** Run health check every 60s in the background */
+let _healthInterval: ReturnType<typeof setInterval> | null = null;
+export function startHealthChecks() {
+  if (_healthInterval) return;
+  _healthInterval = setInterval(async () => {
+    const { getRegistry } = await import('./models');
+    const models = getRegistry();
+    for (const m of models) {
+      if (!m.enabled) continue;
+      const ok = await checkModel(m);
+      if (!ok) {
+        console.warn(`[AI Gateway] Health check failed for ${m.model} — disabling temporarily`);
+        setModelEnabled(m.id, false);
+        // Re-enable after 5 minutes
+        setTimeout(() => setModelEnabled(m.id, true), 5 * 60 * 1000);
+      }
+    }
+  }, 60_000);
+}
 
-async function callOpenRouter(req: AIRequest, model: string, key: string): Promise<AIResponse> {
-  if (!key) {
-    console.warn(`[AI Router] Missing OpenRouter key for ${model}`);
-    throw new Error(`Missing key for ${model}. Please check VITE_OPENROUTER_API_KEY.`);
+// ── Ollama Call ───────────────────────────────────────────────────────────────
+async function callOllama(req: AIRequest, m: ModelConfig): Promise<AIResponse> {
+  const client = getOllamaClient(m.apiKey || '');
+
+  // Build message history  
+  const messages: { role: 'user' | 'assistant' | 'system'; content: string }[] = [];
+
+  if (req.systemInstruction) {
+    messages.push({ role: 'system', content: req.systemInstruction + '\n\n' + SITE_KNOWLEDGE });
   }
-  
-  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${key}`,
-      "Content-Type": "application/json",
-      "HTTP-Referer": "https://math-hub-eta.vercel.app",
-      "X-Title": "Math Hub"
-    },
-    body: JSON.stringify({
-      model: model,
-      messages: [
-        { role: 'system', content: (req.systemInstruction || '') + `\n\nSite Knowledge:\n${SITE_KNOWLEDGE}` },
-        ...(req.history || []),
-        { role: 'user', content: req.prompt }
-      ],
-      response_format: req.responseFormat === 'json' ? { type: 'json_object' } : undefined,
-      ...(model.includes('gpt-oss') ? { reasoning: { enabled: true } } : {})
-    })
-  });
 
-  const data = await response.json();
-  if (!response.ok) throw new Error(`OpenRouter Error: ${data.error?.message || response.statusText}`);
-  
-  const msg = data.choices[0].message;
-  return { 
-    text: msg.content, 
-    provider: model,
-    reasoning: msg.reasoning_details 
-  };
+  for (const h of req.history || []) {
+    messages.push({ role: h.role === 'assistant' ? 'assistant' : 'user', content: h.content });
+  }
+
+  // Handle chunking for long prompts
+  const chunks = chunkText(req.prompt);
+  let finalText = '';
+
+  for (const chunk of chunks) {
+    const payload = [...messages, { role: 'user' as const, content: chunk }];
+    const res = await (client as any).chat({
+      model: m.model,
+      messages: payload,
+      format: req.responseFormat === 'json' ? 'json' : undefined,
+    });
+    finalText += (res.message?.content || '');
+    // Add the chunk response as context for the next chunk (if multi-chunk)
+    if (chunks.length > 1) {
+      messages.push({ role: 'user', content: chunk });
+      messages.push({ role: 'assistant', content: res.message?.content || '' });
+    }
+  }
+
+  return { text: finalText, provider: m.model };
 }
 
-async function callGroq(req: AIRequest, model: string, key: string): Promise<AIResponse> {
-  if (!key) throw new Error(`Missing key for Groq ${model}`);
-
-  const resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: model,
-      messages: [
-        { role: 'system', content: req.systemInstruction || 'You are a helpful assistant.' },
-        ...(req.history || []),
-        { role: 'user', content: req.prompt }
-      ],
-      response_format: req.responseFormat === 'json' ? { type: 'json_object' } : undefined,
-    }),
-  });
-
-  const data = await resp.json();
-  if (!resp.ok) throw new Error(`Groq ${resp.status}: ${data.error?.message || resp.statusText}`);
-  return { text: data.choices[0].message.content, provider: `groq-${model}` };
-}
-
+// ── Gemini Call ───────────────────────────────────────────────────────────────
 async function callGemini(req: AIRequest): Promise<AIResponse> {
-  if (!GEMINI_KEY) {
-    console.warn("[AI Router] Missing Gemini API key (VITE_GEMINI_API_KEY)");
-    throw new Error('No Gemini key. Please check your .env file.');
-  }
+  if (!GEMINI_KEY) throw new Error('No Gemini key');
   const genAI = new GoogleGenerativeAI(GEMINI_KEY);
   const MODEL_ID = 'gemini-3.1-flash-lite-preview';
   const model = genAI.getGenerativeModel({ model: MODEL_ID });
@@ -201,7 +187,7 @@ async function callGemini(req: AIRequest): Promise<AIResponse> {
   const result = await model.generateContent({
     contents: [
       ...(req.systemInstruction ? [
-        { role: 'user' as const, parts: [{ text: `[System] ${req.systemInstruction}` }] }, 
+        { role: 'user' as const, parts: [{ text: `[System] ${req.systemInstruction}` }] },
         { role: 'model' as const, parts: [{ text: 'Understood.' }] }
       ] : []),
       ...(req.history || []).map(h => ({
@@ -220,149 +206,176 @@ async function callGemini(req: AIRequest): Promise<AIResponse> {
   const candidate = (response as any).candidates?.[0];
   const thoughtSignature = candidate?.content?.parts?.find((p: any) => p.thought_signature)?.thought_signature;
 
-  return { 
-    text: response.text(), 
-    provider: MODEL_ID,
-    thoughtSignature 
-  };
+  return { text: response.text(), provider: MODEL_ID, thoughtSignature };
+}
+
+// ── OpenRouter Call ─────────────────────────────────────────────────────────
+async function callOpenRouter(req: AIRequest, model: string, key: string): Promise<AIResponse> {
+  if (!key) throw new Error(`Missing OpenRouter key for ${model}`);
+  const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${key}`,
+      'Content-Type': 'application/json',
+      'HTTP-Referer': 'https://math-hub-eta.vercel.app',
+      'X-Title': 'Math Hub'
+    },
+    body: JSON.stringify({
+      model,
+      messages: [
+        { role: 'system', content: (req.systemInstruction || '') + `\n\nSite Knowledge:\n${SITE_KNOWLEDGE}` },
+        ...(req.history || []).map(h => ({ role: h.role === 'assistant' ? 'assistant' : 'user', content: h.content })),
+        { role: 'user', content: req.prompt }
+      ],
+      response_format: req.responseFormat === 'json' ? { type: 'json_object' } : undefined,
+    })
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(`OpenRouter Error: ${data.error?.message || response.statusText}`);
+  return { text: data.choices[0].message.content, provider: model };
+}
+
+// ── Groq Call ──────────────────────────────────────────────────────────────
+async function callGroq(req: AIRequest, model: string, key: string): Promise<AIResponse> {
+  if (!key) throw new Error(`Missing Groq key for ${model}`);
+  const resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model,
+      messages: [
+        { role: 'system', content: req.systemInstruction || 'You are a helpful assistant.' },
+        ...(req.history || []).map(h => ({ role: h.role === 'assistant' ? 'assistant' : 'user', content: h.content })),
+        { role: 'user', content: req.prompt }
+      ],
+      response_format: req.responseFormat === 'json' ? { type: 'json_object' } : undefined,
+    }),
+  });
+  const data = await resp.json();
+  if (!resp.ok) throw new Error(`Groq ${resp.status}: ${data.error?.message || resp.statusText}`);
+  return { text: data.choices[0].message.content, provider: `groq-${model}` };
+}
+
+// ── Usage Tracking & Caching ─────────────────────────────────────────────────
+const getTodayKey = () => `ai_usage_${new Date().toISOString().split('T')[0]}`;
+const hashPrompt = (str: string) => {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) { hash = ((hash << 5) - hash) + str.charCodeAt(i); hash |= 0; }
+  return hash.toString();
+};
+
+import { supabase } from '../../supabaseClient';
+
+function incrementLegacyUsage(provider: string) {
+  try {
+    const key = getTodayKey();
+    const raw = localStorage.getItem(key);
+    const usage = raw ? JSON.parse(raw) : {};
+    usage[provider] = (usage[provider] || 0) + 1;
+    localStorage.setItem(key, JSON.stringify(usage));
+    if (supabase) {
+      const today = new Date().toISOString().split('T')[0];
+      supabase.from('ai_usage_logs').upsert({ user_id: 'default_user', provider, date: today, count: usage[provider] }, { onConflict: 'user_id,provider,date' });
+    }
+  } catch (_) {}
+}
+
+// ── Primary Fallback (when all Ollama models fail) ─────────────────────────────
+async function fallbackPrimary(req: AIRequest): Promise<AIResponse> {
+  // Try Gemini first
+  try { return await callGemini(req); } catch (_) {}
+  // Then OpenRouter
+  try { return await callOpenRouter(req, 'google/gemini-3.1-flash-lite-preview:free', OPENROUTER_KEY); } catch (_) {}
+  // Finally Groq
+  return await callGroq(req, 'llama-3.1-8b-instant', GROQ_LLAMA_KEY);
 }
 
 import { monitor } from './monitor';
 
+// ── Main Gateway Router ────────────────────────────────────────────────────────
 export async function routeAI(req: AIRequest): Promise<AIResponse> {
   const startTime = Date.now();
   const task = req.task || 'brain';
-  
-  // 1. Check Cache (Deduplication)
+  const isImage = !!req.imageBase64;
+
+  // 1. Cache check
   const cacheKey = `ai_cache_${task}_${hashPrompt(req.prompt + (req.systemInstruction || ''))}`;
   try {
-      const cached = localStorage.getItem(cacheKey);
-      if (cached) {
-          const parsed = JSON.parse(cached);
-          if (parsed && parsed.text) {
-              console.log(`[AI Router] Cache hit for ${task}`);
-              return parsed;
-          }
-      }
-  } catch (e) { /* ignore cache read errors */ }
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (parsed?.text) { console.log(`[AI Gateway] Cache hit for ${task}`); return parsed; }
+    }
+  } catch (_) {}
 
   let result: AIResponse | null = null;
   let error: any = null;
 
   try {
-    switch (task) {
-      case 'brain':
-        if (checkUsage('gemini')) {
-            result = await callGemini(req).catch(async (err) => {
-              if (err.message?.includes('429')) {
-                console.warn("[AI Router] Gemini 429, falling back to OpenRouter");
-                return await callOpenRouter(req, 'google/gemini-3.1-flash-lite-preview:free', OPENROUTER_KEY);
-              }
-              throw err;
-            }).catch(() => callOpenRouter(req, 'google/gemini-3.1-flash-lite-preview:free', OPENROUTER_KEY));
-        } else if (checkUsage('openrouter')) {
-            result = await callOpenRouter(req, 'google/gemini-3.1-flash-lite-preview:free', OPENROUTER_KEY);
-        } else {
-            result = await callGroq(req, 'llama-3.1-8b-instant', GROQ_LLAMA_KEY);
-        }
-        break;
-      
-      case 'lesson_explanation':
-      case 'daily_analysis':
-        if (checkUsage('gemini')) {
-            result = await callGemini(req);
-        } else {
-            result = await callGroq(req, 'llama-3.1-8b-instant', GROQ_LLAMA_KEY);
-        }
-        break;
-      
-      case 'long_context':
-        result = await callGroq(req, 'kimi-k2-instruct-0905', GROQ_KIMI_KEY).catch(() => callGemini(req));
-        break;
-      
-      case 'fast_task':
-        result = await callGroq(req, 'llama-3.1-8b-instant', GROQ_LLAMA_KEY);
-        break;
-      
-      case 'formatting':
-        result = await callOpenRouter(req, 'google/gemma-3-27b-it:free', GEMMA_KEY);
-        break;
-      
-      case 'medium_task':
-        if (checkUsage('mistral')) {
-            const resp = await fetch('https://api.mistral.ai/v1/chat/completions', {
-              method: 'POST',
-              headers: { 'Authorization': `Bearer ${MISTRAL_KEY}`, 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                model: 'mistral-medium-latest',
-                messages: [{ role: 'user', content: req.prompt }]
-              })
-            });
-            const data = await resp.json();
-            result = { text: data.choices[0].message.content, provider: 'mistral' };
-        } else {
-            result = await callGroq(req, 'llama-3.1-8b-instant', GROQ_LLAMA_KEY);
-        }
-        break;
-
-      case 'image':
-        result = await callGemini(req);
-        break;
-
-      default:
-        if (checkUsage('openrouter')) {
-            result = await callOpenRouter(req, 'google/gemini-3.1-flash-lite-preview:free', OPENROUTER_KEY);
-        } else {
-            result = await callGroq(req, 'llama-3.1-8b-instant', GROQ_LLAMA_KEY);
-        }
-    }
-    
-    // Increment usage for the successful provider
-    if (result && result.provider) {
-        if (result.provider.includes('gemini')) incrementUsage('gemini');
-        else if (result.provider.includes('groq') || result.provider.includes('kimi')) incrementUsage('groq');
-        else if (result.provider.includes('mistral')) incrementUsage('mistral');
-        else incrementUsage('openrouter');
-        
-        // 5. Store Result in Cache
+    // 2. Try Ollama Cloud models (skip for image tasks — Gemini handles those)
+    if (!isImage) {
+      const models = getActiveModelsForTask(task);
+      for (const m of models) {
         try {
-            localStorage.setItem(cacheKey, JSON.stringify(result));
-        } catch (e) { /* ignore cache write errors */ }
+          console.log(`[AI Gateway] Trying ${m.model} (priority ${m.priority})`);
+          result = await callOllama(req, m);
+          incrementModelUsage(m.id);
+          incrementLegacyUsage('ollama');
+          console.log(`[AI Gateway] ✅ Success with ${m.model}`);
+          break;
+        } catch (err: any) {
+          console.warn(`[AI Gateway] ❌ ${m.model} failed:`, err.message || err);
+        }
+      }
     }
-    
-    return result!;
+
+    // 3. Fallback to primary (Gemini / OpenRouter / Groq)
+    if (!result) {
+      console.log(`[AI Gateway] All Ollama models failed or skipped — using primary fallback`);
+      result = await fallbackPrimary(req);
+      if (result.provider.includes('gemini')) incrementLegacyUsage('gemini');
+      else if (result.provider.includes('groq') || result.provider.includes('kimi')) incrementLegacyUsage('groq');
+      else incrementLegacyUsage('openrouter');
+    }
+
+    // 4. Cache success
+    try { localStorage.setItem(cacheKey, JSON.stringify(result)); } catch (_) {}
+
+    return result;
   } catch (err: any) {
     error = err;
-    console.warn(`[AI Router] Primary provider for ${task} failed, falling back to Llama 3.1`, err);
+    console.error('[AI Gateway] All providers failed!', err);
+    // Ultimate fallback
     result = await callGroq(req, 'llama-3.1-8b-instant', GROQ_LLAMA_KEY).catch(() => callGemini(req));
-    // If fallback succeeds, we do NOT cache it to avoid caching degraded answers
     return result;
   } finally {
-    monitor.logCall({
-      model: result?.provider || 'unknown',
-      provider: result?.provider.includes('gemini') ? 'gemini' : 
-                result?.provider.includes('gpt') ? 'openrouter' :
-                result?.provider.includes('mistral') ? 'mistral' : 
-                result?.provider.includes('tavily') ? 'tavily' : 'groq',
-      task,
-      duration: Date.now() - startTime,
-      status: error && !result ? 'error' : 'success',
-      error: error?.message,
-      prompt: req.prompt,
-      response: result?.text
-    });
+    if (result) {
+      monitor.logCall({
+        model: result.provider,
+        provider: result.provider.includes('gemini') ? 'gemini'
+                : result.provider.includes('gpt') ? 'openrouter'
+                : result.provider.includes('mistral') ? 'mistral'
+                : result.provider.includes('groq') || result.provider.includes('llama') ? 'groq'
+                : 'ollama',
+        task,
+        duration: Date.now() - startTime,
+        status: error && !result ? 'error' : 'success',
+        error: error?.message,
+        prompt: req.prompt,
+        response: result?.text,
+      });
+    }
   }
 }
 
-// ── Convenience Wrappers ──────────────────────────────────────────────────────
-
+// ── Convenience Wrapper ────────────────────────────────────────────────────────
 export async function generateText(prompt: string, options?: { system?: string; task?: AITask; json?: boolean; history?: any[] }): Promise<string> {
   const res = await routeAI({
     prompt,
     systemInstruction: options?.system,
     task: options?.task,
     responseFormat: options?.json ? 'json' : 'text',
-    history: options?.history
+    history: options?.history,
   });
   return res.text;
 }

@@ -142,6 +142,7 @@ const Navigation: React.FC = () => {
                                     { to: '/explain', icon: <SparkleIcon className="w-5 h-5 text-brand-magenta" />, label: language === 'ar' ? 'البروفيسور AI' : 'Professor AI' },
                                     { to: '/daily-analysis', icon: <span className="text-lg">❖</span>, label: language === 'ar' ? 'التحليل اليومي' : 'Daily Analysis' },
                                     { to: '/ai-monitor', icon: <span className="text-lg">🛡️</span>, label: language === 'ar' ? ' Neural Watchdog' : 'Neural Watchdog' },
+                                    { to: '/ai/models', icon: <span className="text-lg">🤖</span>, label: language === 'ar' ? 'بوابة الذكاء' : 'AI Gateway' },
                                     { to: '/search-history', icon: <SearchHistoryIcon className="w-5 h-5 text-gray-400" />, label: language === 'ar' ? 'سجل البحث' : 'Search History' },
                                     { to: '/vault', icon: <LockIcon className="w-5 h-5 text-[#d4af37]" />, label: language === 'ar' ? 'التوثيق الصامت' : 'Quiet Vault' },
                                     { type: 'divider' },

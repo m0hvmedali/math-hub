@@ -36,10 +36,11 @@ class AIMonitor extends EventEmitter {
 
     private initProviders() {
         const models = [
-            { id: 'gemini', name: 'Gemini 1.5 Flash' },
-            { id: 'openrouter', name: 'GPT-OSS-120B' },
+            { id: 'ollama', name: 'Ollama Cloud (DeepSeek/Kimi/Mistral)' },
+            { id: 'gemini', name: 'Gemini 3.1 Flash Lite' },
+            { id: 'openrouter', name: 'OpenRouter' },
             { id: 'groq', name: 'Groq (Llama/Kimi)' },
-            { id: 'mistral', name: 'Mistral Large' },
+            { id: 'mistral', name: 'Mistral API' },
             { id: 'tavily', name: 'Tavily Search' }
         ];
 

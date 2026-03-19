@@ -61,6 +61,7 @@ import LandingPage from './pages/LandingPage';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
 import AIMonitorPage from './pages/AIMonitorPage';
 import QuietVaultPage from './pages/QuietVaultPage';
+import ModelSettingsPage from './pages/ModelSettingsPage';
 import ContextStitcherModal from './components/ContextStitcherModal';
 
 export const AppContext = createContext<{
@@ -791,6 +792,7 @@ const App: React.FC = () => {
                         <Route path="/whiteboard/:type/:id" element={<ProtectedRoute><WhiteboardPage /></ProtectedRoute>} />
                         <Route path="/whiteboard/:type/:id/:subjectId/:branchId/:lessonId" element={<ProtectedRoute><WhiteboardPage /></ProtectedRoute>} />
                         <Route path="/ai-monitor" element={<ProtectedRoute><AIMonitorPage /></ProtectedRoute>} />
+                        <Route path="/ai/models" element={<ProtectedRoute><ModelSettingsPage /></ProtectedRoute>} />
                         <Route path="/profile" element={<ProtectedRoute><AnalyticsPage /></ProtectedRoute>} />
                         <Route path="/wishes" element={<ProtectedRoute><WishesPage /></ProtectedRoute>} />
                         <Route path="/schedule" element={<ProtectedRoute><SchedulePage /></ProtectedRoute>} />
