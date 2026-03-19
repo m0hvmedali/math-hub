@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
+import { AppContext } from '../App';
 import { assistant } from '../utils/HubCore';
 import { CommandIcon, SearchIcon, ActivityIcon, SparkleIcon } from './Icons';
 import { generateText } from '../services/ai-router';
@@ -9,6 +10,7 @@ interface AssistantOverlayProps {
 }
 
 const AssistantOverlay: React.FC<AssistantOverlayProps> = ({ isOpen, onClose }) => {
+  const { language } = useContext(AppContext);
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isAiThinking, setIsAiThinking] = useState(false);
