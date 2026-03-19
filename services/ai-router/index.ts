@@ -102,14 +102,16 @@ function incrementUsage(provider: string) {
     // Async sync to Supabase
     if (supabase) {
       const today = new Date().toISOString().split('T')[0];
-      // Use upsert for tracking
+      // Use upsert with onConflict for reliable tracking
       supabase.from('ai_usage_logs').upsert({
-         user_id: 'default_user', // Replace with actual user ID if available in this scope
+         user_id: 'default_user', 
          provider,
          date: today,
          count: usage[provider]
-      }).then(({ error }) => {
-        if (error) console.warn("Supabase usage sync failed", error);
+      }, { onConflict: 'user_id,provider,date' }).then(({ error }) => {
+        if (error && error.code !== '23505') { // Ignore unique constraint conflicts if they still happen
+          console.warn("Supabase usage sync failed", error);
+        }
       });
     }
   } catch (e) {
@@ -232,7 +234,13 @@ export async function routeAI(req: AIRequest): Promise<AIResponse> {
     switch (task) {
       case 'brain':
         if (checkUsage('gemini')) {
-            result = await callGemini(req).catch(() => callOpenRouter(req, 'google/gemini-2.0-flash-001', OPENROUTER_KEY));
+            result = await callGemini(req).catch(async (err) => {
+              if (err.message?.includes('429')) {
+                console.warn("[AI Router] Gemini 429, falling back to OpenRouter");
+                return await callOpenRouter(req, 'google/gemini-2.0-flash-001', OPENROUTER_KEY);
+              }
+              throw err;
+            }).catch(() => callOpenRouter(req, 'google/gemini-2.0-flash-001', OPENROUTER_KEY));
         } else if (checkUsage('openrouter')) {
             result = await callOpenRouter(req, 'google/gemini-2.0-flash-001', OPENROUTER_KEY);
         } else {
