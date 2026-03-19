@@ -126,7 +126,7 @@ const SYSTEM_INSTRUCTION = `
 
 
 // --- MAIN DISPATCHER (delegating to centralized AI Router) ---
-async function generateAIContent(prompt: string, systemInstruction: string, json = false): Promise<string> {
+export async function generateAIContent(prompt: string, systemInstruction: string, json = false): Promise<string> {
     const res = await routeAI({
         prompt,
         systemInstruction,

@@ -90,21 +90,11 @@ const Navigation: React.FC = () => {
                 <div className="hidden md:block scale-90">
                     <ThemeStatusBadge phase={livePhase} enabled={themeEnabled} onToggle={toggleTheme} />
                 </div>
-
-                {/* Command Library Trigger */}
-                <button 
-                  onClick={() => setIsAssistantOpen(true)}
-                  className="text-gray-500 hover:text-brand-cyan transition-all transform hover:scale-110 active:scale-90"
-                  title={language === 'ar' ? 'مكتبة الأوامر (Ctrl+K)' : 'Command Library (Ctrl+K)'}
-                >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                </button>
-
                 {/* Assistant Trigger */}
                 <button 
                     onClick={() => setIsAssistantOpen(true)}
-                    className="text-brand-purple hover:text-brand-cyan transition-all transform hover:scale-110 active:scale-90"
-                    title={language === 'ar' ? 'مساعد الذكاء الاصطناعي' : 'AI Assistant'}
+                    className="text-brand-purple hover:text-brand-cyan transition-all transform hover:scale-110 active:scale-90 flex items-center justify-center w-10 h-10 rounded-xl hover:bg-white/5"
+                    title={language === 'ar' ? 'مساعد الذكاء الاصطناعي (Ctrl+J)' : 'AI Assistant (Ctrl+J)'}
                 >
                     <SparkleIcon className="w-5 h-5 shadow-glow-purple" />
                 </button>
@@ -112,10 +102,18 @@ const Navigation: React.FC = () => {
                 {/* Search Trigger */}
                 <button 
                     onClick={() => setIsSearchOpen(true)}
-                    className="text-gray-500 hover:text-white transition-all transform hover:scale-110 active:scale-90"
-                    title={language === 'ar' ? 'بحث شامل' : 'Global Search'}
+                    className="relative group/search text-gray-400 hover:text-white transition-all transform hover:scale-105 active:scale-95 bg-white/5 hover:bg-white/10 p-2.5 rounded-xl border border-white/5 hover:border-white/20 flex items-center justify-center gap-2"
+                    title={language === 'ar' ? 'بحث شامل (Ctrl+K)' : 'Global Search (Ctrl+K)'}
                 >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    <div className="hidden md:flex items-center gap-1 opacity-60">
+                        <kbd className="font-sans text-[9px] px-1.5 py-0.5 rounded bg-black/50 border border-white/10 uppercase font-black">Ctrl</kbd>
+                        <kbd className="font-sans text-[9px] px-1.5 py-0.5 rounded bg-black/50 border border-white/10 uppercase font-black">K</kbd>
+                    </div>
+                    {/* Tooltip */}
+                    <div className="absolute top-full mt-3 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-black text-white text-[10px] font-black uppercase tracking-widest rounded-lg border border-white/20 opacity-0 group-hover/search:opacity-100 transition-opacity pointer-events-none whitespace-nowrap shadow-xl">
+                        {language === 'ar' ? 'البحث الشامل' : 'Search All'}
+                    </div>
                 </button>
 
                 {/* Account Ring */}
