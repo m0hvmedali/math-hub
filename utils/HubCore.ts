@@ -124,8 +124,33 @@ class Assistant {
     console.groupEnd();
   }
 
-  getAvailableCommands() {
-    return Array.from(this.commands.values());
+  /**
+   * Use the Central Brain (GPT-OSS-120B) to interpret a command and execute it.
+   */
+  async performBrainAction(input: string, generateTextFn: any) {
+    console.log(`[Assistant] Brain is thinking: ${input}`);
+    const atoms = Array.from(hubCore['pages'].keys());
+    const prompt = `
+User Command: "${input}"
+Available Atoms: ${atoms.join(', ')}
+Site Structure: (You know the site map)
+
+Your goal: Determine which atom and action to call.
+Return ONLY a valid JSON object: { "atomId": string, "action": string, "args": any[] }
+If you can't satisfy it, return { "error": "Reason" }
+    `;
+
+    try {
+      const result = await generateTextFn(prompt, { task: 'brain', json: true });
+      const cmd = JSON.parse(result);
+      if (cmd.atomId && cmd.action) {
+        hubCore.execute(cmd.atomId, cmd.action, ...(cmd.args || []));
+      } else if (cmd.error) {
+        console.error(`[Assistant] Brain error: ${cmd.error}`);
+      }
+    } catch (e) {
+      console.error("[Assistant] Brain execution failed", e);
+    }
   }
 }
 

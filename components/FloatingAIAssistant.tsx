@@ -7,11 +7,8 @@ const FloatingAIAssistant: React.FC = () => {
     const [isOpen, setIsOpen] = useState(false);
     const location = useLocation();
 
-    // Only show on specific academic routes
-    const academicPaths = ['/subject/', '/labs', '/whiteboard/', '/lesson/', '/branch/'];
-    const isAcademicPage = academicPaths.some(path => location.pathname.includes(path));
-
-    if (!isAcademicPage) return null;
+    // Always show everywhere per user request
+    const isAcademicPage = true;
 
     return (
         <>

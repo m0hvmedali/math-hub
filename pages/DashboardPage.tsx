@@ -19,6 +19,7 @@ import MaterialCard from '../components/MaterialCard';
 import { useHubCore, assistant } from '../utils/HubCore';
 import WisdomCard from '../components/WisdomCard';
 import WisdomProgress from '../components/WisdomProgress';
+import NeuralBriefing from '../components/NeuralBriefing';
 
 const DashboardPage: React.FC = () => {
     const { 
@@ -250,6 +251,11 @@ const DashboardPage: React.FC = () => {
                 onClose={() => setShowGlobalSearch(false)}
                 query={searchQuery}
             />
+
+            {/* Neural Intelligence Briefing */}
+            <div className="max-w-5xl mx-auto px-6 md:px-12 mb-12 relative z-[70] -mt-12">
+                <NeuralBriefing />
+            </div>
 
             {/* OTT Hero Banner */}
             <div className="relative w-full h-[60vh] md:h-[75vh] flex items-end pb-16 px-6 md:px-12 pb-24 top-0 left-0 bg-gradient-to-tr from-brand-dark to-brand-purple/20">

@@ -1,198 +1,198 @@
 /**
- * 🧠 AI Router - Centralized AI Intelligence Network
+ * 🧠 AI Router - Centralized AI Intelligence Network (Advanced v2)
  * 
- * Supports: Groq (Llama 3.1), Gemini (2.5-flash), Mistral (ministral-3b)
- * Strategy: Smart task routing + waterfall fallback
- * 
- * Task Types:
- *  - "chat"      → Best for conversational Arabic flows → Gemini first
- *  - "fast"      → Best for quick completions → Groq first
- *  - "json"      → Structured JSON output → Groq first (supports json_object)
- *  - "translate" → Translation tasks → Gemini (multilingual)
- *  - "search"    → Smart summarization from context → Groq
- *  - "image"     → Vision tasks → Gemini only
+ * Orchestration:
+ * - Central Brain: GPT-OSS-120B (OpenRouter)
+ * - Specialized Tools: Gemini 1.5 Flash, Llama 3.1, Gemma 3, Mistral, Kimi K2
  */
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { Mistral } from '@mistralai/mistralai';
 
 // ── Keys ──────────────────────────────────────────────────────────────────────
-const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
-const GROQ_KEY   = import.meta.env.VITE_GROQ_API_KEY   || '';
-const MISTRAL_KEY = import.meta.env.VITE_MISTRAL_API_KEY || '';
+const OPENROUTER_KEY = import.meta.env.VITE_OPENROUTER_API_KEY || '';
+const GEMINI_KEY     = import.meta.env.VITE_GEMINI_API_KEY     || '';
+const GROQ_KIMI_KEY  = import.meta.env.VITE_GROQ_KIMI_KEY      || '';
+const GROQ_LLAMA_KEY = import.meta.env.VITE_GROQ_LLAMA_KEY     || '';
+const MISTRAL_KEY    = import.meta.env.VITE_MISTRAL_API_KEY    || '';
+const GEMMA_KEY      = import.meta.env.VITE_OPENROUTER_GEMMA_KEY || '';
 
-// ── Task Config ───────────────────────────────────────────────────────────────
-export type AITask = 'chat' | 'fast' | 'json' | 'translate' | 'search' | 'image';
+// ── Site Knowledge ─────────────────────────────────────────────────────────────
+const SITE_KNOWLEDGE = `
+Math Hub Pages:
+- /dashboard: Real-time progress, daily briefing, and quick access.
+- /curriculum: Subject selection and academic pathways.
+- /subject/:id: Course branches and lesson lists.
+- /lesson/:id: Core learning area with video, text, and AI assistant.
+- /labs: Interactive simulations (Organic Chem, Physics, etc.).
+- /schedule: Google Calendar sync with AI optimization.
+- /daily-analysis: AI-powered productivity scoring and mood tracking.
+- /timer: Focus timer with level-up system.
+- /gmail: Integrated inbox and email management.
+- /notes: Sticky notes with Drive backup.
+- /whiteboard: Collaborative workspace for formulas and diagrams.
+`;
+
+// ── Types ──────────────────────────────────────────────────────────────────────
+export type AITask = 'brain' | 'lesson_explanation' | 'daily_analysis' | 'long_context' | 'fast_task' | 'formatting' | 'medium_task' | 'image';
 
 export interface AIRequest {
   prompt: string;
   systemInstruction?: string;
-  task?: AITask;                     // Hint to select best provider
-  imageBase64?: string;              // For vision tasks
+  task?: AITask;
+  imageBase64?: string;
   imageMimeType?: string;
-  responseFormat?: 'text' | 'json'; // Force JSON mode
+  responseFormat?: 'text' | 'json';
+  history?: any[];
 }
 
 export interface AIResponse {
   text: string;
-  provider: 'groq' | 'gemini' | 'mistral';
-  cached?: boolean;
+  provider: string;
+  reasoning?: string;
 }
 
-// ── Provider Implementations ──────────────────────────────────────────────────
+// ── Fetch Helpers ─────────────────────────────────────────────────────────────
 
-async function callGroq(req: AIRequest): Promise<AIResponse> {
-  if (!GROQ_KEY) throw new Error('No Groq key');
+async function callOpenRouter(req: AIRequest, model: string, key: string): Promise<AIResponse> {
+  if (!key) throw new Error(`Missing key for ${model}`);
+  
+  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${key}`,
+      "Content-Type": "application/json",
+      "HTTP-Referer": "https://math-hub-eta.vercel.app",
+      "X-Title": "Math Hub"
+    },
+    body: JSON.stringify({
+      model: model,
+      messages: [
+        { role: 'system', content: (req.systemInstruction || '') + `\n\nSite Knowledge:\n${SITE_KNOWLEDGE}` },
+        ...(req.history || []),
+        { role: 'user', content: req.prompt }
+      ],
+      response_format: req.responseFormat === 'json' ? { type: 'json_object' } : undefined,
+      ...(model.includes('gpt-oss') ? { reasoning: { enabled: true } } : {})
+    })
+  });
 
-  const isJson = req.responseFormat === 'json';
-  const body: any = {
-    model: 'llama-3.1-8b-instant',
-    messages: [
-      { role: 'system', content: (req.systemInstruction || 'You are a helpful assistant.') + (isJson ? '\n\nRespond ONLY with valid JSON.' : '') },
-      { role: 'user', content: req.prompt }
-    ],
-    temperature: 0.7,
+  const data = await response.json();
+  if (!response.ok) throw new Error(`OpenRouter Error: ${data.error?.message || response.statusText}`);
+  
+  const msg = data.choices[0].message;
+  return { 
+    text: msg.content, 
+    provider: model,
+    reasoning: msg.reasoning_details 
   };
+}
 
-  if (isJson) {
-    body.response_format = { type: 'json_object' };
-  }
+async function callGroq(req: AIRequest, model: string, key: string): Promise<AIResponse> {
+  if (!key) throw new Error(`Missing key for Groq ${model}`);
 
   const resp = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
-    headers: { 'Authorization': `Bearer ${GROQ_KEY}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
+    headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: model,
+      messages: [
+        { role: 'system', content: req.systemInstruction || 'You are a helpful assistant.' },
+        ...(req.history || []),
+        { role: 'user', content: req.prompt }
+      ],
+      response_format: req.responseFormat === 'json' ? { type: 'json_object' } : undefined,
+    }),
   });
 
-  if (!resp.ok) throw new Error(`Groq ${resp.status}: ${await resp.text()}`);
   const data = await resp.json();
-  return { text: data.choices[0].message.content, provider: 'groq' };
+  if (!resp.ok) throw new Error(`Groq ${resp.status}: ${data.error?.message || resp.statusText}`);
+  return { text: data.choices[0].message.content, provider: `groq-${model}` };
 }
 
 async function callGemini(req: AIRequest): Promise<AIResponse> {
   if (!GEMINI_KEY) throw new Error('No Gemini key');
   const genAI = new GoogleGenerativeAI(GEMINI_KEY);
+  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
-  // Vision task
   if (req.imageBase64) {
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
     const result = await model.generateContent([
       req.prompt,
       { inlineData: { data: req.imageBase64.replace(/^data:[^;]+;base64,/, ''), mimeType: req.imageMimeType || 'image/jpeg' } }
     ]);
-    return { text: result.response.text(), provider: 'gemini' };
+    return { text: result.response.text(), provider: 'gemini-1.5-flash' };
   }
-
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-
-  const cfg: any = {};
-  if (req.responseFormat === 'json') cfg.responseMimeType = 'application/json';
-
-  const systemPart = req.systemInstruction ? [{ text: req.systemInstruction }] : [];
 
   const result = await model.generateContent({
     contents: [
-      ...(req.systemInstruction ? [{ role: 'user' as const, parts: [{ text: `[System] ${req.systemInstruction}` }] }, { role: 'model' as const, parts: [{ text: 'Understood.' }] }] : []),
-      { role: 'user' as const, parts: [{ text: req.prompt }] }
+      ...(req.systemInstruction ? [{ role: 'user' as 'user', parts: [{ text: `[System] ${req.systemInstruction}` }] }, { role: 'model' as 'model', parts: [{ text: 'Understood.' }] }] : []),
+      ...(req.history || []).map(h => ({ role: (h.role === 'assistant' ? 'model' : 'user') as 'user' | 'model', parts: [{ text: h.content }] })),
+      { role: 'user' as 'user', parts: [{ text: req.prompt }] }
     ],
-    generationConfig: cfg,
+    generationConfig: (req.responseFormat === 'json' ? { responseMimeType: 'application/json' } : undefined) as any,
   });
 
-  return { text: result.response.text(), provider: 'gemini' };
+  return { text: result.response.text(), provider: 'gemini-1.5-flash' };
 }
 
-async function callMistral(req: AIRequest): Promise<AIResponse> {
-  if (!MISTRAL_KEY) throw new Error('No Mistral key');
-  const client = new Mistral({ apiKey: MISTRAL_KEY });
-  const isJson = req.responseFormat === 'json';
+// ── Router ────────────────────────────────────────────────────────────────────
 
-  const result = await client.chat.complete({
-    model: 'ministral-3b-latest',
-    messages: [
-      { role: 'system', content: (req.systemInstruction || 'You are a helpful assistant.') + (isJson ? '\n\nOutput strictly valid JSON.' : '') },
-      { role: 'user', content: req.prompt }
-    ],
-    responseFormat: isJson ? { type: 'json_object' } : undefined,
-    temperature: 0.7,
-  });
-
-  const content = result.choices?.[0]?.message.content;
-  if (!content) throw new Error('Empty Mistral response');
-  return { text: typeof content === 'string' ? content : JSON.stringify(content), provider: 'mistral' };
-}
-
-// ── Route Decision ─────────────────────────────────────────────────────────────
-function decideOrder(req: AIRequest): Array<() => Promise<AIResponse>> {
-  const task = req.task || 'chat';
-
-  // Vision → Gemini only
-  if (task === 'image' || req.imageBase64) return [() => callGemini(req)];
-
-  // Fast / JSON / Search → Groq first 
-  if (['fast', 'json', 'search'].includes(task)) {
-    const order = [];
-    if (GROQ_KEY)    order.push(() => callGroq(req));
-    if (MISTRAL_KEY) order.push(() => callMistral(req));
-    if (GEMINI_KEY)  order.push(() => callGemini(req));
-    return order.length ? order : [() => callGemini(req)];
-  }
-
-  // Chat / Translate → Gemini first (best Arabic)
-  const order = [];
-  if (GEMINI_KEY)  order.push(() => callGemini(req));
-  if (GROQ_KEY)    order.push(() => callGroq(req));
-  if (MISTRAL_KEY) order.push(() => callMistral(req));
-  return order.length ? order : [() => callGroq(req)];
-}
-
-// ── Main Router ────────────────────────────────────────────────────────────────
 export async function routeAI(req: AIRequest): Promise<AIResponse> {
-  const providers = decideOrder(req);
+  const task = req.task || 'brain';
 
-  for (const invoke of providers) {
-    try {
-      return await invoke();
-    } catch (err: any) {
-      console.warn(`[AI Router] Provider failed:`, err?.message || err);
+  try {
+    switch (task) {
+      case 'brain':
+        return await callOpenRouter(req, 'openai/gpt-oss-120b:free', OPENROUTER_KEY);
+      
+      case 'lesson_explanation':
+      case 'daily_analysis':
+        return await callGemini(req);
+      
+      case 'long_context':
+        // User requested moonshotai/kimi-k2-instruct-0905 with GROQ_KIMI_KEY
+        // Note: We'll try it via Groq if that was the intent, or fall back to Gemini
+        return await callGroq(req, 'kimi-k2-instruct-0905', GROQ_KIMI_KEY).catch(() => callGemini(req));
+      
+      case 'fast_task':
+        return await callGroq(req, 'llama-3.1-8b-instant', GROQ_LLAMA_KEY);
+      
+      case 'formatting':
+        return await callOpenRouter(req, 'google/gemma-3-27b-it:free', GEMMA_KEY);
+      
+      case 'medium_task':
+        // Mistral via standalone API
+        const resp = await fetch('https://api.mistral.ai/v1/chat/completions', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${MISTRAL_KEY}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: 'mistral-medium-latest',
+            messages: [{ role: 'user', content: req.prompt }]
+          })
+        });
+        const data = await resp.json();
+        return { text: data.choices[0].message.content, provider: 'mistral' };
+
+      case 'image':
+        return await callGemini(req);
+
+      default:
+        return await callOpenRouter(req, 'openai/gpt-oss-120b:free', OPENROUTER_KEY);
     }
+  } catch (err) {
+    console.warn(`[AI Router] Primary provider for ${task} failed, falling back to Llama 3.1`, err);
+    return await callGroq(req, 'llama-3.1-8b-instant', GROQ_LLAMA_KEY).catch(() => callGemini(req));
   }
-
-  throw new Error('[AI Router] All providers failed');
 }
 
-/**
- * Convenience wrapper - generate text with auto-routing
- */
-export async function generateText(
-  prompt: string,
-  options?: {
-    system?: string;
-    task?: AITask;
-    json?: boolean;
-  }
-): Promise<string> {
+// ── Convenience Wrappers ──────────────────────────────────────────────────────
+
+export async function generateText(prompt: string, options?: { system?: string; task?: AITask; json?: boolean; history?: any[] }): Promise<string> {
   const res = await routeAI({
     prompt,
     systemInstruction: options?.system,
-    task: options?.task || 'chat',
+    task: options?.task,
     responseFormat: options?.json ? 'json' : 'text',
-  });
-  return res.text;
-}
-
-/**
- * Vision analysis - images only go to Gemini
- */
-export async function analyzeImage(
-  prompt: string,
-  base64Image: string,
-  mimeType: string = 'image/jpeg'
-): Promise<string> {
-  const res = await routeAI({
-    prompt,
-    imageBase64: base64Image,
-    imageMimeType: mimeType,
-    task: 'image',
+    history: options?.history
   });
   return res.text;
 }
