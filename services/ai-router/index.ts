@@ -98,6 +98,27 @@ function chunkText(text: string, maxChars = 12000): string[] {
   return chunks;
 }
 
+// ── JSON Cleaner ─────────────────────────────────────────────────────────────
+/**
+ * Strips markdown code fences and surrounding whitespace/text from model outputs
+ * that are supposed to be JSON but often come wrapped in  ```json ... ``` .
+ */
+function cleanJson(raw: string): string {
+  let s = raw.trim();
+  // Strip ```json ... ``` or ``` ... ```
+  const fenceMatch = s.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (fenceMatch) s = fenceMatch[1].trim();
+  // Find the first { or [ and last } or ]
+  const firstBrace = Math.min(
+    s.indexOf('{') === -1 ? Infinity : s.indexOf('{'),
+    s.indexOf('[') === -1 ? Infinity : s.indexOf('[')
+  );
+  if (firstBrace === Infinity) return s;
+  const lastBrace = Math.max(s.lastIndexOf('}'), s.lastIndexOf(']'));
+  if (lastBrace === -1 || lastBrace < firstBrace) return s;
+  return s.slice(firstBrace, lastBrace + 1);
+}
+
 // ── Health Check ──────────────────────────────────────────────────────────────
 async function checkModel(m: ModelConfig): Promise<boolean> {
   try {
@@ -136,7 +157,7 @@ export function startHealthChecks() {
 async function callOllama(req: AIRequest, m: ModelConfig): Promise<AIResponse> {
   const client = getOllamaClient(m.apiKey || '');
 
-  // Build message history  
+  // Build message history
   const messages: { role: 'user' | 'assistant' | 'system'; content: string }[] = [];
 
   if (req.systemInstruction) {
@@ -149,7 +170,7 @@ async function callOllama(req: AIRequest, m: ModelConfig): Promise<AIResponse> {
 
   // Handle chunking for long prompts
   const chunks = chunkText(req.prompt);
-  let finalText = '';
+  let rawText = '';
 
   for (const chunk of chunks) {
     const payload = [...messages, { role: 'user' as const, content: chunk }];
@@ -158,11 +179,26 @@ async function callOllama(req: AIRequest, m: ModelConfig): Promise<AIResponse> {
       messages: payload,
       format: req.responseFormat === 'json' ? 'json' : undefined,
     });
-    finalText += (res.message?.content || '');
-    // Add the chunk response as context for the next chunk (if multi-chunk)
+    const chunkContent: string = res.message?.content || '';
+    rawText += chunkContent;
+
+    // Add chunk pair as context for the next chunk (multi-chunk only)
     if (chunks.length > 1) {
       messages.push({ role: 'user', content: chunk });
-      messages.push({ role: 'assistant', content: res.message?.content || '' });
+      messages.push({ role: 'assistant', content: chunkContent });
+    }
+  }
+
+  // For JSON requests: strip markdown fences and validate
+  let finalText = rawText;
+  if (req.responseFormat === 'json') {
+    const cleaned = cleanJson(rawText);
+    try {
+      JSON.parse(cleaned);   // validate — if it passes, use cleaned version
+      finalText = cleaned;
+    } catch {
+      // fallback: return raw text and let caller handle the parse error gracefully
+      finalText = rawText;
     }
   }
 
@@ -298,15 +334,24 @@ export async function routeAI(req: AIRequest): Promise<AIResponse> {
   const task = req.task || 'brain';
   const isImage = !!req.imageBase64;
 
-  // 1. Cache check
+  // 1. Cache check (skip for JSON responses to prevent stale/malformed cache)
   const cacheKey = `ai_cache_${task}_${hashPrompt(req.prompt + (req.systemInstruction || ''))}`;
-  try {
-    const cached = localStorage.getItem(cacheKey);
-    if (cached) {
-      const parsed = JSON.parse(cached);
-      if (parsed?.text) { console.log(`[AI Gateway] Cache hit for ${task}`); return parsed; }
+  if (req.responseFormat !== 'json') {
+    try {
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed?.text) {
+          console.log(`[AI Gateway] Cache hit for ${task}`);
+          return parsed;
+        } else {
+          localStorage.removeItem(cacheKey);
+        }
+      }
+    } catch {
+      localStorage.removeItem(cacheKey); // delete corrupted cache entry
     }
-  } catch (_) {}
+  }
 
   let result: AIResponse | null = null;
   let error: any = null;
