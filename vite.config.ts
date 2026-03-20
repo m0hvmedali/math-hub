@@ -15,6 +15,7 @@ export default defineConfig({
   resolve: {
     alias: {
       fabric: 'fabric/dist/index.js',
+      mathbox: 'mathbox/build/bundle/mathbox.js',
     }
   },
   optimizeDeps: {
