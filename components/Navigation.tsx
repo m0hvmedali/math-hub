@@ -26,7 +26,7 @@ const Navigation: React.FC = () => {
         { id: 'labs', label: language === 'ar' ? 'المعامل' : 'Labs', path: '/labs', icon: BeakerIcon },
         { id: 'schedule', label: language === 'ar' ? 'الجدول' : 'Schedule', path: '/schedule', icon: ClockIcon },
         { id: 'timer', label: language === 'ar' ? 'المؤقت' : 'Timer', path: '/timer', icon: ClockIcon },
-        { id: 'wisdom', label: language === 'ar' ? 'المكتبة' : 'Wisdom', path: '/wisdom', icon: SparkleIcon },
+        { id: 'math-here', label: language === 'ar' ? 'ماث هير' : 'Math Here', path: '/math-here', icon: SparkleIcon },
         { id: 'analysis', label: language === 'ar' ? 'التحليلات' : 'Analysis', path: '/daily-analysis', icon: TrendingUpIcon },
     ];
 

@@ -59,6 +59,7 @@ import TasksBrowserModal from './components/TasksBrowserModal';
 import CalendarBrowserModal from './components/CalendarBrowserModal';
 import LandingPage from './pages/LandingPage';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
+import MathHerePage from './pages/MathHerePage';
 import AIMonitorPage from './pages/AIMonitorPage';
 import QuietVaultPage from './pages/QuietVaultPage';
 import ModelSettingsPage from './pages/ModelSettingsPage';
@@ -798,6 +799,7 @@ const App: React.FC = () => {
                         <Route path="/schedule" element={<ProtectedRoute><SchedulePage /></ProtectedRoute>} />
                         <Route path="/daily-analysis" element={<ProtectedRoute><DailyAnalysisPage /></ProtectedRoute>} />
                         <Route path="/timer" element={<ProtectedRoute><StudyTimerPage /></ProtectedRoute>} />
+                        <Route path="/math-here" element={<ProtectedRoute><MathHerePage /></ProtectedRoute>} />
                         <Route path="/space" element={<ProtectedRoute><SpacePage /></ProtectedRoute>} />
                         <Route path="/crash" element={<ProtectedRoute><CrashTasksPage /></ProtectedRoute>} />
                         <Route path="/venting" element={<ProtectedRoute><VentingPage /></ProtectedRoute>} />
