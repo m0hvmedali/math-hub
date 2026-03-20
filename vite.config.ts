@@ -20,6 +20,6 @@ export default defineConfig({
     }
   },
   optimizeDeps: {
-    include: ['mathbox', 'three'],
+    include: ['mathbox', 'three', 'threestrap'],
   }
 });
