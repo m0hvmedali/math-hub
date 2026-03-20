@@ -11,28 +11,33 @@ import {
   LayoutDashboard,
   Menu,
   X,
-  BookOpen
+  BookOpen,
+  Zap
 } from 'lucide-react';
 import { AppContext } from '../App';
 import MathSolverModule from '../components/math-system/MathSolverModule';
 import MathGrapherModule from '../components/math-system/MathGrapherModule';
 import CurriculumBrowser from '../components/math-system/CurriculumBrowser';
 import GeoGebraLab from '../components/math-system/GeoGebraLab';
+import CurriculumSimulations from '../components/math-system/CurriculumSimulations';
+import { mathTranslations } from '../components/math-system/mathTranslations';
 
-type MathTab = 'dashboard' | 'solver' | 'grapher' | 'curriculum' | 'geogebra' | 'ai';
+type MathTab = 'dashboard' | 'solver' | 'grapher' | 'curriculum' | 'simulations' | 'geogebra' | 'ai';
 
 const MathHerePage: React.FC = () => {
     const { language } = useContext(AppContext);
+    const t = (mathTranslations as any)[language || 'en'];
     const [activeTab, setActiveTab] = useState<MathTab>('dashboard');
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
     const tabs = [
-        { id: 'dashboard', label: language === 'ar' ? 'الرئيسية' : 'Dashboard', icon: LayoutDashboard, color: 'text-white' },
-        { id: 'solver', label: language === 'ar' ? 'المحلل' : 'Solver', icon: Calculator, color: 'text-brand-purple' },
-        { id: 'grapher', label: language === 'ar' ? 'الرسام' : 'Grapher', icon: LineChart, color: 'text-brand-cyan' },
-        { id: 'geogebra', label: language === 'ar' ? 'جيوجيبرا' : 'GeoGebra', icon: Box, color: 'text-brand-magenta' },
-        { id: 'curriculum', label: language === 'ar' ? 'المنهج' : 'Curriculum', icon: GraduationCap, color: 'text-accent-green' },
-        { id: 'ai', label: language === 'ar' ? 'ذكاء اصطناعي' : 'AI Solvers', icon: BrainCircuit, color: 'text-accent-amber' },
+        { id: 'dashboard', label: t.dashboard, icon: LayoutDashboard, color: 'text-white' },
+        { id: 'simulations', label: t.simulations, icon: Zap, color: 'text-brand-magenta' },
+        { id: 'solver', label: t.solver, icon: Calculator, color: 'text-brand-purple' },
+        { id: 'grapher', label: t.grapher, icon: LineChart, color: 'text-brand-cyan' },
+        { id: 'geogebra', label: t.geogebra, icon: Box, color: 'text-brand-magenta' },
+        { id: 'curriculum', label: t.curriculum, icon: GraduationCap, color: 'text-accent-green' },
+        { id: 'ai', label: t.ai, icon: BrainCircuit, color: 'text-accent-amber' },
     ];
 
     const renderContent = () => {
@@ -40,6 +45,7 @@ const MathHerePage: React.FC = () => {
             case 'solver': return <MathSolverModule />;
             case 'grapher': return <MathGrapherModule />;
             case 'curriculum': return <CurriculumBrowser />;
+            case 'simulations': return <CurriculumSimulations />;
             case 'geogebra': return <GeoGebraLab />;
             case 'ai': return <AISolversOverview />;
             case 'dashboard':
@@ -67,7 +73,7 @@ const MathHerePage: React.FC = () => {
                             animate={{ opacity: 1 }}
                             className="font-black tracking-tighter text-xl bg-clip-text text-transparent bg-ott-gradient"
                         >
-                            Math System
+                            {t.mathSystem}
                         </motion.span>
                     )}
                 </div>
@@ -130,25 +136,28 @@ const MathHerePage: React.FC = () => {
 /* --- SUB-COMPONENTS --- */
 
 const MathDashboardOverview: React.FC<{ onNavigate: (tab: MathTab) => void }> = ({ onNavigate }) => {
+    const { language } = useContext(AppContext);
+    const t = (mathTranslations as any)[language || 'en'];
+
     return (
         <div className="p-8 md:p-12 space-y-12 max-w-7xl mx-auto">
             <header className="space-y-4">
                 <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-brand-cyan/10 border border-brand-cyan/20 text-brand-cyan">
-                    <span className="text-[10px] font-black uppercase tracking-widest">System Overview</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest">{t.systemOverview}</span>
                 </div>
                 <h1 className="text-4xl md:text-6xl font-black tracking-tighter">
-                    Comprehensive <span className="text-transparent bg-clip-text bg-ott-gradient">Math Workspace</span>
+                    {t.comprehensiveWorkspace.split(' ').slice(0, -1).join(' ')} <span className="text-transparent bg-clip-text bg-ott-gradient">{t.comprehensiveWorkspace.split(' ').slice(-1)}</span>
                 </h1>
                 <p className="text-gray-400 text-lg max-w-2xl">
-                    Integrated tools for symbolic math, interactive geometry, and high-performance visualization.
+                    {t.integratedTools}
                 </p>
             </header>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[
-                    { id: 'solver', title: 'Solver Lab', desc: 'Symbolic calculus, algebra, and step-by-step simplification.', icon: Calculator, color: 'from-brand-purple/20 to-transparent', bColor: 'border-brand-purple/30' },
-                    { id: 'grapher', title: 'Plotter Engine', desc: 'Real-time 2D function visualization with SVG optimization.', icon: LineChart, color: 'from-brand-cyan/20 to-transparent', bColor: 'border-brand-cyan/30' },
-                    { id: 'geogebra', title: 'Spatial Lab', desc: '3D Geometry, dynamic constructions, and complex modeling.', icon: Box, color: 'from-brand-magenta/20 to-transparent', bColor: 'border-brand-magenta/30' },
+                    { id: 'simulations', title: t.simulations, desc: 'Interactive high-school curriculum models for Thanaweya Amma.', icon: Zap, color: 'from-brand-magenta/20 to-transparent', bColor: 'border-brand-magenta/30' },
+                    { id: 'solver', title: t.solver + ' Lab', desc: 'Symbolic calculus, algebra, and step-by-step simplification.', icon: Calculator, color: 'from-brand-purple/20 to-transparent', bColor: 'border-brand-purple/30' },
+                    { id: 'grapher', title: t.grapher + ' Engine', desc: 'Real-time 2D function visualization with SVG optimization.', icon: LineChart, color: 'from-brand-cyan/20 to-transparent', bColor: 'border-brand-cyan/30' },
                 ].map((card) => (
                     <button
                         key={card.id}
@@ -169,15 +178,15 @@ const MathDashboardOverview: React.FC<{ onNavigate: (tab: MathTab) => void }> = 
                         <div className="w-12 h-12 rounded-2xl bg-accent-green/10 flex items-center justify-center border border-accent-green/20">
                             <GraduationCap className="w-6 h-6 text-accent-green" />
                         </div>
-                        <h2 className="text-3xl font-black tracking-tight">OSSU Global Curriculum</h2>
+                        <h2 className="text-3xl font-black tracking-tight">{language === 'ar' ? 'منهج OSSU العالمي' : 'OSSU Global Curriculum'}</h2>
                         <p className="text-gray-400 leading-relaxed">
-                            Structured path to a free self-taught education in mathematics, curated from the world's best universities.
+                            {language === 'ar' ? 'مسار منظم لتعليم ذاتي مجاني في الرياضيات، منسق من أفضل الجامعات في العالم.' : 'Structured path to a free self-taught education in mathematics, curated from the world\'s best universities.'}
                         </p>
                         <button 
                             onClick={() => onNavigate('curriculum')}
                             className="px-8 py-3 bg-white text-black rounded-xl font-black text-xs uppercase tracking-widest hover:scale-105 transition-all"
                         >
-                            Explore Curriculum
+                            {t.exploreCurriculum}
                         </button>
                     </div>
                     <div className="w-full md:w-80 h-64 bg-black/40 rounded-[2rem] border border-white/5 flex items-center justify-center relative overflow-hidden group">
@@ -191,6 +200,8 @@ const MathDashboardOverview: React.FC<{ onNavigate: (tab: MathTab) => void }> = 
 };
 
 const AISolversOverview: React.FC = () => {
+    const { language } = useContext(AppContext);
+    
     return (
         <div className="p-8 md:p-12 space-y-8 max-w-6xl mx-auto">
              <header className="flex items-center gap-4">
@@ -198,8 +209,8 @@ const AISolversOverview: React.FC = () => {
                     <BrainCircuit className="w-6 h-6 text-accent-amber" />
                 </div>
                 <div>
-                    <h2 className="text-2xl font-black uppercase tracking-tight">AI Neural Gateways</h2>
-                    <p className="text-xs text-gray-500 font-medium">Advanced solving services & Scan-to-Solve tools</p>
+                    <h2 className="text-2xl font-black uppercase tracking-tight">{language === 'ar' ? 'بوابات الذكاء الاصطناعي' : 'AI Neural Gateways'}</h2>
+                    <p className="text-xs text-gray-500 font-medium">{language === 'ar' ? 'خدمات حل متقدمة وأدوات المسح للحل' : 'Advanced solving services & Scan-to-Solve tools'}</p>
                 </div>
             </header>
 

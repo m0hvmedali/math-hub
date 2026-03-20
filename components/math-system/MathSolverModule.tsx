@@ -1,5 +1,6 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useContext } from 'react';
 import { motion } from 'framer-motion';
+import { AppContext } from '../../App';
 import { 
   Calculator, 
   Trash2, 
@@ -30,6 +31,7 @@ declare global {
 }
 
 const MathSolverModule: React.FC = () => {
+    const { language } = useContext(AppContext);
     const [input, setInput] = useState('');
     const [result, setResult] = useState<{ latex: string; text: string; error?: string } | null>(null);
     const [history, setHistory] = useState<{ input: string; result: string }[]>([]);
@@ -74,8 +76,12 @@ const MathSolverModule: React.FC = () => {
                     <Calculator className="w-6 h-6 text-brand-purple" />
                 </div>
                 <div>
-                    <h2 className="text-2xl font-black uppercase tracking-tight">Symbolic Solver</h2>
-                    <p className="text-xs text-gray-500 font-medium">Algebra, Calculus, and Simplification</p>
+                    <h2 className="text-2xl font-black uppercase tracking-tight">
+                        {language === 'ar' ? 'المحلل الرمزي' : 'Symbolic Solver'}
+                    </h2>
+                    <p className="text-xs text-gray-500 font-medium">
+                        {language === 'ar' ? 'الجبر، التفاضل والتكامل، والتبسيط' : 'Algebra, Calculus, and Simplification'}
+                    </p>
                 </div>
             </header>
 
@@ -93,9 +99,10 @@ const MathSolverModule: React.FC = () => {
                                 border: 'none', 
                                 color: 'white', 
                                 fontSize: '1.25rem',
-                                outline: 'none'
+                                outline: 'none',
+                                direction: 'ltr'
                             }}
-                            placeholder="Enter expression (e.g. x^2 + 2x + 1)"
+                            placeholder={language === 'ar' ? 'أدخل التعبير الرياضي...' : 'Enter expression (e.g. x^2 + 2x + 1)'}
                         >
                             {input}
                         </math-field>
@@ -110,7 +117,7 @@ const MathSolverModule: React.FC = () => {
                                 onClick={solve}
                                 className="px-6 py-2.5 bg-brand-purple text-white rounded-xl font-black text-xs uppercase tracking-widest hover:shadow-glow-purple shadow-2xl transition-all active:scale-95"
                             >
-                                Solve
+                                {language === 'ar' ? 'حـل' : 'Solve'}
                             </button>
                         </div>
                     </div>
@@ -132,7 +139,9 @@ const MathSolverModule: React.FC = () => {
                             <div className="space-y-4">
                                 <div className="flex items-center gap-2 text-brand-cyan mb-2">
                                     <Sparkles className="w-4 h-4" />
-                                    <span className="text-[10px] font-black uppercase tracking-widest">Result Found</span>
+                                    <span className="text-[10px] font-black uppercase tracking-widest">
+                                        {language === 'ar' ? 'تم إيجاد الحل' : 'Result Found'}
+                                    </span>
                                 </div>
                                 <div 
                                     className="text-2xl overflow-x-auto py-2"
@@ -149,9 +158,9 @@ const MathSolverModule: React.FC = () => {
             {/* Quick Tips */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {[
-                    { title: 'Derivatives', example: 'diff(x^2, x)', color: 'text-brand-cyan' },
-                    { title: 'Integrals', example: 'integrate(sin(x), x)', color: 'text-brand-magenta' },
-                    { title: 'Equations', example: 'x^2 = 4', color: 'text-brand-purple' }
+                    { title: language === 'ar' ? 'المشتقات' : 'Derivatives', example: 'diff(x^2, x)', color: 'text-brand-cyan' },
+                    { title: language === 'ar' ? 'التكامل' : 'Integrals', example: 'integrate(sin(x), x)', color: 'text-brand-magenta' },
+                    { title: language === 'ar' ? 'المعادلات' : 'Equations', example: 'x^2 = 4', color: 'text-brand-purple' }
                 ].map((tip, i) => (
                     <button 
                         key={i}
@@ -170,7 +179,9 @@ const MathSolverModule: React.FC = () => {
             {/* History */}
             {history.length > 0 && (
                 <div className="space-y-4">
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 px-2">Recent Lab History</h3>
+                    <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 px-2">
+                        {language === 'ar' ? 'سجل العمليات الأخير' : 'Recent Lab History'}
+                    </h3>
                     <div className="space-y-2">
                         {history.map((h, i) => (
                             <div key={i} className="flex items-center justify-between p-4 rounded-xl bg-white/[0.02] border border-white/5 group">

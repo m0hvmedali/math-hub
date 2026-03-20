@@ -15,13 +15,19 @@ const CurriculumBrowser: React.FC = () => {
                         <GraduationCap className="w-6 h-6 text-brand-cyan" />
                     </div>
                     <div>
-                        <h2 className="text-2xl font-black uppercase tracking-tight">OSSU Math Curriculum</h2>
-                        <p className="text-xs text-gray-500 font-medium">Free self-taught education in mathematics</p>
+                        <h2 className="text-2xl font-black uppercase tracking-tight">
+                            {language === 'ar' ? 'منهج OSSU للرياضيات' : 'OSSU Math Curriculum'}
+                        </h2>
+                        <p className="text-xs text-gray-500 font-medium">
+                            {language === 'ar' ? 'تعليم ذاتي مجاني في الرياضيات' : 'Free self-taught education in mathematics'}
+                        </p>
                     </div>
                 </div>
                 <div className="flex items-center gap-2 px-4 py-2 bg-white/5 rounded-xl border border-white/10">
                     <Trophy className="w-4 h-4 text-brand-magenta" />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Path to Excellence</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+                        {language === 'ar' ? 'طريق التميز' : 'Path to Excellence'}
+                    </span>
                 </div>
             </header>
 
