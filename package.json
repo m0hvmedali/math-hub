@@ -39,7 +39,7 @@
     "katex": "^0.16.28",
     "lucide-react": "^0.363.0",
     "lunr": "^2.3.9",
-    "mathbox": "^2.3.2-rc1",
+    "mathbox": "2.3.1",
     "mathlive": "^0.108.3",
     "mermaid": "^10.9.0",
     "nerdamer": "^1.1.13",

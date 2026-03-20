@@ -2,8 +2,8 @@ import React, { useEffect, useRef } from 'react';
 // @ts-ignore
 import * as THREE from 'three';
 // @ts-ignore
-import { mathBox } from 'mathbox/build/esm/index.js';
-import 'mathbox/build/mathbox.css';
+import { mathBox } from 'mathbox';
+import 'mathbox/mathbox.css';
 
 interface MathBoxVisualizerProps {
     data: any;
