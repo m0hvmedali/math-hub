@@ -10,7 +10,8 @@ import {
   BrainCircuit,
   LayoutDashboard,
   Menu,
-  X
+  X,
+  BookOpen
 } from 'lucide-react';
 import { AppContext } from '../App';
 import MathSolverModule from '../components/math-system/MathSolverModule';
