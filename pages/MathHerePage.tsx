@@ -21,6 +21,7 @@ import CurriculumBrowser from '../components/math-system/CurriculumBrowser';
 import GeoGebraLab from '../components/math-system/GeoGebraLab';
 import CurriculumSimulations from '../components/math-system/CurriculumSimulations';
 import { mathTranslations } from '../components/math-system/mathTranslations';
+import MathAIOrchestrator from '../components/math-system/MathAIOrchestrator';
 
 type MathTab = 'dashboard' | 'solver' | 'grapher' | 'curriculum' | 'simulations' | 'geogebra' | 'ai';
 
@@ -47,7 +48,7 @@ const MathHerePage: React.FC = () => {
             case 'curriculum': return <CurriculumBrowser />;
             case 'simulations': return <CurriculumSimulations />;
             case 'geogebra': return <GeoGebraLab />;
-            case 'ai': return <AISolversOverview />;
+            case 'ai': return <MathAIOrchestrator />;
             case 'dashboard':
             default: return <MathDashboardOverview onNavigate={(tab) => setActiveTab(tab)} />;
         }
@@ -209,7 +210,7 @@ const AISolversOverview: React.FC = () => {
                     <BrainCircuit className="w-6 h-6 text-accent-amber" />
                 </div>
                 <div>
-                    <h2 className="text-2xl font-black uppercase tracking-tight">{language === 'ar' ? 'بوابات الذكاء الاصطناعي' : 'AI Neural Gateways'}</h2>
+                    <h2 className="text-2xl font-black uppercase tracking-tight">{language === 'ar' ? 'مختبر الذكاء' : 'AI Neural Gateways'}</h2>
                     <p className="text-xs text-gray-500 font-medium">{language === 'ar' ? 'خدمات حل متقدمة وأدوات المسح للحل' : 'Advanced solving services & Scan-to-Solve tools'}</p>
                 </div>
             </header>

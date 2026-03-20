@@ -12,7 +12,7 @@ export const mathTranslations = {
         grapher: "الرسام",
         geogebra: "جيوجيبرا",
         curriculum: "المنهج",
-        ai: "ذكاء اصطناعي",
+        ai: "مختبر الذكاء",
         simulations: "المحاكاة التفاعلية",
 
         // Pure Mathematics
@@ -95,7 +95,7 @@ export const mathTranslations = {
         grapher: "Grapher",
         geogebra: "GeoGebra",
         curriculum: "Curriculum",
-        ai: "AI Solvers",
+        ai: "AI Math Lab",
         simulations: "Interactive Simulations",
 
         // Pure Mathematics
