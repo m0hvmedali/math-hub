@@ -39,7 +39,10 @@ const Plane: React.FC<{ normal: [number, number, number]; constant: number; colo
 };
 
 const SolidGeometry3D: React.FC<SolidGeometry3DProps> = ({ data }) => {
-    const { vectors = [], planes = [] } = data;
+    if (!data) return <div className="flex items-center justify-center h-full text-gray-500 italic">No 3D data available</div>;
+    
+    const vectors = Array.isArray(data.vectors) ? data.vectors : [];
+    const planes = Array.isArray(data.planes) ? data.planes : [];
 
     return (
         <div className="w-full h-full min-h-[500px] bg-black/40">

@@ -8,7 +8,7 @@ interface LinearAlgebraModuleProps {
 }
 
 const LinearAlgebraModule: React.FC<LinearAlgebraModuleProps> = ({ data }) => {
-    // data example: { "matrix": [[1,2], [3,4]], "operation": "inverse" }
+    if (!data) return <div className="flex items-center justify-center h-full text-gray-500 italic">No matrix data available</div>;
     const { matrix = [[1, 0], [0, 1]], operation = 'determinant' } = data;
 
     const result = useMemo(() => {

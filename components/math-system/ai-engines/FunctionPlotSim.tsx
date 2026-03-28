@@ -12,7 +12,7 @@ const FunctionPlotSim: React.FC<FunctionPlotSimProps> = ({ data }) => {
     useEffect(() => {
         if (!containerRef.current) return;
 
-        // data example: { "fn": "x^2", "derivative": "2x", "point": 2 }
+        if (!data) return;
         const { fn = 'x^2', derivative, point, domain = [-10, 10], range = [-10, 10] } = data;
 
         const plotData: any[] = [{

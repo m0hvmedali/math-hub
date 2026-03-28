@@ -141,7 +141,7 @@ export async function generateAIContent(prompt: string, systemInstruction: strin
 }
 
 // Helper to safely parse JSON with aggressive cleanup and fallback merge
-function safeJsonParse<T>(text: string, fallback: T): T {
+export function safeJsonParse<T>(text: string, fallback: T): T {
     try {
         // Since routeAI now cleans markdown fences and extracts the object,
         // we mainly handle potential trailing commas or minor fixable issues.

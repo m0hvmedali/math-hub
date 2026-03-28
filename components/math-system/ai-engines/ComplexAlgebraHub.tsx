@@ -11,7 +11,8 @@ const ComplexAlgebraHub: React.FC<ComplexAlgebraHubProps> = ({ data }) => {
     // data example: { "number": "3 + 4i", "operation": "roots", "n": 3 }
     const complexNum = useMemo(() => {
         try {
-            return new Complex(data.number || '0');
+            if (!data || !data.number) return new Complex(0, 0);
+            return new Complex(data.number);
         } catch (e) {
             return new Complex(0, 0);
         }

@@ -2,7 +2,7 @@ import React, { useState, useContext } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, Send, Brain, ChevronRight, RotateCcw } from 'lucide-react';
 import { AppContext } from '../../App';
-import { generateAIContent } from '../../utils/aiHelper';
+import { generateAIContent, safeJsonParse } from '../../utils/aiHelper';
 
 // Specialized Engines
 import SolidGeometry3D from './ai-engines/SolidGeometry3D';
@@ -63,10 +63,19 @@ const MathAIOrchestrator: React.FC = () => {
                 MATH_SYSTEM_PROMPT,
                 true
             );
-            const parsed = JSON.parse(response);
+            
+            const fallback: VizMeta = {
+                type: 'none',
+                data: {},
+                explanation: language === 'ar' ? "عذراً، تعذر تحليل الرد الرياضي بشكل صحيح." : "Apologies, could not parse the mathematical response correctly.",
+                explanation_en: "Apologies, could not parse the mathematical response correctly."
+            };
+
+            const parsed = safeJsonParse<VizMeta>(response, fallback);
             setVizMeta(parsed);
         } catch (err) {
             console.error("AI Visualization Error:", err);
+            setVizMeta(null); // Reset on hard error
         } finally {
             setIsAnalyzing(false);
         }
@@ -164,14 +173,14 @@ const MathAIOrchestrator: React.FC = () => {
                             {/* Render Engine */}
                             <div className="flex-1 bg-black/40 relative">
                                 {vizMeta.type === 'mathbox' && <div className="p-8 text-center text-gray-500 italic">MathBox engine is currently unavailable. Please try a different visualization type.</div>}
-                                {vizMeta.type === 'threejs' && <SolidGeometry3D data={vizMeta.data} />}
-                                {vizMeta.type === 'functionplot' && <FunctionPlotSim data={vizMeta.data} />}
-                                {vizMeta.type === 'complex' && <ComplexAlgebraHub data={vizMeta.data} />}
-                                {vizMeta.type === 'linear_algebra' && <LinearAlgebraModule data={vizMeta.data} />}
+                                {vizMeta.type === 'threejs' && vizMeta.data && <SolidGeometry3D data={vizMeta.data} />}
+                                {vizMeta.type === 'functionplot' && vizMeta.data && <FunctionPlotSim data={vizMeta.data} />}
+                                {vizMeta.type === 'complex' && vizMeta.data && <ComplexAlgebraHub data={vizMeta.data} />}
+                                {vizMeta.type === 'linear_algebra' && vizMeta.data && <LinearAlgebraModule data={vizMeta.data} />}
                                 
-                                {!vizMeta.type && (
+                                {(!vizMeta.type || vizMeta.type === 'none') && (
                                     <div className="flex items-center justify-center h-full text-gray-600 italic">
-                                        [Engine {vizMeta.type} rendering data: {JSON.stringify(vizMeta.data)}]
+                                        [Unable to render visualization for this query type]
                                     </div>
                                 )}
                             </div>

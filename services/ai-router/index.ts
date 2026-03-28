@@ -122,30 +122,41 @@ function chunkText(text: string, maxChars = 12000): string[] {
  * Strips markdown code fences and surrounding whitespace/text from model outputs
  * that are supposed to be JSON but often come wrapped in  ```json ... ``` .
  */
+/**
+ * Strips markdown code fences and surrounding whitespace/text from model outputs
+ * that are supposed to be JSON but often come wrapped in  ```json ... ``` .
+ */
 function cleanJson(raw: string): string {
+  if (!raw) return '';
   let s = raw.trim();
-  // Strip ```json ... ``` or ``` ... ```
-  const fenceMatch = s.match(/```(?:json)?\s*([\s\S]*?)```/);
-  if (fenceMatch) s = fenceMatch[1].trim();
   
-  // Find the first { or [ and last } or ]
+  // 1. Remove markdown code fences
+  const fenceMatch = s.match(/```(?:json)?\s*([\s\S]*?)```/);
+  if (fenceMatch) {
+    s = fenceMatch[1].trim();
+  }
+
+  // 2. Identify the core JSON structure by finding the outermost braces or brackets
   const firstCurly = s.indexOf('{');
   const firstSquare = s.indexOf('[');
-  let firstBrace = -1;
+  let start = -1;
   
-  if (firstCurly !== -1 && firstSquare !== -1) firstBrace = Math.min(firstCurly, firstSquare);
-  else if (firstCurly !== -1) firstBrace = firstCurly;
-  else if (firstSquare !== -1) firstBrace = firstSquare;
+  if (firstCurly !== -1 && firstSquare !== -1) start = Math.min(firstCurly, firstSquare);
+  else if (firstCurly !== -1) start = firstCurly;
+  else if (firstSquare !== -1) start = firstSquare;
 
-  if (firstBrace === -1) return s;
+  if (start === -1) return s;
 
   const lastCurly = s.lastIndexOf('}');
   const lastSquare = s.lastIndexOf(']');
-  const lastBrace = Math.max(lastCurly, lastSquare);
+  const end = Math.max(lastCurly, lastSquare);
 
-  if (lastBrace === -1 || lastBrace < firstBrace) return s;
+  if (end === -1 || end < start) return s;
 
-  return s.slice(firstBrace, lastBrace + 1);
+  s = s.slice(start, end + 1);
+
+  // 3. Technical Polish: Remove trailing commas which break standard JSON.parse
+  return s.replace(/,\s*([\]}])/g, '$1');
 }
 
 // ── Health Check ──────────────────────────────────────────────────────────────
@@ -217,20 +228,8 @@ async function callOllama(req: AIRequest, m: ModelConfig): Promise<AIResponse> {
     }
   }
 
-  // For JSON requests: strip markdown fences and validate
-  let finalText = rawText;
-  if (req.responseFormat === 'json') {
-    const cleaned = cleanJson(rawText);
-    try {
-      JSON.parse(cleaned);   // validate — if it passes, use cleaned version
-      finalText = cleaned;
-    } catch {
-      // fallback: return raw text and let caller handle the parse error gracefully
-      finalText = rawText;
-    }
-  }
-
-  return { text: finalText, provider: m.model };
+  // For JSON requests: final cleanup is handled globally in routeAI
+  return { text: rawText, provider: m.model };
 }
 
 // ── Gemini Call ───────────────────────────────────────────────────────────────
@@ -411,7 +410,12 @@ export async function routeAI(req: AIRequest): Promise<AIResponse> {
       else incrementLegacyUsage('openrouter');
     }
 
-    // 4. Cache success
+    // 4. Post-processing: Global JSON cleaning
+    if (result && req.responseFormat === 'json') {
+      result.text = cleanJson(result.text);
+    }
+
+    // 5. Cache success
     try { localStorage.setItem(cacheKey, JSON.stringify(result)); } catch (_) {}
 
     return result;
