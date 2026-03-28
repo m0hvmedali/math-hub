@@ -2,7 +2,7 @@ import React, { Suspense } from 'react';
 // @ts-ignore
 import { Canvas } from '@react-three/fiber';
 // @ts-ignore
-import { OrbitControls, Grid, PerspectiveCamera, GizmoHelper, GizmoViewport, Arrow } from '@react-three/drei';
+import { OrbitControls, Grid, PerspectiveCamera, GizmoHelper, GizmoViewport } from '@react-three/drei';
 import * as THREE from 'three';
 
 interface SolidGeometry3DProps {
@@ -14,15 +14,16 @@ const Vector: React.FC<{ start: [number, number, number]; end: [number, number, 
     const length = dir.length();
     
     return (
-        <group position={start}>
-            <Arrow
-                dir={dir.normalize()}
-                length={length}
-                color={color}
-                headLength={0.2}
-                headWidth={0.2}
-            />
-        </group>
+        <arrowHelper 
+            args={[
+                dir.normalize(), 
+                new THREE.Vector3(...start), 
+                length, 
+                color, 
+                0.2, 
+                0.2
+            ]} 
+        />
     );
 };
 

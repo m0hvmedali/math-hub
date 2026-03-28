@@ -5,7 +5,6 @@ import { AppContext } from '../../App';
 import { generateAIContent } from '../../utils/aiHelper';
 
 // Specialized Engines
-import MathBoxVisualizer from './ai-engines/MathBoxVisualizer';
 import SolidGeometry3D from './ai-engines/SolidGeometry3D';
 import FunctionPlotSim from './ai-engines/FunctionPlotSim';
 import ComplexAlgebraHub from './ai-engines/ComplexAlgebraHub';
@@ -147,7 +146,7 @@ const MathAIOrchestrator: React.FC = () => {
                             <div className="absolute top-6 left-6 right-6 z-10 pointer-events-none">
                                 <div className="bg-black/60 backdrop-blur-md border border-white/10 rounded-2xl p-4 max-w-md pointer-events-auto">
                                     <div className="flex items-center gap-2 mb-2">
-                                        <div className={`w-2 h-2 rounded-full ${vizMeta.type === 'mathbox' ? 'bg-brand-cyan' : 'bg-brand-magenta'}`} />
+                                        <div className={`w-2 h-2 rounded-full ${vizMeta.type === 'complex' ? 'bg-brand-cyan' : 'bg-brand-magenta'}`} />
                                         <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">
                                             {vizMeta.type} engine
                                         </span>
@@ -160,7 +159,7 @@ const MathAIOrchestrator: React.FC = () => {
 
                             {/* Render Engine */}
                             <div className="flex-1 bg-black/40 relative">
-                                {vizMeta.type === 'mathbox' && <MathBoxVisualizer data={vizMeta.data} />}
+                                {vizMeta.type === 'mathbox' && <div className="p-8 text-center text-gray-500 italic">MathBox engine is currently unavailable. Please try a different visualization type.</div>}
                                 {vizMeta.type === 'threejs' && <SolidGeometry3D data={vizMeta.data} />}
                                 {vizMeta.type === 'functionplot' && <FunctionPlotSim data={vizMeta.data} />}
                                 {vizMeta.type === 'complex' && <ComplexAlgebraHub data={vizMeta.data} />}

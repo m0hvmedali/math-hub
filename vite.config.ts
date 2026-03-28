@@ -20,10 +20,9 @@ export default defineConfig({
   resolve: {
     alias: {
       fabric: 'fabric/dist/index.js',
-      mathbox: path.resolve(__dirname, 'node_modules/mathbox/build/esm/index.js'),
     }
   },
   optimizeDeps: {
-    include: ['mathbox', 'three', 'threestrap'],
+    include: ['three'],
   }
 });
