@@ -12,7 +12,8 @@ import {
   Menu,
   X,
   BookOpen,
-  Zap
+  Zap,
+  Clock
 } from 'lucide-react';
 import { AppContext } from '../App';
 import MathSolverModule from '../components/math-system/MathSolverModule';
@@ -22,8 +23,10 @@ import GeoGebraLab from '../components/math-system/GeoGebraLab';
 import CurriculumSimulations from '../components/math-system/CurriculumSimulations';
 import { mathTranslations } from '../components/math-system/mathTranslations';
 import MathAIOrchestrator from '../components/math-system/MathAIOrchestrator';
+import MathHistoryModule from '../components/math-system/MathHistoryModule';
+import { MathActivity } from '../utils/mathPersistence';
 
-type MathTab = 'dashboard' | 'solver' | 'grapher' | 'curriculum' | 'simulations' | 'geogebra' | 'ai';
+type MathTab = 'dashboard' | 'solver' | 'grapher' | 'curriculum' | 'simulations' | 'geogebra' | 'ai' | 'history';
 
 const MathHerePage: React.FC = () => {
     const { language } = useContext(AppContext);
@@ -31,6 +34,7 @@ const MathHerePage: React.FC = () => {
     const [activeTab, setActiveTab] = useState<MathTab>('dashboard');
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const [restoredActivity, setRestoredActivity] = useState<MathActivity | null>(null);
 
     const tabs = [
         { id: 'dashboard', label: t.dashboard, icon: LayoutDashboard, color: 'text-white' },
@@ -40,6 +44,7 @@ const MathHerePage: React.FC = () => {
         { id: 'geogebra', label: t.geogebra, icon: Box, color: 'text-brand-magenta' },
         { id: 'curriculum', label: t.curriculum, icon: GraduationCap, color: 'text-accent-green' },
         { id: 'ai', label: t.ai, icon: BrainCircuit, color: 'text-accent-amber' },
+        { id: 'history', label: language === 'ar' ? 'السجل' : 'History', icon: Clock, color: 'text-gray-400' },
     ];
 
     const renderContent = () => {
@@ -49,7 +54,13 @@ const MathHerePage: React.FC = () => {
             case 'curriculum': return <CurriculumBrowser />;
             case 'simulations': return <CurriculumSimulations />;
             case 'geogebra': return <GeoGebraLab />;
-            case 'ai': return <MathAIOrchestrator />;
+            case 'ai': return <MathAIOrchestrator initialData={restoredActivity?.category === 'ai_lab' ? restoredActivity : null} />;
+            case 'history': return <MathHistoryModule onRestore={(activity) => {
+                setRestoredActivity(activity);
+                setActiveTab(activity.category as any === 'ai_lab' ? 'ai' : 
+                          activity.category === 'solver' ? 'solver' : 
+                          activity.category === 'grapher' ? 'grapher' : 'history');
+            }} />;
             case 'dashboard':
             default: return <MathDashboardOverview onNavigate={(tab) => setActiveTab(tab)} />;
         }

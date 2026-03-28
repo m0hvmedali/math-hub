@@ -30,12 +30,13 @@ const FunctionPlotSim: React.FC<FunctionPlotSimProps> = ({ data }) => {
         }
 
         try {
+            const width = containerRef.current.clientWidth;
             functionPlot({
                 target: containerRef.current,
-                width: 600,
-                height: 500,
-                yAxis: { domain: range },
-                xAxis: { domain: domain },
+                width: width > 0 ? width : 600,
+                height: 450,
+                yAxis: { domain: range, label: 'y' },
+                xAxis: { domain: domain, label: 'x' },
                 grid: true,
                 data: plotData
             });

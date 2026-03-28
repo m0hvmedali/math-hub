@@ -57,6 +57,7 @@ const SolidGeometry3D: React.FC<SolidGeometry3DProps> = ({ data }) => {
                 <Suspense fallback={null}>
                     <ambientLight intensity={0.5} />
                     <pointLight position={[10, 10, 10]} intensity={1} />
+                    <axesHelper args={[100]} />
                     
                     <Grid 
                         infiniteGrid 

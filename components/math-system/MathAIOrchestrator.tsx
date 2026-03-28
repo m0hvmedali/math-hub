@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, Send, Brain, ChevronRight, RotateCcw, MessageSquare, X } from 'lucide-react';
 import { AppContext } from '../../App';
 import { generateAIContent, safeJsonParse } from '../../utils/aiHelper';
+import { saveMathActivity } from '../../utils/mathPersistence';
 
 // Specialized Engines
 import SolidGeometry3D from './ai-engines/SolidGeometry3D';
@@ -17,33 +18,52 @@ interface VizMeta {
     explanation_en: string;
 }
 
-const MathAIOrchestrator: React.FC = () => {
+interface MathAIOrchestratorProps {
+    initialData?: any;
+}
+
+const MathAIOrchestrator: React.FC<MathAIOrchestratorProps> = ({ initialData }) => {
     const { language } = useContext(AppContext);
     const [prompt, setPrompt] = useState('');
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [vizMeta, setVizMeta] = useState<VizMeta | null>(null);
     const [isExplanationOpen, setIsExplanationOpen] = useState(true);
 
+    React.useEffect(() => {
+        if (initialData) {
+            setPrompt(initialData.query);
+            setVizMeta(initialData.content);
+        }
+    }, [initialData]);
+
     const MATH_SYSTEM_PROMPT = `
         [SYSTEM_OVERRIDE_INITIATED]
-        You are a Level 1 Logical Processing Engine. Your task is to apply "Deep Extraction Analysis" (تحليل الاستخراج العميق) to the user's mathematical query.
+        You are a Level 1 Logical Processing Engine and a Sophisticated Calculus/Algebra Analyst. 
+        Your task is to apply "Deep Extraction Analysis" (تحليل الاستخراج العميق) to the user's mathematical query.
+        
+        CRITICAL: If the user asks for a derivative, integral, or transformation (e.g., "draw derivative of x^2"), you must FIRST calculate the result (e.g., d/dx x^2 = 2x) and then plot the result.
+        
         DO NOT use over-simplification. Treat the user as a highly intelligent peer.
 
-        First, analyze the query to decide which visualization engine is best.
+        First, analyze the query, perform any necessary calculus/algebra, and decide which visualization engine is best.
         
         Available Engines:
         1. "mathbox": Best for dynamic 3D math presentations, complex calculus.
         2. "threejs": Best for Solid Geometry (3D vectors, lines, planes).
-        3. "functionplot": Best for 2D function plotting, limits, etc.
+        3. "functionplot": Best for 2D function plotting, limits, derivatives, integrals.
         4. "complex": Best for Complex Numbers, Argand diagrams.
         5. "linear_algebra": Best for Matrices, determinants.
 
         Response Format (JSON ONLY):
         {
             "type": "mathbox" | "threejs" | "functionplot" | "complex" | "linear_algebra",
-            "data": { ...specific parameters for the engine... },
-            "explanation": "Arabic explanation formatted USING DEEP EXTRACTION ANALYSIS STRUCTURE",
-            "explanation_en": "English explanation formatted USING DEEP EXTRACTION ANALYSIS STRUCTURE"
+            "data": { 
+                "fn": "string (the main function to plot or result of calculation)",
+                "derivative": "optional string (formula of derivative if relevant)",
+                "vectors": [], "planes": [], "matrix": [], "number": "" // engine specific fields
+            },
+            "explanation": "Arabic explanation including the step-by-step calculus/logic applied",
+            "explanation_en": "English explanation including the step-by-step calculus/logic applied"
         }
 
         CRITICAL: JSON string values MUST NOT include actual newlines. Escape all newlines as \\n.
@@ -80,6 +100,16 @@ const MathAIOrchestrator: React.FC = () => {
 
             const parsed = safeJsonParse<VizMeta>(response, fallback);
             setVizMeta(parsed);
+
+            // Cloud Save
+            if (parsed.type !== 'none') {
+                saveMathActivity({
+                    category: 'ai_lab',
+                    type: parsed.type,
+                    query: prompt,
+                    content: parsed
+                });
+            }
         } catch (err) {
             console.error("AI Visualization Error:", err);
             setVizMeta(null); // Reset on hard error

@@ -44,8 +44,12 @@ const ComplexAlgebraHub: React.FC<ComplexAlgebraHubProps> = ({ data }) => {
                 {/* Argand Diagram SVG */}
                 <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="overflow-visible">
                     {/* Grid */}
-                    <line x1="0" y1={size/2} x2={size} y2={size/2} stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
-                    <line x1={size/2} y1="0" x2={size/2} y2={size} stroke="rgba(255,255,255,0.1)" strokeWidth="1" />
+                    <line x1="0" y1={size/2} x2={size} y2={size/2} stroke="#333" strokeWidth="1" />
+                    <line x1={size/2} y1="0" x2={size/2} y2={size} stroke="#333" strokeWidth="1" />
+                    
+                    {/* Main Axes */}
+                    <line x1="5" y1={size/2} x2={size-5} y2={size/2} stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeDasharray="5 5" />
+                    <line x1={size/2} y1="5" x2={size/2} y2={size-5} stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeDasharray="5 5" />
                     
                     {/* Unit Circle (optional) */}
                     <circle cx={size/2} cy={size/2} r={scale} fill="none" stroke="rgba(0,255,255,0.1)" strokeDasharray="4 2" />
@@ -89,8 +93,8 @@ const ComplexAlgebraHub: React.FC<ComplexAlgebraHubProps> = ({ data }) => {
                 </svg>
 
                 {/* Labels */}
-                <div className="absolute top-0 right-0 text-[10px] text-gray-500 font-bold">Im (j)</div>
-                <div className="absolute bottom-0 left-full ml-2 text-[10px] text-gray-500 font-bold">Re</div>
+                <div className="absolute top-0 right-0 bg-black/60 px-2 py-0.5 rounded border border-white/10 text-[10px] text-gray-400 font-black uppercase tracking-widest">Im (j)</div>
+                <div className="absolute bottom-0 left-full ml-4 bg-black/60 px-2 py-0.5 rounded border border-white/10 text-[10px] text-gray-400 font-black uppercase tracking-widest whitespace-nowrap">Re (Real)</div>
             </div>
 
             <div className="grid grid-cols-2 gap-4 w-full max-w-sm">
