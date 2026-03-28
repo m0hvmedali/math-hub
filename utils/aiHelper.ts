@@ -143,19 +143,21 @@ export async function generateAIContent(prompt: string, systemInstruction: strin
 // Helper to safely parse JSON with aggressive cleanup and fallback merge
 export function safeJsonParse<T>(text: string, fallback: T): T {
     try {
-        // Pre-fix unescaped newlines in JSON strings
-        const cleaned = text.replace(/"((?:\\.|[^"\\])*)"/g, (match, content) => {
+        // Pre-fix unescaped newlines and unquoted hexadecimal colors (like 0xff0000)
+        let cleaned = text.replace(/"((?:\\.|[^"\\])*)"/g, (match, content) => {
             return '"' + content.replace(/\n/g, '\\n').replace(/\r/g, '\\r') + '"';
         });
+        cleaned = cleaned.replace(/(^|[:,\[\s])0x([0-9a-fA-F]+)\b/g, '$1"#$2"');
         const parsed = JSON.parse(cleaned);
         return { ...fallback, ...parsed };
     } catch (e) {
         try {
             // Attempt to fix trailing commas in objects/arrays
-            const fixedText = text.replace(/,\s*([\]}])/g, '$1')
+            let fixedText = text.replace(/,\s*([\]}])/g, '$1')
                                   .replace(/"((?:\\.|[^"\\])*)"/g, (match, content) => {
                                       return '"' + content.replace(/\n/g, '\\n').replace(/\r/g, '\\r') + '"';
                                   });
+            fixedText = fixedText.replace(/(^|[:,\[\s])0x([0-9a-fA-F]+)\b/g, '$1"#$2"');
             const parsed = JSON.parse(fixedText);
             return { ...fallback, ...parsed };
         } catch {

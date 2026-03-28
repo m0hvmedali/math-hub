@@ -116,7 +116,12 @@ const OrganicGraph: React.FC<OrganicGraphProps> = ({ searchQuery, onNodeSelect }
         cyRef.current = cy;
 
         return () => {
-            cy.destroy();
+            if (cy && !cy.destroyed()) {
+                cy.stop(true, true);
+                cy.nodes().stop(true, true);
+                cy.edges().stop(true, true);
+                cy.destroy();
+            }
             cyRef.current = null;
         };
     }, [elements, isLoading, onNodeSelect]);

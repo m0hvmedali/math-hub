@@ -46,6 +46,7 @@ const MathAIOrchestrator: React.FC = () => {
         }
 
         CRITICAL: JSON string values MUST NOT include actual newlines. Escape all newlines as \\n.
+        CRITICAL: For colors, use format "#ff0000" (string), NEVER use JavaScript raw hex numbers like 0xff0000.
         Output ONLY valid JSON.
 
         DEEP EXTRACTION ANALYSIS STRUCTURE (Must be used in explanation/explanation_en):

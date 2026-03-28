@@ -356,21 +356,33 @@ const CosmicGraph: React.FC<CosmicGraphProps> = ({ subjects, searchQuery, search
         cyRef.current = cy;
 
         return () => {
-            cy.destroy();
+            if (cy && !cy.destroyed()) {
+                cy.stop(true, true);
+                cy.nodes().stop(true, true);
+                cy.edges().stop(true, true);
+                cy.destroy();
+            }
             cyRef.current = null;
         };
     }, [linkingMode, linkSource, addManualLink, language]);
 
     // Update elements when they change
     useEffect(() => {
+        let currentLayout: any = null;
         if (cyRef.current && elements.length > 0) {
             try {
+                // Ensure cytoscape instance is not destroyed
+                if (cyRef.current.destroyed()) return;
                 cyRef.current.json({ elements });
-                cyRef.current.layout({ name: 'cose', animate: true, fit: true }).run();
+                currentLayout = cyRef.current.layout({ name: 'cose', animate: true, fit: true });
+                currentLayout.run();
             } catch (e) {
                 console.warn("Cytoscape update failed:", e);
             }
         }
+        return () => {
+            if (currentLayout) currentLayout.stop();
+        };
     }, [elements, linkingMode]);
 
     const [menuPos, setMenuPos] = useState({ x: 0, y: 0 });

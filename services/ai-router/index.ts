@@ -129,11 +129,13 @@ function chunkText(text: string, maxChars = 12000): string[] {
 function cleanJson(raw: string): string {
   if (!raw) return '';
   
-  // 0. Pre-pass: Escape literal newlines with \n when they occur inside double-quoted string values.
-  // This handles models that output "raw" newlines instead of JSON-escaped ones.
+  // 0. Pre-pass: Fix common AI JSON errors
+  // a. Escapes literal newlines with \n when they occur inside double-quoted string values.
   let s = raw.replace(/"((?:\\.|[^"\\])*)"/g, (match, content) => {
     return '"' + content.replace(/\n/g, '\\n').replace(/\r/g, '\\r') + '"';
   });
+  // b. Converts unquoted JavaScript hex formats (e.g. 0xff0000) to string hex colors (e.g. "#ff0000")
+  s = s.replace(/(^|[:,\[\s])0x([0-9a-fA-F]+)\b/g, '$1"#$2"');
 
   s = s.trim();
   
