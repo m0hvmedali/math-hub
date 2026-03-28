@@ -8,6 +8,7 @@ import { Shimmer } from '../ai-elements/shimmer';
 import { OpenIn, OpenInContent, OpenInChatGPT, OpenInTrigger } from '../ai-elements/open-in-chat';
 import { Button } from '../ui/button';
 import { getPollinationsImageUrl, generateScienceScene } from '../../utils/pollinations';
+import { CinematicPresentation } from '../CinematicPresentation';
 
 // Specialized Engines
 import SolidGeometry3D from './ai-engines/SolidGeometry3D';
@@ -32,6 +33,8 @@ const MathAIOrchestrator: React.FC<MathAIOrchestratorProps> = ({ initialData }) 
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [vizMeta, setVizMeta] = useState<VizMeta | null>(null);
     const [isExplanationOpen, setIsExplanationOpen] = useState(true);
+    const [showIntro, setShowIntro] = useState(false);
+    const [introSeen, setIntroSeen] = useState(false);
 
     React.useEffect(() => {
         if (initialData) {
@@ -114,6 +117,9 @@ const MathAIOrchestrator: React.FC<MathAIOrchestratorProps> = ({ initialData }) 
                     content: parsed
                 });
             }
+
+            setShowIntro(true); // Launch cinematic intro
+            setIntroSeen(false);
         } catch (err) {
             console.error("AI Visualization Error:", err);
             setVizMeta(null); // Reset on hard error
@@ -288,6 +294,19 @@ const MathAIOrchestrator: React.FC<MathAIOrchestratorProps> = ({ initialData }) 
                     )}
                 </AnimatePresence>
             </div>
+
+            {showIntro && !introSeen && (
+                <CinematicPresentation 
+                    prompt={`Futuristic 3D mathematical simulation, matrix code raining, neon fractals, complex geometry unfolding, high-tech lab UI, 8k`}
+                    overlayText={language === 'ar' ? 'جاري بناء المحاكاة...' : 'Building Neural Simulation...'}
+                    onComplete={() => {
+                        setShowIntro(false);
+                        setIntroSeen(true);
+                    }}
+                    duration={4000}
+                    canSkip={true}
+                />
+            )}
         </div>
     );
 };

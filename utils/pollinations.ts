@@ -21,6 +21,18 @@ export function getPollinationsImageUrl(prompt: string, options: { width?: numbe
     return `${POLLINATIONS_BASE_IMAGE}${cleanPrompt}?width=${width}&height=${height}&nologo=${nologo}&seed=${seed}&model=flux`;
 }
 
+const POLLINATIONS_KEY = 'sk_2QN0KMQFuzJo5NCVlaIoxMHruxaAAYA8';
+
+/**
+ * Generates a cinematic video URL via Pollinations.
+ * Note: Video generation typically returns an MP4 file.
+ */
+export function getPollinationsVideoUrl(prompt: string) {
+    // Pollinations video works best with English prompts
+    const cleanPrompt = encodeURIComponent(prompt.trim());
+    return `https://gen.pollinations.ai/video/${cleanPrompt}?key=${POLLINATIONS_KEY}`;
+}
+
 /**
  * Helper to generate a standardized prompt for "Scientific/Mathematical" scenes.
  */

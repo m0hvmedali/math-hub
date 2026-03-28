@@ -65,6 +65,7 @@ import AIStudyCompanionPage from './pages/AIStudyCompanionPage';
 import QuietVaultPage from './pages/QuietVaultPage';
 import ModelSettingsPage from './pages/ModelSettingsPage';
 import ContextStitcherModal from './components/ContextStitcherModal';
+import { NeuralGreeting } from './components/NeuralGreeting';
 
 export const AppContext = createContext<{
     subjects: Subject[];
@@ -794,6 +795,7 @@ const App: React.FC = () => {
                 style={{ color: 'var(--text-primary)' }}
             >
                 {user && <Navigation />}
+                <NeuralGreeting user={user} isAr={language === 'ar'} />
                 {user && (
                     <FloatingSpeedDial
                         onOpenCalendar={() => setIsCalendarOpen(true)}

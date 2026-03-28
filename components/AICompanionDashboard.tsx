@@ -4,6 +4,7 @@ import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState,
 import '@xyflow/react/dist/style.css';
 import { Lightbulb, CheckCircle, Navigation2, LayoutGrid, X, ImageDown, Network } from 'lucide-react';
 import { Shimmer } from './ai-elements/shimmer';
+import { CinematicPresentation } from './CinematicPresentation';
 import { OpenIn, OpenInContent, OpenInChatGPT, OpenInTrigger } from './ai-elements/open-in-chat';
 import { Button } from './ui/button';
 
@@ -28,6 +29,8 @@ export const AICompanionDashboard: React.FC<{ onClose?: () => void }> = ({ onClo
     const [evalResult, setEvalResult]         = useState<EvaluatorResult | null>(null);
     const [result, setResult]                 = useState<CompanionContentResult | null>(null);
     const [formData, setFormData]             = useState<AICompanionFormData | null>(null);
+    const [showIntro, setShowIntro]           = useState(false);
+    const [introSeen, setIntroSeen]           = useState(false);
     const [selectedQuizAnswer, setSelectedQuizAnswer] = useState<number | null>(null);
     const [rightTab, setRightTab]             = useState<RightTab>('map');
 
@@ -55,6 +58,8 @@ export const AICompanionDashboard: React.FC<{ onClose?: () => void }> = ({ onClo
             // ── Phase 4: Content Builder Agent ──
             const built = await buildCompanionContent(data.subject, ev, data.preferences, data.language);
             setResult(built);
+            setShowIntro(true); // Launch cinematic intro
+            setIntroSeen(false);
 
             // ── Transform to React Flow nodes/edges ──
             if (built.nodes && built.edges) {
@@ -259,6 +264,19 @@ export const AICompanionDashboard: React.FC<{ onClose?: () => void }> = ({ onClo
                         )}
                     </div>
                 </motion.div>
+            )}
+
+            {showIntro && !introSeen && formData && (
+                <CinematicPresentation 
+                    prompt={`Cinematic data synthesis, geometric patterns, neon glowing lines, blue and purple palette, math visualization, 8k`}
+                    overlayText={isAr ? 'جاري توليف المعرفة...' : 'Synthesizing Knowledge...'}
+                    onComplete={() => {
+                        setShowIntro(false);
+                        setIntroSeen(true);
+                    }}
+                    duration={4000}
+                    canSkip={true}
+                />
             )}
         </div>
     );
