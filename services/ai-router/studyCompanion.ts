@@ -77,13 +77,15 @@ Instructions:
 - Length: ${length}.
 - Language: ${language}.
 - Write a "summary" that directly corrects their missed concepts.
-- List 3-5 actionable "points" (key takeaways).
-- Design a concept map: provide "nodes" (5-8 nodes with id + label) and "edges" (source, target, label).
-- Create 1 multiple-choice "practice_question" with 4 options and answer index (0-3).
+- Create a "header_image_prompt" in EN: a cinematic, high-quality visual description of the topic (e.g. "Space-time curvature with glowing grids").
+- List 3-5 actionable "points", each with a "text" and a "image_prompt" (short EN description for visuals).
+- Design a concept map: provide "nodes" and "edges".
+- Create 1 multiple-choice "practice_question".
         `.trim(),
         fallback: {
             summary: `Core concept summary for: ${topic}`,
-            points: ['Review the fundamentals', 'Practice with examples', 'Test your understanding'],
+            header_image_prompt: `Cinematic 3D render of ${topic}`,
+            points: [{ text: 'Review the fundamentals', image_prompt: 'Foundation icon' }],
             nodes: [{ id: '1', label: topic }],
             edges: [],
             practice_question: {

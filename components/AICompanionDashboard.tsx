@@ -31,8 +31,8 @@ export const AICompanionDashboard: React.FC<{ onClose?: () => void }> = ({ onClo
     const [selectedQuizAnswer, setSelectedQuizAnswer] = useState<number | null>(null);
     const [rightTab, setRightTab]             = useState<RightTab>('map');
 
-    const [nodes, setNodes, onNodesChange] = useNodesState([]);
-    const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+    const [nodes, setNodes, onNodesChange] = useNodesState<any>([]);
+    const [edges, setEdges, onEdgesChange] = useEdgesState<any>([]);
 
     const { infographicRef, exportAsPng } = useInfographicExport();
 
@@ -138,7 +138,7 @@ export const AICompanionDashboard: React.FC<{ onClose?: () => void }> = ({ onClo
                             </p>
                             <p className="text-sm text-gray-200 leading-relaxed">{result.summary}</p>
                             <div className="mt-4 flex justify-end">
-                                <OpenIn query={`Study Topic: ${formData.subject}\n\nSummary: ${result.summary}\n\nKey Points: ${result.points.join(', ')}`}>
+                                <OpenIn query={`Study Topic: ${formData.subject}\n\nSummary: ${result.summary}\n\nKey Points: ${result.points.map((p: any) => p.text).join(', ')}`}>
                                     <OpenInTrigger>
                                         <Button variant="ghost" size="sm" className="h-7 text-[10px] bg-brand-cyan/10 text-brand-cyan border border-brand-cyan/20">
                                             {isAr ? 'تعمق أكثر في ChatGPT' : 'Dive Deeper in ChatGPT'}
@@ -158,10 +158,10 @@ export const AICompanionDashboard: React.FC<{ onClose?: () => void }> = ({ onClo
                                 {isAr ? 'النقاط الرئيسية' : 'Key Takeaways'}
                             </p>
                             <ul className="space-y-2">
-                                {result.points.map((pt, i) => (
+                                {result.points.map((pt: any, i: number) => (
                                     <li key={i} className="flex gap-2 text-sm">
                                         <CheckCircle className="w-4 h-4 text-brand-purple shrink-0 mt-0.5" />
-                                        <span className="text-gray-300">{pt}</span>
+                                        <span className="text-gray-300">{pt.text}</span>
                                     </li>
                                 ))}
                             </ul>

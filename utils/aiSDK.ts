@@ -101,7 +101,11 @@ export const EvaluatorSchema = z.object({
 
 export const CompanionContentSchema = z.object({
     summary: z.string(),
-    points: z.array(z.string()),
+    header_image_prompt: z.string().describe("English prompt for Pollinations cinematic background image"),
+    points: z.array(z.object({
+        text: z.string(),
+        image_prompt: z.string().describe("Short English visual prompt for this point"),
+    })),
     nodes: z.array(z.object({ id: z.string(), label: z.string() })),
     edges: z.array(z.object({
         source: z.string(),

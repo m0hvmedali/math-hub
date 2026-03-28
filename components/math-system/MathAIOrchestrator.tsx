@@ -7,6 +7,7 @@ import { saveMathActivity } from '../../utils/mathPersistence';
 import { Shimmer } from '../ai-elements/shimmer';
 import { OpenIn, OpenInContent, OpenInChatGPT, OpenInTrigger } from '../ai-elements/open-in-chat';
 import { Button } from '../ui/button';
+import { getPollinationsImageUrl, generateScienceScene } from '../../utils/pollinations';
 
 // Specialized Engines
 import SolidGeometry3D from './ai-engines/SolidGeometry3D';
@@ -166,7 +167,21 @@ const MathAIOrchestrator: React.FC<MathAIOrchestratorProps> = ({ initialData }) 
             </div>
 
             {/* Visualization Stage */}
-            <div className="flex-1 relative min-h-[500px] overflow-hidden">
+            <div className="flex-1 relative min-h-[500px] overflow-hidden rounded-[2.5rem] border border-white/5 bg-[#050510]">
+                {/* Pollinations Dynamic Background */}
+                <AnimatePresence>
+                    {(isAnalyzing || vizMeta) && (
+                        <motion.img 
+                            key={isAnalyzing ? 'analyzing' : 'result'}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 0.2 }}
+                            exit={{ opacity: 0 }}
+                            src={getPollinationsImageUrl(generateScienceScene(prompt || 'Mathematics', isAnalyzing ? 'Neural processing network' : 'Scientific visualization'), { width: 1024, height: 600 })}
+                            className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+                        />
+                    )}
+                </AnimatePresence>
+                
                 <AnimatePresence mode="wait">
                     {!vizMeta ? (
                         <motion.div
