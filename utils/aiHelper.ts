@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from "@google/generative-ai";
 import { WeeklySchedule, AnalysisResponse, GradeLevel, MotivationalMessage, VoiceTutorResponse, AiStructuredResponse } from "../types";
 import { routeAI } from '../services/ai-router';
+import { generateSDKObject, EvaluateRecapSchema } from './aiSDK';
 
 
 // Helper to parse raw quote string into Structured Message
@@ -277,7 +278,6 @@ export const evaluateRecap = async (
     subject: string,
     gradeLevel: GradeLevel
 ): Promise<VoiceTutorResponse> => {
-
     const FALLBACK_EVAL: VoiceTutorResponse = {
         score: 85,
         feedback: "أحسنت محاولة جيدة! نظراً لضغط الخدمة حالياً، لا يمكنني التحقق من التفاصيل الدقيقة، لكن استمرارك في الشرح الصوتي ممتاز لتثبيت المعلومة.",
@@ -285,26 +285,20 @@ export const evaluateRecap = async (
         correction: "حاول مراجعة الكتاب للتأكد من التفاصيل."
     };
 
-    const prompt = `
-    الطالب (${gradeLevel}) شرح "${subject}": "${transcript}"
+    return generateSDKObject({
+        schema: EvaluateRecapSchema,
+        system: 'أنت معلم خبير تقيم شرح طالب. أجب بـ JSON دقيق فقط.',
+        prompt: `
+الطالب (${gradeLevel}) شرح "${subject}": "${transcript}"
 
-    المطلوب (JSON):
-    1. "score": درجة الفهم (0-100).
-    2. "feedback": تعليق مشجع (عربي).
-    3. "missingConcepts": قائمة بالمفاهيم المفقودة.
-    4. "correction": تصحيح أي أخطاء علمية.
-    
-    JSON only.
-  `;
-
-    return callWithRetry(async () => {
-        try {
-            const textResponse = await generateAIContent(prompt, "أنت معلم خبير تقيم شرح طالب.");
-            return safeJsonParse<VoiceTutorResponse>(textResponse, FALLBACK_EVAL);
-        } catch (e) {
-            throw e;
-        }
-    }, FALLBACK_EVAL);
+المطلوب:
+1. "score": درجة الفهم (0-100).
+2. "feedback": تعليق مشجع قصير (عربي).
+3. "missingConcepts": قائمة بالمفاهيم المفقودة.
+4. "correction": تصحيح أي أخطاء علمية.
+        `.trim(),
+        fallback: FALLBACK_EVAL,
+    });
 };
 
 // Legacy support for older calls (optional, kept for compatibility if needed elsewhere, 

@@ -1,10 +1,19 @@
-import { routeAI } from './index';
+/**
+ * 🧠 AI Study Companion — Service Layer v2
+ * 
+ * Upgraded to use Vercel AI SDK's generateObject (Zod-validated).
+ * Falls back to routeAI + JSON if SDK is unavailable.
+ */
 
-export interface EvaluatorResult {
-    understanding: 'none' | 'partial' | 'full';
-    missed_concepts: string[];
-    keywords_for_rag: string[];
-}
+import {
+    generateSDKObject,
+    EvaluatorSchema,
+    CompanionContentSchema,
+    type EvaluatorResult,
+    type CompanionContent,
+} from '../../utils/aiSDK';
+
+export type { EvaluatorResult, CompanionContent as CompanionContentResult };
 
 export interface CompanionPreferences {
     length: 'concise' | 'detailed';
@@ -12,117 +21,76 @@ export interface CompanionPreferences {
     tone: 'academic' | 'casual' | 'visual';
 }
 
-export interface CompanionContentResult {
-    summary: string;
-    points: string[];
-    nodes: { id: string; label: string }[];
-    edges: { source: string; target: string; label: string }[];
-    practice_question: { q: string; options: string[]; answer: number };
-}
-
-/**
- * Phase 1 & 2: Evaluate Student Understanding
- */
+// ── Phase 2: Evaluator Agent ─────────────────────────────────────────────────
 export async function evaluateUnderstanding(
-    topic: string, 
-    level: string, 
-    explanation: string, 
+    topic: string,
+    level: string,
+    explanation: string,
     language: 'arabic' | 'english'
 ): Promise<EvaluatorResult> {
-    const prompt = `
-    Analyze the student's explanation for the topic: "${topic}" (Level: ${level}).
-    
-    Student's Explanation: "${explanation}"
-    
-    Determine:
-    1. Their level of understanding (none, partial, full).
-    2. Exactly what concepts they missed or misunderstood.
-    3. Essential keywords to search for to fill these gaps.
-    
-    Respond STRICTLY in JSON:
-    {
-      "understanding": "none" | "partial" | "full",
-      "missed_concepts": ["concept 1", "concept 2"],
-      "keywords_for_rag": ["x", "y"]
-    }
-    Ensure the JSON keys are exactly as requested. Translate concepts into the language: ${language}.
-    `;
+    return generateSDKObject({
+        schema: EvaluatorSchema,
+        system: 'You are an expert instructional designer and cognitive psychologist analyzing student comprehension gaps.',
+        prompt: `
+Analyze the student's explanation for the topic: "${topic}" (Level: ${level}).
 
-    const res = await routeAI({
-        prompt,
-        systemInstruction: "You are an expert instructional designer and cognitive psychologist analyzing student gaps.",
-        task: 'brain',
-        responseFormat: 'json'
-    });
+Student's Explanation: "${explanation}"
 
-    try {
-        return JSON.parse(res.text) as EvaluatorResult;
-    } catch (e) {
-        console.error("Evaluation Parse Error:", e, res.text);
-        return {
+Determine:
+1. Their level of understanding (none, partial, full).
+2. Exactly what concepts they missed or misunderstood.
+3. Essential keywords to search for to fill the gaps.
+
+Translate all concept names and keywords into: ${language}.
+        `.trim(),
+        fallback: {
             understanding: 'partial',
-            missed_concepts: ['Unable to analyze gaps definitively. Please review core concepts.'],
-            keywords_for_rag: [topic]
-        };
-    }
+            missed_concepts: ['Unable to analyze. Please review core concepts.'],
+            keywords_for_rag: [topic],
+        },
+    });
 }
 
-/**
- * Phase 4: Build Comprehensive Learning Content
- */
+// ── Phase 4: Content Builder Agent ──────────────────────────────────────────
 export async function buildCompanionContent(
     topic: string,
     evalResults: EvaluatorResult,
     prefs: CompanionPreferences,
     language: 'arabic' | 'english'
-): Promise<CompanionContentResult> {
-    
-    const toneTarget = prefs.tone === 'casual' ? 'friendly, relatable, and simple' : 
-                       prefs.tone === 'visual' ? 'highly descriptive and metaphorical' : 'academic and formal';
+): Promise<CompanionContent> {
+    const tone  = prefs.tone === 'casual' ? 'friendly and simple' :
+                  prefs.tone === 'visual' ? 'highly descriptive and metaphorical' : 'academic and formal';
+    const length = prefs.length === 'concise' ? 'very brief and bulleted' : 'detailed and comprehensive';
 
-    const lengthTarget = prefs.length === 'concise' ? 'very brief, bulleted' : 'detailed, comprehensive';
+    return generateSDKObject({
+        schema: CompanionContentSchema,
+        system: 'You are a world-class tutor. Output ONLY a structured educational JSON payload. Be precise and concise.',
+        prompt: `
+Build a structured learning response to address a student's knowledge gaps.
 
-    const prompt = `
-    Build a structured learning response to address a student's knowledge gaps.
-    
-    Topic: "${topic}"
-    Student's current understanding: ${evalResults.understanding}.
-    Concepts they missed: ${evalResults.missed_concepts.join(', ')}.
-    
-    Instructions:
-    1. Tone: ${toneTarget}.
-    2. Length: ${lengthTarget}.
-    3. Language: ${language}.
-    4. Create a 'Summary' that directly corrects their missed concepts.
-    5. Create 3-5 'points' of key takeaways.
-    6. Design a Map Graph. Provide 'nodes' (id, label) and 'edges' (source, target, label) representing the concepts.
-    7. Create 1 multiple-choice 'practice_question' to test their understanding.
-    
-    Respond STRICTLY in JSON:
-    {
-      "summary": "...",
-      "points": ["...", "..."],
-      "nodes": [{"id": "1", "label": "Concept A"}],
-      "edges": [{"source": "1", "target": "2", "label": "relates to"}],
-      "practice_question": {
-          "q": "Question here?",
-          "options": ["A", "B", "C", "D"],
-          "answer": 0 // index of correct option
-      }
-    }
-    `;
+Topic: "${topic}"
+Student understanding level: ${evalResults.understanding}.
+Concepts they missed: ${evalResults.missed_concepts.join(', ')}.
 
-    const res = await routeAI({
-        prompt,
-        systemInstruction: "You are a world-class tutor generating precise, structured educational payloads. Output ONLY valid JSON.",
-        task: 'lesson_explanation',
-        responseFormat: 'json'
+Instructions:
+- Tone: ${tone}.
+- Length: ${length}.
+- Language: ${language}.
+- Write a "summary" that directly corrects their missed concepts.
+- List 3-5 actionable "points" (key takeaways).
+- Design a concept map: provide "nodes" (5-8 nodes with id + label) and "edges" (source, target, label).
+- Create 1 multiple-choice "practice_question" with 4 options and answer index (0-3).
+        `.trim(),
+        fallback: {
+            summary: `Core concept summary for: ${topic}`,
+            points: ['Review the fundamentals', 'Practice with examples', 'Test your understanding'],
+            nodes: [{ id: '1', label: topic }],
+            edges: [],
+            practice_question: {
+                q: `What is the core principle of ${topic}?`,
+                options: ['Option A', 'Option B', 'Option C', 'Option D'],
+                answer: 0,
+            },
+        },
     });
-
-    try {
-        return JSON.parse(res.text) as CompanionContentResult;
-    } catch (e) {
-        console.error("Content Build Parse Error:", e, res.text);
-        throw new Error("Failed to build reliable JSON educational content structure.");
-    }
 }
