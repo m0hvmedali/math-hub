@@ -160,12 +160,19 @@ function cleanJson(raw: string): string {
   s = s.slice(start, end + 1);
 
   // 2. Technical Polish: Remove common AI JSON errors
-  // a. Escapes literal newlines inside strings
+  // a. Escapes literal newlines and control chars inside strings
   s = s.replace(/"((?:\\.|[^"\\])*)"/g, (match, content) => {
-    return '"' + content.replace(/\n/g, '\\n').replace(/\r/g, '\\r') + '"';
+    return '"' + content
+      .replace(/\n/g, '\\n')
+      .replace(/\r/g, '\\r')
+      .replace(/\t/g, '\\t')
+      + '"';
   });
   // b. Remove trailing commas
   s = s.replace(/,\s*([\]}])/g, '$1');
+
+  // c. Remove accidental AI prefixes that might have slipped into the slice
+  s = s.replace(/^[^{}\[\]]*([{\[])/g, '$1'); 
 
   return s;
 }

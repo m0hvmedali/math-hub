@@ -23,10 +23,29 @@ const getGoogleProvider = () => {
 
 const GOOGLE_MODEL_ID = 'gemini-2.0-flash';
 
+// ── Deep Merge Utility (for JSON Healing) ──────────────────────────────────
+function deepMerge<T>(target: T, source: any): T {
+    const isObject = (obj: any) => obj && typeof obj === 'object' && !Array.isArray(obj);
+    if (!isObject(target) || !isObject(source)) return source ?? target;
+
+    const result = { ...target } as any;
+    Object.keys(source).forEach(key => {
+        const targetValue = result[key];
+        const sourceValue = source[key];
+        if (isObject(targetValue) && isObject(sourceValue)) {
+            result[key] = deepMerge(targetValue, sourceValue);
+        } else {
+            result[key] = sourceValue ?? targetValue;
+        }
+    });
+    return result;
+}
+
 // ── generateObject: Type-Safe Structured Output ─────────────────────────────
 /**
  * Generates a structured object guaranteed to match the Zod schema.
  * Falls back to routeAI + manual JSON parse on failure.
+ * Incorporates 'JSON Healing' (merging AI response with fallback) for resilience.
  */
 export async function generateSDKObject<T>(options: {
     schema: z.ZodType<T>;
@@ -34,20 +53,49 @@ export async function generateSDKObject<T>(options: {
     system?: string;
     fallback: T;
 }): Promise<{ object: T; provider: string }> {
+    const template = JSON.stringify(options.fallback, null, 2);
+    const system = (options.system || '') + 
+        `\n\nCRITICAL: Respond ONLY with a valid raw JSON object matching this EXACT template structure:
+${template}
+
+Instructions:
+- Output RAW JSON ONLY.
+- No conversational filler, no markdown blocks (\`\`\`), no headers (###).
+- Ensure all keys match the template exactly.
+- If unsure, use the default values from the template provided.`;
+
     try {
         const res = await routeAI({
             prompt: options.prompt,
-            systemInstruction: (options.system || '') + "\n\nCRITICAL: Respond ONLY with a valid raw JSON object. No conversational filler, no markdown blocks (```), no headers (###). The response must be parsable by JSON.parse() immediately.",
+            systemInstruction: system,
             task: 'formatting',
             responseFormat: 'json',
         });
         
+        // 1. Initial Parse
+        let rawObj: any;
+        try {
+            rawObj = JSON.parse(res.text);
+        } catch (pErr) {
+            console.warn('[AI SDK] Initial JSON.parse failed, retry with cleaning:', pErr);
+            throw pErr; // Let the outer catch handle it
+        }
+
+        // 2. Enum Normalization (Auto-Fix 'Partial' -> 'partial')
+        if (rawObj.understanding && typeof rawObj.understanding === 'string') {
+            rawObj.understanding = rawObj.understanding.toLowerCase();
+        }
+
+        // 3. JSON Healing (Safe Parse + Deep Merge)
+        const healed = deepMerge(options.fallback, rawObj);
+        const validated = options.schema.parse(healed);
+
         return { 
-            object: options.schema.parse(JSON.parse(res.text)), 
+            object: validated as T, 
             provider: res.provider 
         };
     } catch (err) {
-        console.error('[AI SDK] Resilience route failed:', err);
+        console.error('[AI SDK] Resilience route/validation failed (attempting fallback):', err);
         return { object: options.fallback, provider: 'fallback-static' };
     }
 }
