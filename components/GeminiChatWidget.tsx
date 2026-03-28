@@ -4,6 +4,9 @@ import { useHubCore, assistant } from '../utils/HubCore';
 import { routeAI, generateText } from '../services/ai-router';
 import { SparkleIcon } from './Icons';
 import MarkdownRenderer from './MarkdownRenderer';
+import { Shimmer } from './ai-elements/shimmer';
+import { OpenIn, OpenInContent, OpenInChatGPT, OpenInTrigger } from './ai-elements/open-in-chat';
+import { Button } from './ui/button';
 
 interface Message {
     role: 'user' | 'assistant';
@@ -161,7 +164,24 @@ ${contentSummary ? `ملخص محتوى الدرس: ${contentSummary}` : ''}
                                 </div>
                             )}
                             {msg.role === 'assistant' ? (
-                                <MarkdownRenderer content={msg.content} />
+                                <>
+                                    <MarkdownRenderer content={msg.content} />
+                                    {i === messages.length - 1 && !isLoading && (
+                                        <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between gap-2">
+                                            <span className="text-[10px] text-gray-400 font-medium">هل تريد معرفة المزيد؟</span>
+                                            <OpenIn query={`Context: ${systemPrompt}\n\nUser: ${messages[i-1]?.content || ''}\n\nAssistant: ${msg.content}`}>
+                                                <OpenInTrigger>
+                                                    <Button variant="ghost" size="sm" className="h-7 px-2 text-[9px] bg-brand-cyan/10 text-brand-cyan hover:bg-brand-cyan/20 border border-brand-cyan/20">
+                                                        فتح في ChatGPT
+                                                    </Button>
+                                                </OpenInTrigger>
+                                                <OpenInContent>
+                                                    <OpenInChatGPT />
+                                                </OpenInContent>
+                                            </OpenIn>
+                                        </div>
+                                    )}
+                                </>
                             ) : (
                                 msg.content
                             )}
@@ -170,12 +190,12 @@ ${contentSummary ? `ملخص محتوى الدرس: ${contentSummary}` : ''}
                 ))}
                 {isLoading && (
                     <div className="flex justify-start">
-                        <div className="bg-[#1a1a1a] border border-white/5 px-4 py-3 rounded-2xl rounded-bl-sm flex items-center gap-3">
-                            <div className="flex gap-1.5">
-                                {[0, 1, 2].map(i => (
-                                    <div key={i} className="w-1.5 h-1.5 rounded-full bg-brand-cyan animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
-                                ))}
+                        <div className="bg-[#1a1a1a] border border-white/5 px-4 py-3 rounded-2xl rounded-bl-sm max-w-[85%]">
+                            <div className="flex items-center gap-2 mb-2">
+                                <SparkleIcon className="w-3 h-3 text-brand-cyan animate-spin" />
+                                <span className="text-[9px] font-black text-brand-cyan uppercase tracking-widest leading-none">Processing</span>
                             </div>
+                            <Shimmer className="text-xs text-gray-400">جاري تحليل المنطق الرياضي الأعمق...</Shimmer>
                         </div>
                     </div>
                 )}

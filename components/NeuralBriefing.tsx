@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { AppContext } from '../App';
 import { generateText } from '../services/ai-router';
+import { Shimmer } from './ai-elements/shimmer';
 import { SparkleIcon, ClockIcon, TargetIcon } from './Icons';
 import { calendar } from '../services/platform-sdk';
 
@@ -60,11 +61,15 @@ ${eventsSummary}
 
     if (isLoading) {
         return (
-            <div className="animate-pulse flex items-center gap-4 p-6 bg-white/5 rounded-3xl border border-white/10">
-                <div className="w-10 h-10 bg-brand-cyan/20 rounded-full" />
-                <div className="flex-1 space-y-2">
-                    <div className="h-4 bg-white/10 rounded w-3/4" />
-                    <div className="h-3 bg-white/5 rounded w-1/2" />
+            <div className="flex items-center gap-4 p-8 bg-white/5 rounded-[2.5rem] border border-white/10">
+                <div className="w-12 h-12 bg-brand-cyan/20 rounded-2xl flex items-center justify-center">
+                    <SparkleIcon className="w-6 h-6 text-brand-cyan animate-pulse" />
+                </div>
+                <div className="flex-1 space-y-3">
+                    <Shimmer className="h-4 text-brand-cyan/40 font-black uppercase text-[10px] tracking-[0.3em]">
+                        Syncing Neural Nodes...
+                    </Shimmer>
+                    <Shimmer className="h-6 w-3/4 rounded-lg" />
                 </div>
             </div>
         );

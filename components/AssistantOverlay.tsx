@@ -3,6 +3,9 @@ import { AppContext } from '../App';
 import { assistant } from '../utils/HubCore';
 import { CommandIcon, SearchIcon, ActivityIcon, SparkleIcon } from './Icons';
 import { generateText } from '../services/ai-router';
+import { Shimmer } from './ai-elements/shimmer';
+import { OpenIn, OpenInContent, OpenInChatGPT, OpenInTrigger } from './ai-elements/open-in-chat';
+import { Button } from './ui/button';
 
 interface AssistantOverlayProps {
   isOpen: boolean;
@@ -130,9 +133,15 @@ const AssistantOverlay: React.FC<AssistantOverlayProps> = ({ isOpen, onClose }) 
                 <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br from-brand-purple to-brand-cyan flex items-center justify-center text-xl shadow-glow-brand ${isAiThinking ? 'animate-pulse' : 'group-hover/ai:rotate-12 transition-transform'}`}>
                     {isAiThinking ? '🧠' : <SparkleIcon className="w-6 h-6 text-white" />}
                 </div>
-                <div className="text-left">
+                <div className="text-left flex-1">
                     <h4 className="text-white font-black text-lg">{isAiThinking ? (language === 'ar' ? 'جاري التفكير...' : 'Brain is active...') : (language === 'ar' ? 'اسأل الذكاء الاصطناعي' : 'Ask AI Brain')}</h4>
-                    <p className="text-sm text-gray-500 mt-1">"{query}"</p>
+                    {isAiThinking ? (
+                        <Shimmer className="text-sm text-brand-cyan/70 font-bold mt-1">
+                            {language === 'ar' ? 'جاري تحليل المنطق وربط العقد المعرفية...' : 'Analyzing logic and connecting knowledge nodes...'}
+                        </Shimmer>
+                    ) : (
+                        <p className="text-sm text-gray-500 mt-1">"{query}"</p>
+                    )}
                 </div>
                 <div className="ml-auto bg-brand-cyan/10 text-brand-cyan px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border border-brand-cyan/20">
                     Press Enter to interpret

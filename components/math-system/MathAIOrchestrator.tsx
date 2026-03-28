@@ -4,6 +4,9 @@ import { Sparkles, Send, Brain, ChevronRight, RotateCcw, MessageSquare, X } from
 import { AppContext } from '../../App';
 import { generateAIContent, safeJsonParse } from '../../utils/aiHelper';
 import { saveMathActivity } from '../../utils/mathPersistence';
+import { Shimmer } from '../ai-elements/shimmer';
+import { OpenIn, OpenInContent, OpenInChatGPT, OpenInTrigger } from '../ai-elements/open-in-chat';
+import { Button } from '../ui/button';
 
 // Specialized Engines
 import SolidGeometry3D from './ai-engines/SolidGeometry3D';
@@ -174,16 +177,26 @@ const MathAIOrchestrator: React.FC<MathAIOrchestratorProps> = ({ initialData }) 
                             className="absolute inset-0 flex flex-col items-center justify-center text-center p-12"
                         >
                             <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mb-6 border border-white/10">
-                                <Brain className="w-10 h-10 text-gray-600" />
+                                {isAnalyzing ? (
+                                    <RotateCcw className="w-10 h-10 text-brand-cyan animate-spin" />
+                                ) : (
+                                    <Brain className="w-10 h-10 text-gray-600" />
+                                )}
                             </div>
                             <h3 className="text-lg font-bold text-gray-400 mb-2">
-                                {language === 'ar' ? 'في انتظار سؤالك' : 'Awaiting your question'}
+                                {isAnalyzing ? (language === 'ar' ? 'جاري التحليل المنطقي' : 'Analyzing Logic') : (language === 'ar' ? 'في انتظار سؤالك' : 'Awaiting your question')}
                             </h3>
-                            <p className="text-xs text-gray-600 max-w-xs">
-                                {language === 'ar' 
-                                    ? 'سأقوم بتحليل السؤال واختيار أفضل محرك رسومي لشرحه بشكل تفاعلي.'
-                                    : 'I will analyze your question and pick the best graphics engine to explain it interactively.'}
-                            </p>
+                            {isAnalyzing ? (
+                                <Shimmer className="text-sm text-brand-cyan/70 font-medium">
+                                    {language === 'ar' ? 'جاري استخراج المعطيات وبناء المحاكاة الرسومية...' : 'Extracting data and building graphical simulation...'}
+                                </Shimmer>
+                            ) : (
+                                <p className="text-xs text-gray-600 max-w-xs">
+                                    {language === 'ar' 
+                                        ? 'سأقوم بتحليل السؤال واختيار أفضل محرك رسومي لشرحه بشكل تفاعلي.'
+                                        : 'I will analyze your question and pick the best graphics engine to explain it interactively.'}
+                                </p>
+                            )}
                         </motion.div>
                     ) : (
                         <motion.div
@@ -220,6 +233,23 @@ const MathAIOrchestrator: React.FC<MathAIOrchestratorProps> = ({ initialData }) 
                                             </div>
                                             <div className="text-sm font-medium leading-relaxed whitespace-pre-wrap text-gray-200">
                                                 {language === 'ar' ? vizMeta.explanation : vizMeta.explanation_en}
+                                            </div>
+
+                                            <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between gap-3">
+                                                <div>
+                                                    <p className="text-[11px] text-white font-bold">{language === 'ar' ? 'هل تريد التعمق أكثر؟' : 'Want to dive deeper?'}</p>
+                                                    <p className="text-[9px] text-gray-500">{language === 'ar' ? 'اكتشف التحليل البرمجي والرياضي في ChatGPT' : 'Explore code and math analysis in ChatGPT'}</p>
+                                                </div>
+                                                <OpenIn query={`Query: ${prompt}\n\nMath Logic: ${vizMeta.explanation}\n\nSystem Prompt: ${MATH_SYSTEM_PROMPT}`}>
+                                                    <OpenInTrigger>
+                                                        <Button variant="outline" size="sm" className="h-8 px-3 text-[10px] bg-brand-cyan/10 text-brand-cyan border-brand-cyan/30 hover:bg-brand-cyan/20">
+                                                            Deep Dive in ChatGPT
+                                                        </Button>
+                                                    </OpenInTrigger>
+                                                    <OpenInContent>
+                                                        <OpenInChatGPT />
+                                                    </OpenInContent>
+                                                </OpenIn>
                                             </div>
                                         </motion.div>
                                     )}

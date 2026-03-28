@@ -5,6 +5,9 @@ import { generateAIContent } from '../utils/aiHelper';
 import { AppContext } from '../App';
 import { useCosmicStore } from '../store/useCosmicStore';
 import { supabase } from '../supabaseClient';
+import { Shimmer } from './ai-elements/shimmer';
+import { OpenIn, OpenInContent, OpenInChatGPT, OpenInTrigger } from './ai-elements/open-in-chat';
+import { Button } from './ui/button';
 
 interface GlobalSearchModalProps {
     isOpen: boolean;
@@ -206,9 +209,9 @@ const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, onClose, 
                                 <div className="absolute inset-0 border-4 border-accent-blue border-t-transparent rounded-full animate-spin"></div>
                                 <GlobeIcon className="absolute inset-4 w-12 h-12 text-accent-blue opacity-50" />
                             </div>
-                            <div className="text-white font-bold uppercase tracking-widest text-xs animate-pulse">
+                            <Shimmer className="text-white font-bold uppercase tracking-widest text-xs">
                                 Deep Scanning Web Patterns...
-                            </div>
+                            </Shimmer>
                         </div>
                     ) : (
                         <>
@@ -288,6 +291,21 @@ const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, onClose, 
                                                     </div>
                                                 )}
                                                 <div className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</div>
+                                                {msg.role === 'ai' && (
+                                                    <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between gap-3">
+                                                        <span className="text-[10px] text-white/40 font-medium whitespace-nowrap">Explore more?</span>
+                                                        <OpenIn query={`Context: ${chatHistory.slice(0, i).map(m => `${m.role}: ${m.content}`).join('\n')}\n\nLast Logic: ${msg.content}`}>
+                                                            <OpenInTrigger>
+                                                                <Button variant="ghost" size="sm" className="h-7 px-2 text-[9px] bg-white/5 border border-white/10 hover:bg-white/10 text-brand-purple">
+                                                                    Open in ChatGPT
+                                                                </Button>
+                                                            </OpenInTrigger>
+                                                            <OpenInContent>
+                                                                <OpenInChatGPT />
+                                                            </OpenInContent>
+                                                        </OpenIn>
+                                                    </div>
+                                                )}
                                             </div>
                                         </div>
                                     ))}

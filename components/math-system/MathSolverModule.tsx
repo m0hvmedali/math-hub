@@ -11,6 +11,9 @@ import {
   CheckCircle2,
   AlertCircle
 } from 'lucide-react';
+import { Shimmer } from '../ai-elements/shimmer';
+import { OpenIn, OpenInContent, OpenInChatGPT, OpenInTrigger } from '../ai-elements/open-in-chat';
+import { Button } from '../ui/button';
 // @ts-ignore
 import nerdamer from 'nerdamer';
 import 'nerdamer/Algebra';
@@ -149,6 +152,18 @@ const MathSolverModule: React.FC = () => {
                                         __html: katex.renderToString(result.latex, { throwOnError: false, displayMode: true }) 
                                     }}
                                 />
+                                <div className="mt-4 pt-4 border-t border-white/5 flex justify-end">
+                                    <OpenIn query={`Math Expression: ${input}\n\nSymbolic Solution: ${result.text}\n\nPlease provide a deep logical breakdown of this solution using the Deep Extraction Analysis protocol.`}>
+                                        <OpenInTrigger>
+                                            <Button variant="ghost" size="sm" className="h-7 text-[10px] bg-brand-purple/10 text-brand-purple border border-brand-purple/20">
+                                                {language === 'ar' ? 'تحليل عميق في ChatGPT' : 'Deep Analysis in ChatGPT'}
+                                            </Button>
+                                        </OpenInTrigger>
+                                        <OpenInContent>
+                                            <OpenInChatGPT />
+                                        </OpenInContent>
+                                    </OpenIn>
+                                </div>
                             </div>
                         )}
                     </motion.div>

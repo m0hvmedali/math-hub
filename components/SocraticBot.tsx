@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { SparkleIcon, SendIcon } from './Icons';
+import { OpenIn, OpenInContent, OpenInChatGPT, OpenInTrigger } from './ai-elements/open-in-chat';
+import { Button } from './ui/button';
 
 interface SocraticBotProps {
     lessonId: string;
@@ -62,6 +64,20 @@ const SocraticBot: React.FC<SocraticBotProps> = ({ lessonId, lessonName, onClose
                                 : 'bg-accent-blue text-white rounded-tr-none shadow-lg shadow-accent-blue/20'
                             }`}>
                             {m.text}
+                            {m.isAi && idx === messages.length - 1 && (
+                                <div className="mt-3 pt-2 border-t border-white/5 flex justify-end">
+                                    <OpenIn query={`Socratic Context: ${lessonName}\n\nDialogue History: ${messages.map(msg => msg.text).join(' | ')}`}>
+                                        <OpenInTrigger>
+                                            <Button variant="ghost" size="sm" className="h-6 text-[9px] bg-accent-cyan/10 text-accent-cyan border border-accent-cyan/20">
+                                                Explore in ChatGPT
+                                            </Button>
+                                        </OpenInTrigger>
+                                        <OpenInContent>
+                                            <OpenInChatGPT />
+                                        </OpenInContent>
+                                    </OpenIn>
+                                </div>
+                            )}
                         </div>
                     </div>
                 ))}

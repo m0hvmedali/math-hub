@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, Trash2, ExternalLink, RefreshCw, Calculator, LineChart, BrainCircuit, Box } from 'lucide-react';
 import { fetchMathActivities, deleteMathActivity, MathActivity, MathCategory } from '../../utils/mathPersistence';
 import { AppContext } from '../../App';
+import { OpenIn, OpenInContent, OpenInChatGPT, OpenInTrigger } from '../ai-elements/open-in-chat';
+import { Button } from '../ui/button';
 
 interface MathHistoryModuleProps {
     onRestore?: (activity: MathActivity) => void;
@@ -106,9 +108,23 @@ const MathHistoryModule: React.FC<MathHistoryModuleProps> = ({ onRestore }) => {
                                         {item.query}
                                     </h3>
                                     {item.category === 'ai_lab' && item.type && (
-                                        <div className="mt-2 inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-brand-cyan/10 border border-brand-cyan/20">
-                                            <div className="w-1 h-1 rounded-full bg-brand-cyan" />
-                                            <span className="text-[9px] font-black text-brand-cyan uppercase">Engine: {item.type}</span>
+                                        <div className="mt-2 flex items-center justify-between gap-1.5">
+                                            <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-brand-cyan/10 border border-brand-cyan/20">
+                                                <div className="w-1 h-1 rounded-full bg-brand-cyan" />
+                                                <span className="text-[9px] font-black text-brand-cyan uppercase">Engine: {item.type}</span>
+                                            </div>
+                                            <div onClick={(e) => e.stopPropagation()}>
+                                                <OpenIn query={`History Item (${item.category}): ${item.query}\n\nPlease analyze this historical query using the Deep Extraction Analysis protocol.`}>
+                                                    <OpenInTrigger>
+                                                        <Button variant="ghost" size="sm" className="h-6 text-[9px] bg-white/5 border border-white/5 hover:border-brand-purple/30 text-gray-500 hover:text-brand-purple">
+                                                            Recall with ChatGPT
+                                                        </Button>
+                                                    </OpenInTrigger>
+                                                    <OpenInContent>
+                                                        <OpenInChatGPT />
+                                                    </OpenInContent>
+                                                </OpenIn>
+                                            </div>
                                         </div>
                                     )}
                                 </div>

@@ -3,6 +3,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, BackgroundVariant } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { Lightbulb, CheckCircle, Navigation2, LayoutGrid, X, ImageDown, Network } from 'lucide-react';
+import { Shimmer } from './ai-elements/shimmer';
+import { OpenIn, OpenInContent, OpenInChatGPT, OpenInTrigger } from './ai-elements/open-in-chat';
+import { Button } from './ui/button';
 
 import { AICompanionInputForm, AICompanionFormData } from './AICompanionInputForm';
 import { evaluateUnderstanding, buildCompanionContent } from '../services/ai-router/studyCompanion';
@@ -102,9 +105,12 @@ export const AICompanionDashboard: React.FC<{ onClose?: () => void }> = ({ onClo
                     <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} className="relative z-10 w-full">
                         <AICompanionInputForm onSubmit={handleFormSubmit} isLoading={isLoading} />
                         {isLoading && (
-                            <p className="text-center text-accent-cyan mt-6 animate-pulse font-black tracking-widest uppercase text-sm">
-                                {statusText}
-                            </p>
+                            <div className="mt-8 flex flex-col items-center">
+                                <Shimmer className="text-center text-brand-cyan font-black tracking-widest uppercase text-sm mb-2">
+                                    {statusText}
+                                </Shimmer>
+                                <div className="text-[10px] text-gray-500 animate-pulse">Neural Pathfinding in Progress...</div>
+                            </div>
                         )}
                     </motion.div>
                 </AnimatePresence>
@@ -131,6 +137,18 @@ export const AICompanionDashboard: React.FC<{ onClose?: () => void }> = ({ onClo
                                 {isAr ? 'الملخص' : 'Summary'}
                             </p>
                             <p className="text-sm text-gray-200 leading-relaxed">{result.summary}</p>
+                            <div className="mt-4 flex justify-end">
+                                <OpenIn query={`Study Topic: ${formData.subject}\n\nSummary: ${result.summary}\n\nKey Points: ${result.points.join(', ')}`}>
+                                    <OpenInTrigger>
+                                        <Button variant="ghost" size="sm" className="h-7 text-[10px] bg-brand-cyan/10 text-brand-cyan border border-brand-cyan/20">
+                                            {isAr ? 'تعمق أكثر في ChatGPT' : 'Dive Deeper in ChatGPT'}
+                                        </Button>
+                                    </OpenInTrigger>
+                                    <OpenInContent>
+                                        <OpenInChatGPT />
+                                    </OpenInContent>
+                                </OpenIn>
+                            </div>
                         </div>
 
                         {/* Key Takeaways */}

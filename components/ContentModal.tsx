@@ -9,6 +9,9 @@ import remarkGfm from 'remark-gfm';
 import { supabase } from '../supabaseClient';
 import { getAiResponse } from '../utils/aiHelper';
 import { detectMagicLink, MagicLinkResult } from '../utils/detectMagicLink';
+import { Shimmer } from './ai-elements/shimmer';
+import { OpenIn, OpenInContent, OpenInChatGPT, OpenInTrigger } from './ai-elements/open-in-chat';
+import { Button } from './ui/button';
 import RichTextEditor from './RichTextEditor';
 import WhiteboardBlock from './WhiteboardBlock';
 import { useGoogleOmni } from '../services/platform-sdk';
@@ -552,8 +555,15 @@ const ContentModal: React.FC<ContentModalProps> = ({ isOpen, onClose, onSave }) 
                                     placeholder="Write your notes in Markdown..."
                                     className={`w-full h-full p-3 border border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none text-white transition-colors ${selectedColor}`}
                                 />
+                                {isSummarizing && (
+                                    <div className="absolute inset-x-0 bottom-12 bg-black/80 backdrop-blur-md p-3 border-y border-white/10 flex flex-col items-center">
+                                        <Shimmer className="text-[10px] text-brand-cyan font-black uppercase tracking-widest">
+                                            Generating Neural Summary...
+                                        </Shimmer>
+                                    </div>
+                                )}
                                 <button onClick={handleSummarize} disabled={isSummarizing} className="absolute bottom-3 right-3 bg-indigo-600 text-white p-2 rounded-full shadow-lg hover:bg-indigo-700 disabled:bg-gray-500 flex items-center">
-                                    <SparkleIcon className={`w-5 h-5 ${isSummarizing ? 'animate-spin' : ''}`} />
+                                    <SparkleIcon className={`size-5 ${isSummarizing ? 'animate-spin' : ''}`} />
                                 </button>
                             </div>
                             <div className={`prose prose-invert p-3 rounded-md overflow-y-auto border border-gray-700 transition-colors ${selectedColor}`}>
