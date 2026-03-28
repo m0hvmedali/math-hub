@@ -22,6 +22,7 @@ import WisdomProgress from '../components/WisdomProgress';
 import NeuralBriefing from '../components/NeuralBriefing';
 import { useWisdomRotation, localQuotes } from '../hooks/useWisdomRotation';
 import { motion, AnimatePresence } from 'framer-motion';
+import NeuralSyncHub from '../components/NeuralSyncHub';
 
 const DashboardPage: React.FC = () => {
     const { 
@@ -253,6 +254,11 @@ const DashboardPage: React.FC = () => {
                 onClose={() => setShowGlobalSearch(false)}
                 query={searchQuery}
             />
+
+            {/* Unified Identity/Sync Awareness */}
+            <div className="max-w-5xl mx-auto px-6 md:px-12 relative z-[70] mt-12 mb-8">
+                 <NeuralSyncHub />
+            </div>
 
             {/* Consolidated Wisdom Hub (30s Rotation) */}
             <div className="max-w-5xl mx-auto px-6 md:px-12 mb-12 relative z-[70] -mt-12">

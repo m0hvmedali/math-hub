@@ -360,6 +360,34 @@ const App: React.FC = () => {
         }
     }, [subjects, customNodes, isLoading]);
 
+    // ═══ Neural Identity Persistence ═══
+    useEffect(() => {
+        if (!supabase) return;
+
+        // 1. Initial Check
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            if (session?.user) {
+                const userId = session.user.email || session.user.id;
+                setUser(userId);
+                localStorage.setItem('study_user', userId);
+            }
+        });
+
+        // 2. Continuous Listener
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            if (session?.user) {
+                const userId = session.user.email || session.user.id;
+                setUser(userId);
+                localStorage.setItem('study_user', userId);
+            } else if (_event === 'SIGNED_OUT') {
+                setUser(null);
+                localStorage.removeItem('study_user');
+            }
+        });
+
+        return () => subscription.unsubscribe();
+    }, []);
+
     // ═══ Dynamic Theme Auto-Rotation Engine ═══
     useEffect(() => {
         if (!user) return;
