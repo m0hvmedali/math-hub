@@ -45,6 +45,9 @@ const MathAIOrchestrator: React.FC = () => {
             "explanation_en": "English explanation formatted USING DEEP EXTRACTION ANALYSIS STRUCTURE"
         }
 
+        CRITICAL: JSON string values MUST NOT include actual newlines. Escape all newlines as \\n.
+        Output ONLY valid JSON.
+
         DEEP EXTRACTION ANALYSIS STRUCTURE (Must be used in explanation/explanation_en):
         [الحالة الابتدائية (Hook/Intro State)]: <1 sentence core of the problem>
         [التفكيك التسلسلي (Body Execution)]:

@@ -128,7 +128,14 @@ function chunkText(text: string, maxChars = 12000): string[] {
  */
 function cleanJson(raw: string): string {
   if (!raw) return '';
-  let s = raw.trim();
+  
+  // 0. Pre-pass: Escape literal newlines with \n when they occur inside double-quoted string values.
+  // This handles models that output "raw" newlines instead of JSON-escaped ones.
+  let s = raw.replace(/"((?:\\.|[^"\\])*)"/g, (match, content) => {
+    return '"' + content.replace(/\n/g, '\\n').replace(/\r/g, '\\r') + '"';
+  });
+
+  s = s.trim();
   
   // 1. Remove markdown code fences
   const fenceMatch = s.match(/```(?:json)?\s*([\s\S]*?)```/);

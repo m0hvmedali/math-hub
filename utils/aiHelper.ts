@@ -143,14 +143,19 @@ export async function generateAIContent(prompt: string, systemInstruction: strin
 // Helper to safely parse JSON with aggressive cleanup and fallback merge
 export function safeJsonParse<T>(text: string, fallback: T): T {
     try {
-        // Since routeAI now cleans markdown fences and extracts the object,
-        // we mainly handle potential trailing commas or minor fixable issues.
-        const parsed = JSON.parse(text);
+        // Pre-fix unescaped newlines in JSON strings
+        const cleaned = text.replace(/"((?:\\.|[^"\\])*)"/g, (match, content) => {
+            return '"' + content.replace(/\n/g, '\\n').replace(/\r/g, '\\r') + '"';
+        });
+        const parsed = JSON.parse(cleaned);
         return { ...fallback, ...parsed };
     } catch (e) {
         try {
             // Attempt to fix trailing commas in objects/arrays
-            const fixedText = text.replace(/,\s*([\]}])/g, '$1');
+            const fixedText = text.replace(/,\s*([\]}])/g, '$1')
+                                  .replace(/"((?:\\.|[^"\\])*)"/g, (match, content) => {
+                                      return '"' + content.replace(/\n/g, '\\n').replace(/\r/g, '\\r') + '"';
+                                  });
             const parsed = JSON.parse(fixedText);
             return { ...fallback, ...parsed };
         } catch {
