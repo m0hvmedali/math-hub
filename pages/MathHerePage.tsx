@@ -30,6 +30,7 @@ const MathHerePage: React.FC = () => {
     const t = (mathTranslations as any)[language || 'en'];
     const [activeTab, setActiveTab] = useState<MathTab>('dashboard');
     const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     const tabs = [
         { id: 'dashboard', label: t.dashboard, icon: LayoutDashboard, color: 'text-white' },
@@ -105,15 +106,100 @@ const MathHerePage: React.FC = () => {
             {/* Main Content Area */}
             <main className="flex-1 flex flex-col relative overflow-hidden">
                 {/* Mobile Header */}
-                <header className="md:hidden p-4 border-b border-white/5 flex items-center justify-between bg-black/50 backdrop-blur-xl shrink-0">
+                <header className="md:hidden p-4 border-b border-white/5 flex items-center justify-between bg-black/50 backdrop-blur-xl shrink-0 z-30 relative">
                     <div className="flex items-center gap-3">
                          <Sparkles className="w-5 h-5 text-brand-cyan" />
                          <span className="font-black uppercase tracking-tighter">Math System</span>
                     </div>
-                    <button onClick={() => setActiveTab('dashboard')} className="p-2 bg-white/5 rounded-lg">
-                        <Menu className="w-5 h-5" />
+                    <button 
+                        onClick={() => setIsMobileMenuOpen(true)} 
+                        className="p-3 bg-white/5 rounded-2xl border border-white/5 active:scale-95 transition-all"
+                    >
+                        <Menu className="w-5 h-5 text-gray-300" />
                     </button>
                 </header>
+
+                {/* Mobile Sidebar Overlay */}
+                <AnimatePresence>
+                    {isMobileMenuOpen && (
+                        <motion.div 
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="fixed inset-0 z-[100] md:hidden"
+                        >
+                            {/* Backdrop */}
+                            <motion.div 
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                onClick={() => setIsMobileMenuOpen(false)}
+                                className="absolute inset-0 bg-black/80 backdrop-blur-lg"
+                            />
+
+                            {/* Menu Panel */}
+                            <motion.div 
+                                initial={{ x: '100%' }}
+                                animate={{ x: 0 }}
+                                exit={{ x: '100%' }}
+                                transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                                className="absolute top-0 right-0 h-full w-[85%] max-w-sm bg-[#080808] border-l border-white/10 shadow-2xl flex flex-col"
+                            >
+                                <div className="p-6 flex items-center justify-between border-b border-white/5 bg-black/40">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-lg bg-ott-gradient p-[1px]">
+                                            <div className="w-full h-full bg-black rounded-[7px] flex items-center justify-center">
+                                                <Sparkles className="w-4 h-4 text-white" />
+                                            </div>
+                                        </div>
+                                        <span className="font-black uppercase tracking-tighter text-lg">{t.mathSystem}</span>
+                                    </div>
+                                    <button 
+                                        onClick={() => setIsMobileMenuOpen(false)}
+                                        className="p-3 bg-white/5 rounded-2xl border border-white/5 active:scale-90 transition-all"
+                                    >
+                                        <X className="w-6 h-6 text-gray-400" />
+                                    </button>
+                                </div>
+
+                                <nav className="flex-1 overflow-y-auto p-6 space-y-3 no-scrollbar">
+                                    {tabs.map((tab, idx) => (
+                                        <motion.button
+                                            key={tab.id}
+                                            initial={{ opacity: 0, x: 20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            transition={{ delay: 0.1 + idx * 0.05 }}
+                                            onClick={() => {
+                                                setActiveTab(tab.id as MathTab);
+                                                setIsMobileMenuOpen(false);
+                                            }}
+                                            className={`w-full flex items-center gap-5 p-5 rounded-3xl transition-all border ${activeTab === tab.id ? 'bg-white/5 border-white/10 text-white shadow-lg' : 'bg-transparent border-transparent text-gray-500'}`}
+                                        >
+                                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-colors ${activeTab === tab.id ? 'bg-white/10' : 'bg-white/[0.02]'}`}>
+                                                <tab.icon className={`w-6 h-6 ${activeTab === tab.id ? tab.color : 'text-gray-600'}`} />
+                                            </div>
+                                            <div className="text-left">
+                                                <span className="block text-xs font-black uppercase tracking-[0.2em]">{tab.label}</span>
+                                                <span className="block text-[10px] text-gray-600 mt-1 tracking-tight font-medium opacity-80 uppercase">Configure {tab.id} tools</span>
+                                            </div>
+                                            <ChevronRight className={`w-4 h-4 ml-auto opacity-40 ${activeTab === tab.id ? 'text-white' : 'text-gray-700'}`} />
+                                        </motion.button>
+                                    ))}
+                                </nav>
+
+                                <div className="p-8 border-t border-white/5 bg-black/20">
+                                    <div className="flex items-center gap-4 p-5 rounded-[2rem] bg-white/[0.02] border border-white/5">
+                                         <BrainCircuit className="w-8 h-8 text-accent-amber opacity-40 shrink-0" />
+                                         <div>
+                                             <div className="text-[10px] font-black uppercase tracking-widest text-gray-500 leading-none mb-1">System Priority</div>
+                                             <div className="text-xs font-bold text-gray-300">Advanced Neural Core</div>
+                                         </div>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
                 <div className="flex-1 overflow-y-auto no-scrollbar scroll-smooth relative">
                     <AnimatePresence mode="wait">
