@@ -4,33 +4,35 @@
  * Provides static and dynamic methods to bridge Math Hub with Pollinations visuals.
  */
 
-export const POLLINATIONS_BASE_IMAGE = 'https://image.pollinations.ai/prompt/';
+export const POLLINATIONS_BASE_IMAGE = 'https://gen.pollinations.ai/image/';
 
 /**
  * Generates a cinematic image URL for a given prompt.
- * Automatically appends high-quality parameters.
- * @param prompt - The visual description (best in English).
- * @param options - width, height, seed, etc.
+ * Uses the LTX-2 model with enhancement for maximum fidelity.
  */
-export function getPollinationsImageUrl(prompt: string, options: { width?: number; height?: number; nologo?: boolean; seed?: number } = {}) {
-    const { width = 1024, height = 768, nologo = true, seed = Math.floor(Math.random() * 10000) } = options;
+export function getPollinationsImageUrl(prompt: string, options: { width?: number; height?: number; seed?: number; enhance?: boolean } = {}) {
+    const { width = 1280, height = 720, seed = Math.floor(Math.random() * 10000), enhance = true } = options;
     
-    // Clean and encode prompt
     const cleanPrompt = encodeURIComponent(prompt.trim());
-    
-    return `${POLLINATIONS_BASE_IMAGE}${cleanPrompt}?width=${width}&height=${height}&nologo=${nologo}&seed=${seed}&model=flux&key=${POLLINATIONS_KEY}`;
+    return `${POLLINATIONS_BASE_IMAGE}${cleanPrompt}?model=ltx-2&width=${width}&height=${height}&seed=${seed}&enhance=${enhance}&key=${POLLINATIONS_KEY}`;
 }
 
 export const POLLINATIONS_KEY = 'sk_2QN0KMQFuzJo5NCVlaIoxMHruxaAAYA8';
 
 /**
- * Generates a cinematic video URL via Pollinations.
- * Note: Video generation typically returns an MP4 file.
+ * Generates a high-quality AI audio URL via Pollinations (Whisper/Echo).
  */
-export function getPollinationsVideoUrl(prompt: string) {
-    // Pollinations video works best with English prompts
+export function getPollinationsAudioUrl(text: string, voice: 'echo' | 'alloy' | 'fable' | 'onyx' | 'nova' | 'shimmer' = 'echo') {
+    const cleanText = encodeURIComponent(text.trim());
+    return `https://gen.pollinations.ai/audio/${cleanText}?model=whisper&voice=${voice}&key=${POLLINATIONS_KEY}`;
+}
+
+/**
+ * Generates a cinematic video URL via Pollinations.
+ */
+export function getPollinationsVideoUrl(prompt: string, width = 1280, height = 720) {
     const cleanPrompt = encodeURIComponent(prompt.trim());
-    return `https://gen.pollinations.ai/video/${cleanPrompt}?key=${POLLINATIONS_KEY}`;
+    return `https://gen.pollinations.ai/video/${cleanPrompt}?width=${width}&height=${height}&key=${POLLINATIONS_KEY}`;
 }
 
 /**
@@ -41,34 +43,46 @@ export function generateScienceScene(topic: string, description: string): string
 }
 
 /**
- * Voice Tutor Utility (Web Speech API Wrapper)
+ * Voice Tutor Utility (Web Speech & AI Audio Bridge)
  */
 export class VoiceTutor {
     private static synth = typeof window !== 'undefined' ? window.speechSynthesis : null;
+    private static currentAudio: HTMLAudioElement | null = null;
 
+    /**
+     * Plays high-quality AI generated voice (Whisper/Echo)
+     */
+    static async playAIVoice(text: string) {
+        this.stop();
+        const url = getPollinationsAudioUrl(text);
+        this.currentAudio = new Audio(url);
+        return this.currentAudio.play();
+    }
+
+    /**
+     * Classic browser synthesis (Fallback)
+     */
     static speak(text: string, lang: 'ar-EG' | 'en-US' = 'ar-EG') {
         if (!this.synth) return;
-        
-        // Cancel any ongoing speech
-        this.synth.cancel();
+        this.stop();
 
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = lang;
-        utterance.rate = 0.9; // Slightly slower for clarity
+        utterance.rate = 0.9;
         utterance.pitch = 1.0;
 
-        // Try to find a high-quality voice
         const voices = this.synth.getVoices();
         const preferredVoice = voices.find(v => v.lang.startsWith(lang.split('-')[0]) && (v.name.includes('Google') || v.name.includes('Natural')));
         
-        if (preferredVoice) {
-            utterance.voice = preferredVoice;
-        }
-
+        if (preferredVoice) utterance.voice = preferredVoice;
         this.synth.speak(utterance);
     }
 
     static stop() {
         if (this.synth) this.synth.cancel();
+        if (this.currentAudio) {
+            this.currentAudio.pause();
+            this.currentAudio = null;
+        }
     }
 }

@@ -19,7 +19,7 @@ export const CinematicPresentation: React.FC<CinematicPresentationProps> = ({
     canSkip = true 
 }) => {
     const [isLoading, setIsLoading] = useState(true);
-    const videoUrl = getPollinationsVideoUrl(prompt);
+    const videoUrl = getPollinationsVideoUrl(prompt, 1280, 720);
 
     useEffect(() => {
         const timer = setTimeout(() => {

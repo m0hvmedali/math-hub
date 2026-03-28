@@ -48,7 +48,10 @@ export const StudyInfographic = React.forwardRef<HTMLDivElement, StudyInfographi
                 setIsSpeaking(false);
             } else {
                 const textToSpeak = `${isAr ? 'ملخص دراسي لـ' : 'Study summary for'} ${topic}. ${content.summary}. ${content.points.map(p => p.text).join('. ')}`;
-                VoiceTutor.speak(textToSpeak, isAr ? 'ar-EG' : 'en-US');
+                VoiceTutor.playAIVoice(textToSpeak).catch(err => {
+                    console.error("AI Voice Error, falling back to browser synthesis:", err);
+                    VoiceTutor.speak(textToSpeak, isAr ? 'ar-EG' : 'en-US');
+                });
                 setIsSpeaking(true);
             }
         };
