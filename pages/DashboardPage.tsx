@@ -386,6 +386,20 @@ const DashboardPage: React.FC = () => {
                             <span className="text-lg">🧠</span>
                             {language === 'ar' ? 'خطة المذاكرة الذكية' : 'Deep Study Macro'}
                         </button>
+
+                        <div className="h-10 w-[1px] bg-white/20 mx-2 hidden md:block" />
+
+                        <button 
+                            onClick={() => navigate('/ai-companion')}
+                            className="px-6 py-4 w-full md:w-auto justify-center rounded-xl flex items-center gap-2 font-black text-sm transition-all hover:scale-105 active:scale-95 text-black relative overflow-hidden shadow-xl"
+                            style={{ background: 'linear-gradient(135deg, #00d2ff, #7b2ff7)' }}
+                        >
+                            <div className="absolute inset-0 bg-white/10 opacity-0 hover:opacity-100 transition-opacity" />
+                            <span className="text-lg relative z-10">✨</span>
+                            <span className="relative z-10">
+                                {language === 'ar' ? 'الرفيق الذكي' : 'AI Companion'}
+                            </span>
+                        </button>
                     </div>
                 </div>
             </div>
