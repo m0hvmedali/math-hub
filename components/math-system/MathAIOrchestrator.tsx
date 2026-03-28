@@ -51,11 +51,12 @@ const MathAIOrchestrator: React.FC = () => {
         Output ONLY valid JSON.
 
         DEEP EXTRACTION ANALYSIS STRUCTURE (Must be used in explanation/explanation_en):
-        [الحالة الابتدائية (Hook/Intro State)]: <1 sentence core of the problem>
+        [الحالة الابتدائية (Hook/Intro State)]: <1 sentence core of the original problem>
+        [تحليل وتنقيح المعطيات (Refined Understanding)]: <Refine the user request into precise mathematical parameters (e.g., "The user wants a vector R³(1,2,3) starting at origin")]
         [التفكيك التسلسلي (Body Execution)]:
         > * الخطوة [1]: [المفهوم] -> [المنطق الداعم] -> [التطبيق/النتيجة]
         > * ...
-        [تحليل الفجوات הסقراطي (Socratic Gap Analysis)]: <Conflicts or critical questions derived from the problem>
+        [تحليل الفجوات السقراطي (Socratic Gap Analysis)]: <Conflicts or critical questions derived from the problem>
         [الحالة النهائية (Conclusion/Output State)]: <1 sentence summary + actionable algorithm>
     `;
 

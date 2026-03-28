@@ -10,14 +10,18 @@ interface SolidGeometry3DProps {
 }
 
 const Vector: React.FC<{ start: [number, number, number]; end: [number, number, number]; color: string; label?: string }> = ({ start, end, color }) => {
-    const dir = new THREE.Vector3(...end).sub(new THREE.Vector3(...start));
+    // Defensive check to avoid iterator error if end/start are not arrays
+    const s = Array.isArray(start) ? start : [0, 0, 0];
+    const e = Array.isArray(end) ? end : [0, 0, 0];
+    
+    const dir = new THREE.Vector3(...e).sub(new THREE.Vector3(...s));
     const length = dir.length();
     
     return (
         <arrowHelper 
             args={[
                 dir.normalize(), 
-                new THREE.Vector3(...start), 
+                new THREE.Vector3(...s), 
                 length, 
                 color, 
                 0.2, 
@@ -64,15 +68,20 @@ const SolidGeometry3D: React.FC<SolidGeometry3DProps> = ({ data }) => {
                         cellColor="#222" 
                     />
                     
-                    {/* Vectors */}
-                    {vectors.map((v: any, idx: number) => (
-                        <Vector 
-                            key={`v-${idx}`} 
-                            start={v.start || [0, 0, 0]} 
-                            end={v.end || v} 
-                            color={v.color || (idx === 0 ? "#00ffff" : "#ff00ff")} 
-                        />
-                    ))}
+                    {vectors.map((v: any, idx: number) => {
+                        // Support multiple AI output formats: [x,y,z], {start:[], end:[]}, {origin:[], direction:[]}
+                        const vStart = v.start || v.origin || [0, 0, 0];
+                        const vEnd = v.end || v.direction || (Array.isArray(v) ? v : [0, 0, 0]);
+
+                        return (
+                            <Vector 
+                                key={`v-${idx}`} 
+                                start={vStart} 
+                                end={vEnd} 
+                                color={v.color || (idx === 0 ? "#00ffff" : "#ff00ff")} 
+                            />
+                        );
+                    })}
 
                     {/* Planes */}
                     {planes.map((p: any, idx: number) => (
