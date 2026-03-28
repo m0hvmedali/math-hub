@@ -23,10 +23,24 @@ const NeuralSyncHub: React.FC = () => {
 
     const googleLogin = async () => {
         if (!supabase) return;
-        await supabase.auth.signInWithOAuth({
-            provider: 'google',
-            options: { redirectTo: window.location.origin + '/dashboard' }
-        });
+        try {
+            const redirectTo = new URL('/dashboard', window.location.origin).href;
+            console.log('[Auth] Attempting Google sync with redirect:', redirectTo);
+            
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: { 
+                    redirectTo,
+                    queryParams: {
+                        access_type: 'offline',
+                        prompt: 'select_account',
+                    },
+                }
+            });
+            if (error) throw error;
+        } catch (err: any) {
+            console.error('[Auth] Google Sync Error:', err.message);
+        }
     };
 
     if (isGoogleConnected && isSpotifyConnected) return null;

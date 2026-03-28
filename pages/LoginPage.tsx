@@ -10,12 +10,25 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
 
     const handleGoogleLogin = async () => {
         if (!supabase) return;
-        await supabase.auth.signInWithOAuth({
-            provider: 'google',
-            options: {
-                redirectTo: window.location.origin + '/dashboard'
-            }
-        });
+        try {
+            const redirectTo = new URL('/dashboard', window.location.origin).href;
+            console.log('[Auth] Attempting Google login with redirect:', redirectTo);
+            
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo,
+                    queryParams: {
+                        access_type: 'offline',
+                        prompt: 'select_account',
+                    },
+                }
+            });
+            if (error) throw error;
+        } catch (err: any) {
+            console.error('[Auth] Google Login Error:', err.message);
+            alert(`Login Error: ${err.message}`);
+        }
     };
 
     const handleSubmit = (e: React.FormEvent) => {
