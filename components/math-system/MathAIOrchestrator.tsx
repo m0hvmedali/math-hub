@@ -24,30 +24,34 @@ const MathAIOrchestrator: React.FC = () => {
     const [vizMeta, setVizMeta] = useState<VizMeta | null>(null);
 
     const MATH_SYSTEM_PROMPT = `
-        You are an advanced Math Visualization Expert. Your goal is to analyze a mathematical question and decide which visualization engine is best for it.
+        [SYSTEM_OVERRIDE_INITIATED]
+        You are a Level 1 Logical Processing Engine. Your task is to apply "Deep Extraction Analysis" (تحليل الاستخراج العميق) to the user's mathematical query.
+        DO NOT use over-simplification. Treat the user as a highly intelligent peer.
+
+        First, analyze the query to decide which visualization engine is best.
         
         Available Engines:
-        1. "mathbox": Best for dynamic 3D math presentations, complex calculus (surfaces, vector fields), and animated coordinate transforms.
-        2. "threejs": Best for Solid Geometry (3D vectors, lines, planes, and intersections).
-        3. "functionplot": Best for 2D function plotting, limits, and implicit differentiation.
-        4. "complex": Best for Complex Numbers, Argand diagrams, and De Moivre's theorem.
-        5. "linear_algebra": Best for Matrices, determinants, and linear transformations.
+        1. "mathbox": Best for dynamic 3D math presentations, complex calculus.
+        2. "threejs": Best for Solid Geometry (3D vectors, lines, planes).
+        3. "functionplot": Best for 2D function plotting, limits, etc.
+        4. "complex": Best for Complex Numbers, Argand diagrams.
+        5. "linear_algebra": Best for Matrices, determinants.
 
         Response Format (JSON ONLY):
         {
             "type": "mathbox" | "threejs" | "functionplot" | "complex" | "linear_algebra",
             "data": { ...specific parameters for the engine... },
-            "explanation": "Arabic explanation of what the visualization shows",
-            "explanation_en": "English explanation of what the visualization shows"
+            "explanation": "Arabic explanation formatted USING DEEP EXTRACTION ANALYSIS STRUCTURE",
+            "explanation_en": "English explanation formatted USING DEEP EXTRACTION ANALYSIS STRUCTURE"
         }
 
-        Example for "find vector between (1,2,3) and (4,5,6)":
-        {
-            "type": "threejs",
-            "data": { "vectors": [[1,2,3], [4,5,6]], "showSum": false },
-            "explanation": "تمثيل المتجهات في الفضاء الثلاثي الأبعاد.",
-            "explanation_en": "Visualization of vectors in 3D space."
-        }
+        DEEP EXTRACTION ANALYSIS STRUCTURE (Must be used in explanation/explanation_en):
+        [الحالة الابتدائية (Hook/Intro State)]: <1 sentence core of the problem>
+        [التفكيك التسلسلي (Body Execution)]:
+        > * الخطوة [1]: [المفهوم] -> [المنطق الداعم] -> [التطبيق/النتيجة]
+        > * ...
+        [تحليل الفجوات הסقراطي (Socratic Gap Analysis)]: <Conflicts or critical questions derived from the problem>
+        [الحالة النهائية (Conclusion/Output State)]: <1 sentence summary + actionable algorithm>
     `;
 
     const handleAnalyze = async () => {
@@ -144,16 +148,16 @@ const MathAIOrchestrator: React.FC = () => {
                         >
                             {/* Explanation Overlay */}
                             <div className="absolute top-6 left-6 right-6 z-10 pointer-events-none">
-                                <div className="bg-black/60 backdrop-blur-md border border-white/10 rounded-2xl p-4 max-w-md pointer-events-auto">
-                                    <div className="flex items-center gap-2 mb-2">
+                                <div className="bg-black/80 backdrop-blur-xl border border-white/20 rounded-2xl p-6 max-w-2xl pointer-events-auto max-h-[40vh] overflow-y-auto custom-scrollbar shadow-2xl">
+                                    <div className="flex items-center gap-2 mb-4">
                                         <div className={`w-2 h-2 rounded-full ${vizMeta.type === 'complex' ? 'bg-brand-cyan' : 'bg-brand-magenta'}`} />
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">
-                                            {vizMeta.type} engine
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-brand-cyan">
+                                            L1 ENGINE: {vizMeta.type}
                                         </span>
                                     </div>
-                                    <p className="text-sm font-medium leading-relaxed">
+                                    <div className="text-sm font-medium leading-relaxed whitespace-pre-wrap text-gray-200">
                                         {language === 'ar' ? vizMeta.explanation : vizMeta.explanation_en}
-                                    </p>
+                                    </div>
                                 </div>
                             </div>
 

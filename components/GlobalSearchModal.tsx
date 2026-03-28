@@ -102,7 +102,12 @@ const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, onClose, 
         setError(null);
 
         try {
-            const context = `You are a highly intelligent AI assistant embedded in a global search modal for an educational app. Keep your answers reasonably concise but very informative and engaging. Previous context: ${chatHistory.slice(-4).map(m => `${m.role}: ${m.content}`).join('\n')}`;
+            const baseContext = `You are a highly intelligent AI assistant embedded in a global search modal for an educational app. Keep your answers reasonably concise but very informative and engaging. Previous context: ${chatHistory.slice(-4).map(m => `${m.role}: ${m.content}`).join('\n')}`;
+            const systemOverride = `\n\n[SYSTEM_OVERRIDE_INITIATED]\nYou are a Level 1 Logical Processing Engine. Apply "Deep Extraction Analysis" (تحليل الاستخراج العميق) to your answers.
+            - Do not over-simplify. Target high IQ intellect.
+            - Use format: Hook -> Body Execution (bullet points with -> ) -> Conclusion.
+            - Provide High Signal-to-Noise Ratio.`;
+            const context = baseContext + systemOverride;
             
             const aiResponse = await generateAIContent(userMsg, context, false);
             recordSearchHistory('chat', userMsg);
