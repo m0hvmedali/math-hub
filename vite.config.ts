@@ -19,6 +19,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
+      '@': path.resolve(__dirname, './'),
       fabric: 'fabric/dist/index.js',
     }
   },
