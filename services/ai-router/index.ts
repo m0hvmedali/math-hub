@@ -164,7 +164,10 @@ function cleanJson(raw: string): string {
 
   s = s.slice(start, end + 1);
 
-  // 3. Technical Polish: Remove trailing commas which break standard JSON.parse
+  // 4. Polish: Handle cases where model adds Arabic prose before/after
+  // If we still have markdown-style headers like ### or ** 
+  s = s.replace(/^[#\s\*٠-٩\u0621-\u064A]+[:：]\s*/g, ''); 
+
   return s.replace(/,\s*([\]}])/g, '$1');
 }
 
@@ -328,6 +331,16 @@ async function callGroq(req: AIRequest, model: string, key: string): Promise<AIR
   return { text: data.choices[0].message.content, provider: `groq-${model}` };
 }
 
+// ── Pollinations Call (Free Fallback) ─────────────────────────────────────────
+async function callPollinationsText(req: AIRequest): Promise<AIResponse> {
+    const model = 'openai'; // Pollinations default, high quality
+    const url = `https://text.pollinations.ai/${encodeURIComponent(req.prompt)}?model=${model}&system=${encodeURIComponent(req.systemInstruction || '')}&json=true&seed=${Math.floor(Math.random()*1000)}`;
+    
+    const resp = await fetch(url);
+    const text = await resp.text();
+    return { text, provider: `pollinations-${model}` };
+}
+
 // ── Usage Tracking & Caching ─────────────────────────────────────────────────
 const getTodayKey = () => `ai_usage_${new Date().toISOString().split('T')[0]}`;
 const hashPrompt = (str: string) => {
@@ -358,8 +371,10 @@ async function fallbackPrimary(req: AIRequest): Promise<AIResponse> {
   try { return await callGemini(req); } catch (_) {}
   // Then OpenRouter
   try { return await callOpenRouter(req, 'google/gemini-2.0-flash-lite-preview-02-05:free', OPENROUTER_KEY); } catch (_) {}
-  // Finally Groq
-  return await callGroq(req, 'llama-3.1-8b-instant', GROQ_LLAMA_KEY);
+  // Then Groq
+  try { return await callGroq(req, 'llama-3.1-8b-instant', GROQ_LLAMA_KEY); } catch (_) {}
+  // Finally Pollinations (Unlimited free fallback)
+  return await callPollinationsText(req);
 }
 
 import { monitor } from './monitor';

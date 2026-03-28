@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ReactFlow, MiniMap, Controls, Background, useNodesState, useEdgesState, BackgroundVariant } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Lightbulb, CheckCircle, Navigation2, LayoutGrid, X, ImageDown, Network } from 'lucide-react';
+import { Lightbulb, CheckCircle, Navigation2, LayoutGrid, X, ImageDown, Network, Brain } from 'lucide-react';
 import { Shimmer } from './ai-elements/shimmer';
 import { CinematicPresentation } from './CinematicPresentation';
 import { OpenIn, OpenInContent, OpenInChatGPT, OpenInTrigger } from './ai-elements/open-in-chat';
@@ -31,6 +31,7 @@ export const AICompanionDashboard: React.FC<{ onClose?: () => void }> = ({ onClo
     const [formData, setFormData]             = useState<AICompanionFormData | null>(null);
     const [showIntro, setShowIntro]           = useState(false);
     const [introSeen, setIntroSeen]           = useState(false);
+    const [source, setSource]                 = useState<string | null>(null);
     const [selectedQuizAnswer, setSelectedQuizAnswer] = useState<number | null>(null);
     const [rightTab, setRightTab]             = useState<RightTab>('map');
 
@@ -50,14 +51,17 @@ export const AICompanionDashboard: React.FC<{ onClose?: () => void }> = ({ onClo
 
         try {
             // ── Phase 2: Evaluator Agent (via Vercel AI SDK generateObject) ──
-            const ev = await evaluateUnderstanding(data.subject, data.level, data.explanation, data.language);
-            setEvalResult(ev);
+            const evData = await evaluateUnderstanding(data.subject, data.level, data.explanation, data.language);
+            setEvalResult(evData.object);
+            setSource(evData.provider);
 
             setStatusText(data.language === 'arabic' ? 'جاري بناء المحتوى المخصص...' : 'Building Personalized Content...');
 
             // ── Phase 4: Content Builder Agent ──
-            const built = await buildCompanionContent(data.subject, ev, data.preferences, data.language);
+            const builtData = await buildCompanionContent(data.subject, evData.object, data.preferences, data.language);
+            const built = builtData.object;
             setResult(built);
+            setSource(builtData.provider);
             setShowIntro(true); // Launch cinematic intro
             setIntroSeen(false);
 
@@ -135,6 +139,12 @@ export const AICompanionDashboard: React.FC<{ onClose?: () => void }> = ({ onClo
                             <Lightbulb className="w-5 h-5" />
                             {isAr ? 'تقرير الرفيق الذكي' : 'Smart Tutor Report'}
                         </h2>
+                        {source && (
+                            <div className="flex items-center gap-2 px-3 py-1 bg-white/5 border border-white/10 rounded-full w-fit">
+                                <Brain className="w-3 h-3 text-brand-cyan" />
+                                <span className="text-[8px] font-black uppercase tracking-widest text-gray-400">Intelligence: {source}</span>
+                            </div>
+                        )}
 
                         {/* Summary */}
                         <div className="bg-white/5 border border-white/10 p-5 rounded-2xl">

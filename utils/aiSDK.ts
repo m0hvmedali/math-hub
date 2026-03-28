@@ -33,16 +33,16 @@ export async function generateSDKObject<T>(options: {
     prompt: string;
     system?: string;
     fallback: T;
-}): Promise<T> {
+}): Promise<{ object: T; provider: string }> {
     try {
         const google = getGoogleProvider();
         const { object } = await aiGenerateObject({
             model: google(GOOGLE_MODEL_ID),
             schema: options.schema as any,
-            system: options.system,
+            system: (options.system || '') + "\n\nCRITICAL: Respond ONLY with valid raw JSON. No markdown code blocks (```json), no prose, no formatting headers. Must match the provided schema exactly.",
             prompt: options.prompt,
         });
-        return object as T;
+        return { object: object as T, provider: GOOGLE_MODEL_ID };
     } catch (sdkErr) {
         console.warn('[AI SDK] generateObject failed, falling back to routeAI:', sdkErr);
         try {
@@ -52,10 +52,10 @@ export async function generateSDKObject<T>(options: {
                 task: 'formatting',
                 responseFormat: 'json',
             });
-            return options.schema.parse(JSON.parse(res.text));
+            return { object: options.schema.parse(JSON.parse(res.text)), provider: res.provider };
         } catch (fallbackErr) {
             console.error('[AI SDK] Fallback also failed:', fallbackErr);
-            return options.fallback;
+            return { object: options.fallback, provider: 'fallback-static' };
         }
     }
 }
@@ -71,7 +71,7 @@ export async function streamSDKText(options: {
         const google = getGoogleProvider();
         const { textStream } = await aiStreamText({
             model: google(GOOGLE_MODEL_ID),
-            system: options.system,
+            system: (options.system || '') + "\n\nNote: Provide direct information concisely.",
             prompt: options.prompt,
         });
         let full = '';

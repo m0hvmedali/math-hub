@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Shimmer } from './ai-elements/shimmer';
 import type { CompanionContentResult } from '../services/ai-router/studyCompanion';
 import type { EvaluatorResult } from '../utils/aiSDK';
-import { getPollinationsImageUrl, VoiceTutor } from '../utils/pollinations';
+import { getPollinationsImageUrl, VoiceTutor, POLLINATIONS_KEY } from '../utils/pollinations';
 
 interface StudyInfographicProps {
     topic: string;
@@ -32,7 +32,7 @@ export const StudyInfographic = React.forwardRef<HTMLDivElement, StudyInfographi
             setIsLoadingNote(true);
             try {
                 const prompt = `Give me a very short, creative metaphor or analogy for ${topic} in ${isAr ? 'Arabic' : 'English'}. Be cinematic.`;
-                const res = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(prompt)}`);
+                const res = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(prompt)}?json=true&key=${POLLINATIONS_KEY}`);
                 const text = await res.text();
                 setFastNote(text);
             } catch (e) {
@@ -273,6 +273,8 @@ export function useInfographicExport() {
                 quality: 1,
                 pixelRatio: 2,
                 backgroundColor: '#050510',
+                cacheBust: true,
+                includeQueryParams: true,
             });
             const link = document.createElement('a');
             link.download = `${filename}-${Date.now()}.png`;

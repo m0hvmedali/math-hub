@@ -27,7 +27,7 @@ export async function evaluateUnderstanding(
     level: string,
     explanation: string,
     language: 'arabic' | 'english'
-): Promise<EvaluatorResult> {
+): Promise<{ object: EvaluatorResult; provider: string }> {
     return generateSDKObject({
         schema: EvaluatorSchema,
         system: 'You are an expert instructional designer and cognitive psychologist analyzing student comprehension gaps.',
@@ -57,7 +57,7 @@ export async function buildCompanionContent(
     evalResults: EvaluatorResult,
     prefs: CompanionPreferences,
     language: 'arabic' | 'english'
-): Promise<CompanionContent> {
+): Promise<{ object: CompanionContent; provider: string }> {
     const tone  = prefs.tone === 'casual' ? 'friendly and simple' :
                   prefs.tone === 'visual' ? 'highly descriptive and metaphorical' : 'academic and formal';
     const length = prefs.length === 'concise' ? 'very brief and bulleted' : 'detailed and comprehensive';

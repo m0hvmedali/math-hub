@@ -18,10 +18,10 @@ export function getPollinationsImageUrl(prompt: string, options: { width?: numbe
     // Clean and encode prompt
     const cleanPrompt = encodeURIComponent(prompt.trim());
     
-    return `${POLLINATIONS_BASE_IMAGE}${cleanPrompt}?width=${width}&height=${height}&nologo=${nologo}&seed=${seed}&model=flux`;
+    return `${POLLINATIONS_BASE_IMAGE}${cleanPrompt}?width=${width}&height=${height}&nologo=${nologo}&seed=${seed}&model=flux&key=${POLLINATIONS_KEY}`;
 }
 
-const POLLINATIONS_KEY = 'sk_2QN0KMQFuzJo5NCVlaIoxMHruxaAAYA8';
+export const POLLINATIONS_KEY = 'sk_2QN0KMQFuzJo5NCVlaIoxMHruxaAAYA8';
 
 /**
  * Generates a cinematic video URL via Pollinations.
