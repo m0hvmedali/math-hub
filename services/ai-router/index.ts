@@ -24,6 +24,14 @@ const GROQ_LLAMA_KEY = (import.meta.env.VITE_GROQ_LLAMA_KEY     || '').trim();
 const GEMMA_KEY      = (import.meta.env.VITE_OPENROUTER_GEMMA_KEY || '').trim();
 const MISTRAL_KEY    = (import.meta.env.VITE_MISTRAL_API_KEY    || '').trim();
 
+// ── Circuit Breaker (Anti-429 Resilience) ──────────────────────────────────
+let GEMINI_COOLDOWN_UNTIL = 0;
+const isGeminiOnCooldown = () => Date.now() < GEMINI_COOLDOWN_UNTIL;
+const setGeminiCooldown = (sec = 60) => {
+    console.warn(`[AI Router] 🛡️ Gemini 429 detected - Cool-down for ${sec}s`);
+    GEMINI_COOLDOWN_UNTIL = Date.now() + (sec * 1000);
+};
+
 // ── Ollama Cloud REST API (browser-compatible fetch via Vercel Proxy) ────────
 const OLLAMA_HOST = '/api/ai/ollama';
 
@@ -129,23 +137,10 @@ function chunkText(text: string, maxChars = 12000): string[] {
 function cleanJson(raw: string): string {
   if (!raw) return '';
   
-  // 0. Pre-pass: Fix common AI JSON errors
-  // a. Escapes literal newlines with \n when they occur inside double-quoted string values.
-  let s = raw.replace(/"((?:\\.|[^"\\])*)"/g, (match, content) => {
-    return '"' + content.replace(/\n/g, '\\n').replace(/\r/g, '\\r') + '"';
-  });
-  // b. Converts unquoted JavaScript hex formats (e.g. 0xff0000) to string hex colors (e.g. "#ff0000")
-  s = s.replace(/(^|[:,\[\s])0x([0-9a-fA-F]+)\b/g, '$1"#$2"');
-
-  s = s.trim();
+  let s = raw.trim();
   
-  // 1. Remove markdown code fences
-  const fenceMatch = s.match(/```(?:json)?\s*([\s\S]*?)```/);
-  if (fenceMatch) {
-    s = fenceMatch[1].trim();
-  }
-
-  // 2. Identify the core JSON structure by finding the outermost braces or brackets
+  // 1. Identify valid JSON structure by finding the OUTTERMOST braces or brackets
+  // This ignores any prose, headers, or markdown that the AI might have added.
   const firstCurly = s.indexOf('{');
   const firstSquare = s.indexOf('[');
   let start = -1;
@@ -164,11 +159,15 @@ function cleanJson(raw: string): string {
 
   s = s.slice(start, end + 1);
 
-  // 4. Polish: Handle cases where model adds Arabic prose before/after
-  // If we still have markdown-style headers like ### or ** 
-  s = s.replace(/^[#\s\*٠-٩\u0621-\u064A]+[:：]\s*/g, ''); 
+  // 2. Technical Polish: Remove common AI JSON errors
+  // a. Escapes literal newlines inside strings
+  s = s.replace(/"((?:\\.|[^"\\])*)"/g, (match, content) => {
+    return '"' + content.replace(/\n/g, '\\n').replace(/\r/g, '\\r') + '"';
+  });
+  // b. Remove trailing commas
+  s = s.replace(/,\s*([\]}])/g, '$1');
 
-  return s.replace(/,\s*([\]}])/g, '$1');
+  return s;
 }
 
 // ── Health Check ──────────────────────────────────────────────────────────────
@@ -247,41 +246,48 @@ async function callOllama(req: AIRequest, m: ModelConfig): Promise<AIResponse> {
 // ── Gemini Call ───────────────────────────────────────────────────────────────
 async function callGemini(req: AIRequest): Promise<AIResponse> {
   if (!GEMINI_KEY) throw new Error('No Gemini key');
+  if (isGeminiOnCooldown()) throw new Error('Gemini on 429 cooldown');
+
   const genAI = new GoogleGenerativeAI(GEMINI_KEY);
   const MODEL_ID = 'gemini-3.1-flash-lite-preview';
   const model = genAI.getGenerativeModel({ model: MODEL_ID });
 
-  if (req.imageBase64) {
-    const result = await model.generateContent([
-      req.prompt,
-      { inlineData: { data: req.imageBase64.replace(/^data:[^;]+;base64,/, ''), mimeType: req.imageMimeType || 'image/jpeg' } }
-    ]);
-    return { text: result.response.text(), provider: MODEL_ID };
+  try {
+    if (req.imageBase64) {
+      const result = await model.generateContent([
+        req.prompt,
+        { inlineData: { data: req.imageBase64.replace(/^data:[^;]+;base64,/, ''), mimeType: req.imageMimeType || 'image/jpeg' } }
+      ]);
+      return { text: result.response.text(), provider: MODEL_ID };
+    }
+
+    const result = await model.generateContent({
+      contents: [
+        ...(req.systemInstruction ? [
+          { role: 'user' as const, parts: [{ text: `[System] ${req.systemInstruction}` }] },
+          { role: 'model' as const, parts: [{ text: 'Understood.' }] }
+        ] : []),
+        ...(req.history || []).map(h => ({
+          role: (h.role === 'assistant' ? 'model' : 'user') as 'user' | 'model',
+          parts: [
+            { text: h.content } as any,
+            ...(h.thoughtSignature ? [{ thought_signature: h.thoughtSignature } as any] : [])
+          ]
+        })),
+        { role: 'user' as const, parts: [{ text: req.prompt }] }
+      ],
+      generationConfig: (req.responseFormat === 'json' ? { responseMimeType: 'application/json' } : undefined) as any,
+    });
+
+    const response = result.response;
+    const candidate = (response as any).candidates?.[0];
+    const thoughtSignature = candidate?.content?.parts?.find((p: any) => p.thought_signature)?.thought_signature;
+
+    return { text: response.text(), provider: MODEL_ID, thoughtSignature };
+  } catch (err: any) {
+    if (err.message?.includes('429')) setGeminiCooldown(60);
+    throw err;
   }
-
-  const result = await model.generateContent({
-    contents: [
-      ...(req.systemInstruction ? [
-        { role: 'user' as const, parts: [{ text: `[System] ${req.systemInstruction}` }] },
-        { role: 'model' as const, parts: [{ text: 'Understood.' }] }
-      ] : []),
-      ...(req.history || []).map(h => ({
-        role: (h.role === 'assistant' ? 'model' : 'user') as 'user' | 'model',
-        parts: [
-          { text: h.content } as any,
-          ...(h.thoughtSignature ? [{ thought_signature: h.thoughtSignature } as any] : [])
-        ]
-      })),
-      { role: 'user' as const, parts: [{ text: req.prompt }] }
-    ],
-    generationConfig: (req.responseFormat === 'json' ? { responseMimeType: 'application/json' } : undefined) as any,
-  });
-
-  const response = result.response;
-  const candidate = (response as any).candidates?.[0];
-  const thoughtSignature = candidate?.content?.parts?.find((p: any) => p.thought_signature)?.thought_signature;
-
-  return { text: response.text(), provider: MODEL_ID, thoughtSignature };
 }
 
 // ── OpenRouter Call ─────────────────────────────────────────────────────────

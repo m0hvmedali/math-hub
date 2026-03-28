@@ -35,28 +35,20 @@ export async function generateSDKObject<T>(options: {
     fallback: T;
 }): Promise<{ object: T; provider: string }> {
     try {
-        const google = getGoogleProvider();
-        const { object } = await aiGenerateObject({
-            model: google(GOOGLE_MODEL_ID),
-            schema: options.schema as any,
-            system: (options.system || '') + "\n\nCRITICAL: Respond ONLY with valid raw JSON. No markdown code blocks (```json), no prose, no formatting headers. Must match the provided schema exactly.",
+        const res = await routeAI({
             prompt: options.prompt,
+            systemInstruction: (options.system || '') + "\n\nCRITICAL: Respond ONLY with a valid raw JSON object. No conversational filler, no markdown blocks (```), no headers (###). The response must be parsable by JSON.parse() immediately.",
+            task: 'formatting',
+            responseFormat: 'json',
         });
-        return { object: object as T, provider: GOOGLE_MODEL_ID };
-    } catch (sdkErr) {
-        console.warn('[AI SDK] generateObject failed, falling back to routeAI:', sdkErr);
-        try {
-            const res = await routeAI({
-                prompt: options.prompt,
-                systemInstruction: options.system,
-                task: 'formatting',
-                responseFormat: 'json',
-            });
-            return { object: options.schema.parse(JSON.parse(res.text)), provider: res.provider };
-        } catch (fallbackErr) {
-            console.error('[AI SDK] Fallback also failed:', fallbackErr);
-            return { object: options.fallback, provider: 'fallback-static' };
-        }
+        
+        return { 
+            object: options.schema.parse(JSON.parse(res.text)), 
+            provider: res.provider 
+        };
+    } catch (err) {
+        console.error('[AI SDK] Resilience route failed:', err);
+        return { object: options.fallback, provider: 'fallback-static' };
     }
 }
 

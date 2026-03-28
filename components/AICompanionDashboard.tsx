@@ -34,6 +34,7 @@ export const AICompanionDashboard: React.FC<{ onClose?: () => void }> = ({ onClo
     const [source, setSource]                 = useState<string | null>(null);
     const [selectedQuizAnswer, setSelectedQuizAnswer] = useState<number | null>(null);
     const [rightTab, setRightTab]             = useState<RightTab>('map');
+    const [hasError, setHasError]             = useState(false);
 
     const [nodes, setNodes, onNodesChange] = useNodesState<any>([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState<any>([]);
@@ -47,10 +48,11 @@ export const AICompanionDashboard: React.FC<{ onClose?: () => void }> = ({ onClo
         setEvalResult(null);
         setSelectedQuizAnswer(null);
         setRightTab('map');
+        setHasError(false);
         setStatusText(data.language === 'arabic' ? 'جاري تقييم مستوى الفهم...' : 'Evaluating Understanding...');
 
         try {
-            // ── Phase 2: Evaluator Agent (via Vercel AI SDK generateObject) ──
+            // ── Phase 2: Evaluator Agent ──
             const evData = await evaluateUnderstanding(data.subject, data.level, data.explanation, data.language);
             setEvalResult(evData.object);
             setSource(evData.provider);
@@ -62,35 +64,40 @@ export const AICompanionDashboard: React.FC<{ onClose?: () => void }> = ({ onClo
             const built = builtData.object;
             setResult(built);
             setSource(builtData.provider);
-            setShowIntro(true); // Launch cinematic intro
-            setIntroSeen(false);
+            
+            if (builtData.provider === 'fallback-static') {
+                setHasError(true);
+            } else {
+                setShowIntro(true); 
+                setIntroSeen(false);
 
-            // ── Transform to React Flow nodes/edges ──
-            if (built.nodes && built.edges) {
-                setNodes(built.nodes.map((n, i) => ({
-                    id: n.id,
-                    position: { x: (i % 3) * 220, y: Math.floor(i / 3) * 160 },
-                    data: { label: n.label },
-                    style: {
-                        background: data.preferences.theme === 'neon' ? 'rgba(0,210,255,0.08)' : '#1a1a2e',
-                        color: '#fff',
-                        border: data.preferences.theme === 'neon' ? '1px solid #00d2ff' : '1px solid rgba(255,255,255,0.1)',
-                        borderRadius: '12px', padding: '10px 16px',
-                        fontSize: '13px', fontWeight: 700,
-                    }
-                })));
+                // ── Transform to React Flow nodes/edges ──
+                if (built.nodes && built.edges) {
+                    setNodes(built.nodes.map((n: any, i: number) => ({
+                        id: n.id,
+                        position: { x: (i % 3) * 220, y: Math.floor(i / 3) * 160 },
+                        data: { label: n.label },
+                        style: {
+                            background: data.preferences.theme === 'neon' ? 'rgba(0,210,255,0.08)' : '#1a1a2e',
+                            color: '#fff',
+                            border: data.preferences.theme === 'neon' ? '1px solid #00d2ff' : '1px solid rgba(255,255,255,0.1)',
+                            borderRadius: '12px', padding: '10px 16px',
+                            fontSize: '13px', fontWeight: 700,
+                        }
+                    })));
 
-                setEdges(built.edges.map((e, i) => ({
-                    id: `e-${e.source}-${e.target}-${i}`,
-                    source: e.source, target: e.target, label: e.label,
-                    animated: true,
-                    style: { stroke: '#00d2ff', strokeWidth: 2 },
-                    labelStyle: { fill: '#9ca3af', fontSize: 10, fontWeight: 600 },
-                })));
+                    setEdges(built.edges.map((e: any, i: number) => ({
+                        id: `e-${e.source}-${e.target}-${i}`,
+                        source: e.source, target: e.target, label: e.label,
+                        animated: true,
+                        style: { stroke: '#00d2ff', strokeWidth: 2 },
+                        labelStyle: { fill: '#9ca3af', fontSize: 10, fontWeight: 600 },
+                    })));
+                }
             }
         } catch (err) {
-            console.error('Companion Error:', err);
-            setStatusText(data.language === 'arabic' ? 'عذراً، حدث خطأ أثناء التحليل.' : 'Error during analysis.');
+            console.error("Dashboard Analysis Error:", err);
+            setHasError(true);
         } finally {
             setIsLoading(false);
         }
@@ -119,6 +126,19 @@ export const AICompanionDashboard: React.FC<{ onClose?: () => void }> = ({ onClo
                                     {statusText}
                                 </Shimmer>
                                 <div className="text-[10px] text-gray-500 animate-pulse">Neural Pathfinding in Progress...</div>
+                            </div>
+                        )}
+                        {hasError && (
+                            <div className="mt-8 p-6 bg-red-500/10 border border-red-500/20 rounded-[2rem] text-center space-y-4">
+                                <p className="text-sm text-red-400 font-bold">
+                                    {isAr ? 'عذراً، المحرك الذكي مزدحم حالياً. حاول الإعادة باستخدام المحرك البديل.' : 'Apologies, the primary neural engine is crowded. Retry with the fallback engine.'}
+                                </p>
+                                <Button 
+                                    onClick={() => formData && handleFormSubmit(formData)}
+                                    className="bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30"
+                                >
+                                    {isAr ? 'إعادة المحاولة (محرك احتياطي)' : 'Retry (Backup Engine)'}
+                                </Button>
                             </div>
                         )}
                     </motion.div>
