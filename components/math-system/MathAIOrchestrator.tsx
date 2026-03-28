@@ -1,6 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, Send, Brain, ChevronRight, RotateCcw } from 'lucide-react';
+import { Sparkles, Send, Brain, ChevronRight, RotateCcw, MessageSquare, X } from 'lucide-react';
 import { AppContext } from '../../App';
 import { generateAIContent, safeJsonParse } from '../../utils/aiHelper';
 
@@ -22,6 +22,7 @@ const MathAIOrchestrator: React.FC = () => {
     const [prompt, setPrompt] = useState('');
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [vizMeta, setVizMeta] = useState<VizMeta | null>(null);
+    const [isExplanationOpen, setIsExplanationOpen] = useState(true);
 
     const MATH_SYSTEM_PROMPT = `
         [SYSTEM_OVERRIDE_INITIATED]
@@ -61,6 +62,7 @@ const MathAIOrchestrator: React.FC = () => {
     const handleAnalyze = async () => {
         if (!prompt.trim()) return;
         setIsAnalyzing(true);
+        setIsExplanationOpen(true);
         try {
             const response = await generateAIContent(
                 `Question: ${prompt}`,
@@ -160,20 +162,38 @@ const MathAIOrchestrator: React.FC = () => {
                             className="absolute inset-0 flex flex-col"
                         >
                             {/* Explanation Overlay */}
-                            <div className="absolute top-6 left-6 right-6 z-10 pointer-events-none">
-                                <div className="bg-black/80 backdrop-blur-xl border border-white/20 rounded-2xl p-6 max-w-2xl pointer-events-auto max-h-[40vh] overflow-y-auto custom-scrollbar shadow-2xl">
-                                    <div className="flex items-center gap-2 mb-4">
-                                        <div className={`w-2 h-2 rounded-full ${vizMeta.type === 'complex' ? 'bg-brand-cyan' : 'bg-brand-magenta'}`} />
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-brand-cyan">
-                                            L1 ENGINE: {vizMeta.type}
-                                        </span>
-                                    </div>
-                                    <div className="text-sm font-medium leading-relaxed whitespace-pre-wrap text-gray-200">
-                                        {language === 'ar' ? vizMeta.explanation : vizMeta.explanation_en}
-                                    </div>
-                                </div>
+                            <div className="absolute top-6 left-6 right-6 z-10 pointer-events-none flex flex-col items-start gap-4">
+                                <button 
+                                    onClick={() => setIsExplanationOpen(!isExplanationOpen)}
+                                    className="pointer-events-auto p-3 bg-black/80 backdrop-blur-xl border border-white/20 rounded-xl flex items-center gap-2 shadow-2xl hover:bg-white/5 transition-colors"
+                                >
+                                    {isExplanationOpen ? <X className="w-4 h-4 text-gray-400" /> : <MessageSquare className="w-4 h-4 text-brand-cyan" />}
+                                    <span className="text-xs font-bold text-gray-300 uppercase tracking-widest">
+                                        {isExplanationOpen ? (language === 'ar' ? 'إخفاء التحليل' : 'Hide Analysis') : (language === 'ar' ? 'إظهار التحليل' : 'Show Analysis')}
+                                    </span>
+                                </button>
+                                
+                                <AnimatePresence>
+                                    {isExplanationOpen && (
+                                        <motion.div 
+                                            initial={{ opacity: 0, y: -10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: -10 }}
+                                            className="bg-black/80 backdrop-blur-xl border border-white/20 rounded-2xl p-6 max-w-2xl pointer-events-auto max-h-[40vh] overflow-y-auto custom-scrollbar shadow-2xl w-full"
+                                        >
+                                            <div className="flex items-center gap-2 mb-4">
+                                                <div className={`w-2 h-2 rounded-full ${vizMeta.type === 'complex' ? 'bg-brand-cyan' : 'bg-brand-magenta'}`} />
+                                                <span className="text-[10px] font-black uppercase tracking-widest text-brand-cyan">
+                                                    L1 ENGINE: {vizMeta.type}
+                                                </span>
+                                            </div>
+                                            <div className="text-sm font-medium leading-relaxed whitespace-pre-wrap text-gray-200">
+                                                {language === 'ar' ? vizMeta.explanation : vizMeta.explanation_en}
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
                             </div>
-
                             {/* Render Engine */}
                             <div className="flex-1 bg-black/40 relative">
                                 {vizMeta.type === 'mathbox' && <div className="p-8 text-center text-gray-500 italic">MathBox engine is currently unavailable. Please try a different visualization type.</div>}
